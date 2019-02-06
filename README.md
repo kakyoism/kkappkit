@@ -478,6 +478,6 @@ Currently the kit is only tested on macOS (High Sierra and Mojave), under Python
 - Prompt offers `.info()`, `.warning()`, and `.error()` methods, similar to the `logging` module, however, a twist here is that it enforces writing readable diagnostics. You must provide three pieces of info: description, cause, and suggestion. If a logger is given, calling these API will both pop up a prompt, and write log messages into `app.log`.
 
 
-## Credits
+## Acknowledgements
 
 I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to  think about my own problems and start working on my own pragmatic UI solution instead of blindly committing to a random framework out there.
