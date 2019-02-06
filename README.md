@@ -14,7 +14,7 @@ python myscript.py -V -C config.json
 
 I could tune the parameters through my JSON config file myself. But this doesn't please my non-engineer colleagues: They need intuitive control, i.e., a GUI. Then it takes a bit of work: Lay out the frontend controls, link them with backend data, and code up sophisticated behaviours.
 
-However, that's still not enough. Being agile, the tool won't be perfect and undergo constant revisions. My colleagues need the freedom to tweak the data model and sometimes the GUI themselves. They also demand better diagnostics and error handling: "What's this KeyError here?". Then I'd have to run it under CLI mode to get a full picture of the backend, then often dive into the dirty code and weed out the cryptic log messages, a sin of sloppy programmers. 
+However, that's still not enough. Being agile, the tool won't be *complete*. It will undergo constant revisions. My colleagues need the freedom to tweak the data model and sometimes the GUI themselves. They also demand better diagnostics and error handling: "What's this KeyError here?". Then I'd have to run it under CLI mode to get a full picture of the backend, then often dive into the dirty code and weed out the cryptic log messages, a sin of sloppy programmers. 
 
 Imagine doing this all over again on their next request.
 
@@ -475,6 +475,7 @@ Currently the kit is only tested on macOS (High Sierra and Mojave), under Python
 - A compound widget reuses the corresponding top-level field in the JSON config file as its name. This name registers with Tkinter.
 - The widget filtering based on SearchBar relies on a `eval()` call on special property `accessors` defined in widgets.
 - The `OnHelp` handler behind a Help(?) button can be used to retrieve help string in any form, you may also customize how to show the help, e.g., on a docked panel. By default, it gets the doc from config file, and pops up a top-level window.
+- Prompt offers `.info`, `.warning`, and `.error` methods, similar to `logging`, however, a twist here is that it enforces writing readable diagnostics. You must provide three pieces of info: description, cause, and suggestion. If a logger is given, calling these API will both pop up a prompt, and write log messages into `app.log`.
 
 
 ## Credits
