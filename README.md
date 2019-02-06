@@ -220,7 +220,7 @@ From top to bottom, you see:
 
 No. 1, 4, and 5 come for free as built-in widgets from calling the factory method `ui.build_script_launcher()`. The two core parameters show up in the order of their appearance in `app.json`.
 
-Now press the bottom-right button `Go!` and you'll see the following prompt:
+Now drag the slider or edit the spinbox so that the number shown 0.5, then press the bottom-right button `Go!`. You'll see the following prompt:
 
 ![](hello_world/helloworld-popup.png)
 
