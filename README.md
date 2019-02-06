@@ -204,19 +204,19 @@ Wow! That is long! For a Hello-World, what we did may seem an overkill. But for 
 
 Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we are ready to run this app.
 
-We'll test the GUI mode first. Run `hello.py` with shell integration of Python 3, or open a Terminal or Command Prompt and type in `python3 hello.py`. You should see the following GUI (mine runes on macOS).
+We'll test the GUI mode first. Run `hello.py` with shell integration of Python 3, or open a Terminal or Command Prompt and type in `python3 hello.py`. You should see the following GUI (mine runs on macOS).
 
 ![](hello_world/helloworld-gui.png)
 
-From top to bottom, you see these
+From top to bottom, you see:
 
 1. A search bar for filtering out widgets by keywords
 2. The string parameter compound widget, with Reset and Help (?) buttons. 
-3. The number paramter compound widget, with Reset and Help (?) buttons. 
+3. The number parameter compound widget, with Reset and Help (?) buttons. 
 4. A submission panel to launch main script and handle parameter presets.
 5. A status bar with a progressbar
 
-No. 1, 4, and 5 come for free as built-in widgets from calling the factory method `ui.build_script_launcher`. The two core parameters show up in the order of their appearance in `app.json`.
+No. 1, 4, and 5 come for free as built-in widgets from calling the factory method `ui.build_script_launcher()`. The two core parameters show up in the order of their appearance in `app.json`.
 
 Now press the bottom-right button `Go!` and you'll see the following prompt:
 
@@ -224,7 +224,7 @@ Now press the bottom-right button `Go!` and you'll see the following prompt:
 
 That concludes our GUI mode example.
 
-Next we'll see about the CLI mode. Open your Terminal or Commmand Prompt and type in:
+Next we'll see about the CLI mode. Open your Terminal or Command Prompt and type in:
 
 ```sh
 python3 hello.py -c
@@ -251,7 +251,7 @@ You can see that with kkAppKit, we can:
 
 ### More examples
 
-The hello-world example shows using offine control with the kkAppKit, i.e., the parameters are first saved into `app.json` before running the main script, and never changes during the run. Two more examples are included in sub-folders:
+The hello-world example shows using offline control with the kkAppKit, i.e., the parameters are first saved into `app.json` before running the main script, and never changes during the run. Two more examples are included in sub-folders:
 
 - One shows a more complex offline case: Embed text into a picture, with the font and colour configurable, using the third-party lib PIL fork [pillow](https://python-pillow.org). 
 - The other is a realtime control example: Playing an oscillator tone with minimal control such as frequency and gain, using [Csound](http://www.csounds.com) as the synth backend. The GUI talks with Csound using [Open Sound Control (OSC)](http://opensoundcontrol.org). Although Csound bundles a [FLTK](https://www.fltk.org) binding, similar to Python, here I decouple the frontend completely from the backend.
@@ -452,7 +452,7 @@ search_bar.configure_internal({
 })
 ```
 
-This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They usually are the top-level fields of a compound widget and retrieved by calling the accesors to those field values internally.
+This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They usually are the top-level fields of a compound widget and retrieved by calling the accessors to those field values internally.
 
 SearchBar can be adapted to search for anything you want. Right now it's used for widgets because we only use it with the ScrollFrame, which implements the `.filter_widgets()` method.
 
@@ -470,14 +470,14 @@ Currently the kit is only tested on macOS (High Sierra and Mojave), under Python
 
 ## Implementation details
 
-- Each compound widget supports Tkinter's geometry managers `pack` and `grid`. However, only `grid` is recommended because proper widget filtering is only possible with `grid`. `pack` makes it diffcult to recall the original widget order after you revert the filtering.
-- The compound widgets all have their own handlers and properties in addition to their parent Tkinter widget properties. `.configure_internal` method is used to configure such properties. Their inherited `.configure` is used for configure basic properties. Their overriden `bind` is used to bind additional handlers.
+- Each compound widget supports Tkinter's geometry managers `pack` and `grid`. However, only `grid` is recommended because proper widget filtering is only possible with `grid`. `pack` makes it difficult to recall the original widget order after you revert the filtering.
+- The compound widgets all have their own handlers and properties in addition to their parent Tkinter widget properties. `.configure_internal()` method is used to configure such properties. Their inherited `.configure()` is used for configure basic properties. Their overriden `.bind` is used to bind additional handlers.
 - A compound widget reuses the corresponding top-level field in the JSON config file as its name. This name registers with Tkinter.
-- The widget filtering based on SearchBar relies on a `eval()` call on special property `accessors` defined in widgets.
+- The widget filtering based on SearchBar relies on a `eval()` call on special property accessors defined in widgets.
 - The `OnHelp` handler behind a Help(?) button can be used to retrieve help string in any form, you may also customize how to show the help, e.g., on a docked panel. By default, it gets the doc from config file, and pops up a top-level window.
-- Prompt offers `.info`, `.warning`, and `.error` methods, similar to `logging`, however, a twist here is that it enforces writing readable diagnostics. You must provide three pieces of info: description, cause, and suggestion. If a logger is given, calling these API will both pop up a prompt, and write log messages into `app.log`.
+- Prompt offers `.info()`, `.warning()`, and `.error()` methods, similar to the `logging` module, however, a twist here is that it enforces writing readable diagnostics. You must provide three pieces of info: description, cause, and suggestion. If a logger is given, calling these API will both pop up a prompt, and write log messages into `app.log`.
 
 
 ## Credits
 
-I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to start working on my own "just good enough" UI solution instead of blindly commiting to the vanila frameworks out there.
+I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to  think about my own problems and start working on my own pragmatic UI solution instead of blindly committing to a random framework out there.
