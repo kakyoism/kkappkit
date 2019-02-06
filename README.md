@@ -464,9 +464,9 @@ This compound widget handles preset save/load, and launching the main script. It
 
 This widget wraps `ttk.ProgressBar` with a label, which shows a visual progress and a text one. The hello-world example already shows you how to use a queue to push progress info from the backend thread to the GUI thread. As with `ttk.ProgressBar`, it supports the `determinate` and `indeterminate` modes.
 
-## Testing
+## Compatibility
 
-Currently the kit is only tested on macOS (High Sierra and Mojave), under Python 3.7. It only supports Python 3 for future convenience.
+Currently the kit is only tested on macOS (High Sierra and Mojave), but there is no platform-specific code in the kit. It only supports Python 3 for future convenience.
 
 ## Implementation details
 
