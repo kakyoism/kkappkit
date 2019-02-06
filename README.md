@@ -68,9 +68,9 @@ Yes, I believe this shall be my own pet project for a very long time. This doc i
 The typical workflow with kkAppKit:
 
 - Create a project folder and a main Python script.
-- Write up JSON configuration files: `app.json` and `default.json`. Here, the input parameters to the main script and their default values are defined by the order of their appearance on the UI. See Section Configuration for details.
-- In your main script, write your logic in a main function. This function reads all parameters from a config file. It also accounts for the CLI mode of your app.  
-- In your main script, call a factory method from the API to build the GUI for you based on the config file. This method returns the Tkinter main top-level window, e.g., root. Launch your Tkinter main event loop from the root window.
+- Create and write up JSON configuration files: `app.json` and `default.json`. The former holds the control parameters and GUI specs the main script relies on; the latter holds the default preset.
+- In the main script, write the main logic in a main function. This function also accounts for the CLI mode of your app.  
+- In the main script, call a factory method among the kit's API to generate the GUI for you based on the config file. This method returns the Tkinter main top-level window, e.g., root. Launch your Tkinter main event loop from the root window.
 
 
 ### Hello World!
