@@ -2,6 +2,8 @@
 
 A UI library and mini-framework based on [Tkinter](https://wiki.python.org/moin/TkInter) for RAD of  small Python tool applications.
 
+## Version
+1.0.0
 
 ## Motivation
 
