@@ -417,6 +417,8 @@ Syntax: Decimal
 
 Use Options for single-choice selection. The `Value` field must be a non-negative integer, representing the 0-based index of the option menu item. The `Options` field must include strings only.
 
+Syntax 
+
 ```js
 "some_name": {
     "Title": "some title",
@@ -454,7 +456,7 @@ search_bar.configure_internal({
 })
 ```
 
-This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They usually are the top-level fields of a compound widget and retrieved by calling the accessors to those field values internally.
+This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They are some properties of a compound widget and are retrieved by calling the property accessors.
 
 SearchBar can be adapted to search for anything you want. Right now it's used for widgets because we only use it with `ScrollFrame`, which implements the `.filter_widgets()` method as `SearchBar`'s `OnSearch` handler.
 
