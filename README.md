@@ -74,7 +74,7 @@ The typical workflow with kkAppKit:
 
 
 ### Hello World!
-If you skim through the source code section below, you might be scared at how incredibly long it looks for a Hello-World (80 lines). There are two reasons:
+If you skim through the source code section below, you might be scared at how incredibly long it looks for a Hello World (80 lines). There are two reasons:
 
 - The goal of this example is to show what's really in my day-to-day work. There is no hiding of necessary details there.
 - I follow `PEP8` as much as possible, so many lines could've been merged into one, but I avoid that style here for readability.
@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
 ```
 
-Wow! That is long! For a Hello-World, what we did may seem an overkill. But for anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits. But, we are not done yet.
+Wow! That is long! For a Hello World, what we did may seem an overkill. But for anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little cost of boilerplate will become ignorable. But, we are not done yet.
 
 Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we are ready to run this app.
 
@@ -224,7 +224,7 @@ Now drag the slider or edit the spinbox so that the number shows 0.5, then press
 
 ![](hello_world/helloworld-popup.png)
 
-That concludes our GUI mode example.
+That concludes our GUI-mode example.
 
 Next we'll see about the CLI mode. Open your Terminal or Command Prompt and type in:
 
@@ -238,7 +238,7 @@ You should see the same message as the prompt showing in the console.
 
 You'll also notice that a log file `app.log` is automatically generated under the project folder. It contains all log messages from the app, which provides complete diagnostics for the bad times.
 
-That's it for our hello-world.
+That's it for our Hello World.
 
 ### Benefits
 
