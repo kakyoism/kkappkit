@@ -413,7 +413,7 @@ Syntax: Decimal
 
 ### Options
 
-Use Options for single-choice selection. The `Value` field must be a non-negative integer, representing the 0-based index of the option menu item. The `Options` filed must include strings only.
+Use Options for single-choice selection. The `Value` field must be a non-negative integer, representing the 0-based index of the option menu item. The `Options` field must include strings only.
 
 ```js
 "some_name": {
