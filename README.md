@@ -50,7 +50,7 @@ However, only the first problem is a showstopper in my context: User needs to tw
 So a big part of this work is to ease the tweaking by creating a custom UI reflection mechanism based on Tkinter, similar to [XRC for wxWidgets](https://docs.wxwidgets.org/3.1/overview_xrc.html). Other (on-going) features include providing specialized compound widgets, handling blocking and async controls transparently, etc.
 
 ### Caveats
-Many UI lib efforts, such as the great PySimpleGUI, aim at innovative workflows. Here, instead, I'm only interested in building a thin layer upon Tkinter, keeping the familiar Tkinter flavour: The create-configure-bind-layout workflow for most compound widgets.
+Many UI lib efforts, such as the great [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI), aim at innovative workflows. Here, instead, I'm only interested in building a thin layer upon Tkinter, keeping the familiar Tkinter flavour: The create-configure-bind-layout workflow for most compound widgets.
 
 The reflection mechanism currently adopts a vertical layout, like an *endless page*, meaning all the controls are laid out by rows inside a scrollable frame, one control per row. This is inspired by many form-filling web interface, such as Google Chrome's settings page.
 
