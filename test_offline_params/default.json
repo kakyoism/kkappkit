@@ -1,0 +1,170 @@
+{
+    "_label0": {
+        "Title": "About"
+    },
+    "_author": {
+        "Title": "Author: ",
+        "Value": "Beinan Li",
+        "Type": "Info"
+    },
+    "_version": {
+        "Title": "Version:",
+        "Value": "0.0.1",
+        "Type": "Info"
+    },
+    "_usage": {
+        "Title": "Usage:   ",
+        "Value": "Embed text into an image.\n  1) Select input and output image paths;\n  2) Edit text and its position, font, and size;\n  3) Click \"Go\" to run the script.\n",
+        "Type": "Info"
+    },
+    "_label1": {
+        "Title": "Image Settings"
+    },
+    "in_image": {
+        "Title": "Input image:    ",
+        "Value": "/Users/kakyo/Desktop/0.Dev/work/images/test.png",
+        "Type": "Path",
+        "Action": "Browse ...",
+        "FileTypes": [
+            [
+                "JPEG Image",
+                "*.jpg"
+            ],
+            [
+                "PNG Image",
+                "*.png"
+            ],
+            [
+                "GIF Image",
+                "*.gif"
+            ]
+        ],
+        "Help": "Full path to input image file."
+    },
+    "out_image": {
+        "Title": "Output image: ",
+        "Value": "/Users/kakyo/Desktop/0.Dev/work/images/text.png",
+        "Type": "Path",
+        "Action": "Browse ...",
+        "FileTypes": [
+            [
+                "JPEG Image",
+                "*.jpg"
+            ],
+            [
+                "PNG Image",
+                "*.png"
+            ],
+            [
+                "GIF Image",
+                "*.gif"
+            ]
+        ],
+        "Help": "Full path to output image file."
+    },
+    "save_copy": {
+        "Title": "Save as a copy",
+        "Value": false,
+        "Help": "Enable this to save a file <name>-copy.ext in place."
+    },
+    "_label2": {
+        "Title": "Text Settings"
+    },
+    "text": {
+        "Title": "Text:    ",
+        "Value": "天呐！OMG!",
+        "Help": "Text to draw on input image file."
+    },
+    "text_pos_x": {
+        "Title": "Pos X:   ",
+        "Value": 0.0,
+        "Range": [
+            0.0,
+            1.0
+        ],
+        "Steps": [
+            0.01,
+            0.1
+        ],
+         "Precision": 4,
+        "Help": "Horizontal coordinate of text to draw, in ratio relative to image size."
+    },
+    "text_pos_y": {
+        "Title": "Pos Y:   ",
+        "Value": 0.0,
+        "Range": [
+            0.0,
+            1.0
+        ],
+        "Steps": [
+            0.01,
+            0.1
+        ],
+         "Precision": 4,
+        "Help": "Vertical coordinate of text to draw, in ratio relative to image size."
+    },
+    "separator1": {},
+    "color_r": {
+        "Title": "Color.R: ",
+        "Value": 255,
+        "Range": [
+            0,
+            255
+        ],
+        "Steps": [
+            1,
+            10
+        ],
+        "Help": "Red component of RGB color value for text."
+    },
+    "color_g": {
+        "Title": "Color.G: ",
+        "Value": 255,
+        "Range": [
+            0,
+            255
+        ],
+        "Steps": [
+            1,
+            10
+        ],
+        "Help": "Green component of RGB color value for text."
+    },
+    "color_b": {
+        "Title": "Color.B: ",
+        "Value": 0,
+        "Range": [
+            0,
+            255
+        ],
+        "Steps": [
+            1,
+            10
+        ],
+        "Help": "Blue component of RGB color value for text."
+    },
+    "separator3": {},
+    "font": {
+        "Title": "Font:    ",
+        "Value": 0,
+        "Options": [
+            "宋体",
+            "黑体",
+            "Default"
+        ],
+        "Help": "Font name of text to draw; actual font file to use depends on platforms."
+    },
+    "font_size": {
+        "Title": "Size:     ",
+        "Value": 100,
+        "Range": [
+            10,
+            200
+        ],
+        "Steps": [
+            1,
+            10
+        ],
+        "Help": "Font size of text to draw; actual size depends on fonts."
+    }
+}

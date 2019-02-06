@@ -1,0 +1,67 @@
+{
+    "engine": {
+        "Title": "Engine:       ",
+        "Value": "/usr/local/bin/csound",
+        "Type": "Path",
+        "Action": "Browse ...",
+        "FileTypes": [
+            [
+                "Executable",
+                "*"
+            ]
+        ],
+        "Help": "Full path to the synth engine executable."
+    },
+    "script": {
+        "Title": "Script:         ",
+        "Value": "/Users/kakyo/Desktop/0.Dev/work/kkGUI/test_realtime_params/tonegen.csd",
+        "Type": "Path",
+        "Action": "Browse ...",
+        "FileTypes": [
+            [
+                "Csound Script",
+                "*.csd"
+            ]
+        ],
+        "Help": "Full path to the synth engine script."
+    },
+    "oscillator": {
+        "Title": "Oscillator:  ",
+        "Value": 0,
+        "Options": [
+            "Sine",
+            "Triangular",
+            "Square",
+            "Sawtooth",
+            "White Noise",
+            "Pink Noise"
+        ],
+        "Help": "Oscillator types of the output signal."
+    },
+    "frequency": {
+        "Title": "Frequency: ",
+        "Value": 440,
+        "Range": [
+            20,
+            20000
+        ],
+        "Steps": [
+            1,
+            10
+        ],
+        "Help": "Frequency of the output signal, in Herz."
+    },
+    "gain": {
+        "Title": "Gain:           ",
+        "Value": -48.0,
+        "Range": [
+            -96.0,
+            0.0
+        ],
+        "Steps": [
+            0.1,
+            1.0
+        ],
+        "Help": "Gain of the output signal, in dB."
+    }
+}
