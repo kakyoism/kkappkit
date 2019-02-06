@@ -36,7 +36,7 @@ Considering the vision, choosing Tkinter gives me the following benefits:
 
 - **It's always there!** It's first-party as a standard Python library, which simplifies distribution.
 - **It's stable.** Being a [Tcl/TK](https://www.tcl.tk) binding, Tkinter rarely changes. I personally enjoy Tkinter's create-configure-bind-layout workflow.
-- **Its features seems good enough for writing small tools.** So far. Its widget set, though much smaller than its peers', is compact and configurable. Native look and styling are possible.
+- **Its features seem good enough for writing small tools.** So far. Its widget set, though much smaller than its peers', is compact and configurable. Native look and styling are possible.
 
 ### What is this all about then?
 Tkinter has well-known problems, such as:
