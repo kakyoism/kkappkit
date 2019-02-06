@@ -435,11 +435,11 @@ Other than the data-model widgets, there are predefined widgets for convenience.
 
 ### ScrollFrame
 
-A frame with a vertical scrollbar where generated widgets reside. Combined with SearchBar, this makes it easy to add hundreds of parameter widgets under the vertical layout.
+This is the *endless page*. A frame with a vertical scrollbar where generated widgets reside. Combined with SearchBar, this makes it easy to add hundreds of parameter widgets under the vertical layout.
 
 ### SearchBar
 
-Use this to show only the widgets relevant to a typed-in keyword. You can also specify domains where the keywords will be searched for. Call its `configure_internal` method to specify domains.
+Use this to show only the widgets relevant to a user-provided keyword. It starts filtering as you type. You can also specify domains where the keywords will be searched for. Call its `.configure_internal()` method to specify domains.
 
 Example
 
@@ -454,7 +454,7 @@ search_bar.configure_internal({
 
 This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They usually are the top-level fields of a compound widget and retrieved by calling the accessors to those field values internally.
 
-SearchBar can be adapted to search for anything you want. Right now it's used for widgets because we only use it with the ScrollFrame, which implements the `.filter_widgets()` method.
+SearchBar can be adapted to search for anything you want. Right now it's used for widgets because we only use it with `ScrollFrame`, which implements the `.filter_widgets()` method as `SearchBar`'s `OnSearch` handler.
 
 ### SubmitStrip
 
