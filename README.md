@@ -326,7 +326,7 @@ Syntax
     "Title": "some title",
     "Value": false,
     "Help": "some help text."
-},
+}
 ```
 
 
@@ -369,7 +369,7 @@ Syntax
         ]
     ],
     "Help": "some help text."
-},
+}
 ```
 
 
@@ -430,7 +430,7 @@ Syntax
         "option 2"
     ],
     "Help": "Font name of text to draw; actual font file to use depends on platforms."
-},
+}
 ```
 
 
