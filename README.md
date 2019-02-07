@@ -246,12 +246,12 @@ That's it for our Hello World.
 
 You can see that with kkAppKit, we can:
 
-- focus on writing main logic and designing data model; 
-- use the kit to generate the GUI based on a config file.
-- handle default values and per-parameter documentation.
 - consolidate the GUI and CLI mode easily.
-- keep the app transparent by giving user useful diagnostics (more on this later).
+- generate the GUI based on a config file.
+- focus on writing main logic and designing data model; 
+- handle default values, presets, and per-parameter documentation.
 - allow user to quickly modify the data model and doc, and reflect the changes onto the UI for free.
+- keep the app transparent by giving user useful diagnostics (more on this later).
 
 ### More examples
 
