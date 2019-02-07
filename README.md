@@ -255,12 +255,12 @@ You can see that with kkAppKit, we can:
 
 ### More examples
 
-The hello-world example shows using offline control with the kkAppKit, i.e., the parameters are first saved into `app.json` before running the main script, and never changes during the run. Two more examples are included in sub-folders:
+The hello-world example shows how to work out an offline control with the kkAppKit, i.e., the parameters are first saved into `app.json` before running the main script, and never changes during the run. Two more examples are included in sub-folders:
 
-- One shows a more complex offline case: Embed text into a picture, with the font and colour configurable, using the third-party lib PIL fork [pillow](https://python-pillow.org). 
-- The other is a realtime control example: Playing an oscillator tone with minimal control such as frequency and gain, using [Csound](http://www.csounds.com) as the synth backend. The GUI talks with Csound using [Open Sound Control (OSC)](http://opensoundcontrol.org). Although Csound bundles a [FLTK](https://www.fltk.org) binding, similar to Python, here I decouple the frontend completely from the backend.
+- One shows a more complex offline case: To show text on top of a picture, with the font and colour of the text configurable, using the third-party lib PIL fork [pillow](https://python-pillow.org). 
+- The other is a realtime control example: Playing an oscillator tone with minimal control such as frequency and gain, using [Csound](http://www.csounds.com) as the synth backend. The GUI talks to Csound using [Open Sound Control (OSC)](http://opensoundcontrol.org). Although Csound bundles a [FLTK](https://www.fltk.org) binding, similar to Python, here I decouple the frontend completely from the backend.
 
-These are specialized examples and are pretty self-descriptive. So I'll skip the details.
+These are specialized examples and the code is straightforward to follow. So I'll skip the details here.
 
 ## Installation
 
@@ -277,7 +277,7 @@ The format supports two types of top-level fields:
 
 The order of fields in the JSON file represents the vertical order of appearance of their generated widgets.
 
-CAUTION: A top-level field name must be all-lowercase ASCII characters. This is because we use it as the Tkinter widget name, which demands it that way. You may wonder "Why not fix the casing in the kit?" This is because JSON is case-sensitive, so we might end up with conflicting fields that would differ in JSON only by case, but would look the same to Tkinter if we fixed it only before feeding Tkinter.
+CAUTION: A top-level field name must be all-lowercase ASCII characters. This is because we use it as the Tkinter widget name, and Tkinter requires these names to be that way. You may wonder "Why not fix the casing in the kit?" This is because JSON is case-sensitive, so we might end up with conflicting fields that would differ in JSON only by case, but would look the same to Tkinter if we fixed it only before feeding Tkinter.
 
 ### Banner
 
