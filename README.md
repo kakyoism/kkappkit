@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
 Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, the only UI code in the example is the `run_gui()` function, which costs only two subroutines. No explicit widget or layout coding was needed. All the details come from our `app.json` config file.
 
-As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency via showing progress and status, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little cost of boilerplate will become ignorable. But, we are not done yet.
+As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency via showing progress and status, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little boilerplate cost will become ignorable. But, we are not done yet.
 
 Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we are ready to run this app.
 
