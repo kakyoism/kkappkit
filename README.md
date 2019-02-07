@@ -29,9 +29,9 @@ I must rapidly deliver agile tools to internal non-engineer users, so that the a
 - gives non-engineer user offline/realtime parameter controls, presets, and per-parameter documentation
 - allows user to reflect changes in data to UI with little programmer help.
 - makes its runtime state as clear as possible to non-engineer, e.g., shows key progress stages, pops up detailed diagnostics upon errors.
-- introduces least third-party dependencies on UI libs or frameworks to reduce bloat.
+- introduces least third-party dependencies on UI libs or frameworks to reduce bloat and simplify distribution.
 
-For now, I don't aim at complex applications such as a digital audio workstation, nor do I try to solve the aesthetic challenges such as UI theming. Python is my language of choice.
+For now, I don't aim at complex applications such as a digital audio workstation, nor do I try to attack aesthetics such as UI theming. Python is my language of choice.
 
 ### Why Tkinter for the GUI?
 Considering the vision, choosing Tkinter gives me the following benefits:
@@ -202,7 +202,9 @@ if __name__ == '__main__':
 
 ```
 
-Wow! That is long! For a Hello World, what we did may seem an overkill. But for anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little cost of boilerplate will become ignorable. But, we are not done yet.
+Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, the only UI code in the example is the `run_gui()` function, which costs only two subroutines. No explicit widget or layout coding was needed. All the details come from our `app.json` config file.
+
+As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little cost of boilerplate will become ignorable. But, we are not done yet.
 
 Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we are ready to run this app.
 
@@ -433,9 +435,9 @@ Syntax
 
 
 
-### Predefined Widgets
+### Hand-written Widgets
 
-Other than the data-model widgets, there are predefined widgets for convenience.
+Other than the data-model widgets, there are pre-written widget classes for convenience. They are not part of the JSON config format and thus cannot be generated.
 
 ### ScrollFrame
 
