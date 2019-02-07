@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
 ```
 
-Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, the only UI code in the example is the `run_gui()` function, which costs only two subroutines. No explicit widget or layout coding was needed. All the details come from our `app.json` config file.
+Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, most of that is just necessary bootstrapping in a real-world tool and we are not shy from doing things properly; the only UI code in the example, however, is just the `run_gui()` function, which costs only two subroutines, one being a factory method. No explicit widget or layout coding was needed. All the details come from our `app.json` config file. Anybody can write up this config easily.
 
 As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency via showing progress and status, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little boilerplate cost will become ignorable. But, we are not done yet.
 
