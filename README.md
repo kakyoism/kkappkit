@@ -214,11 +214,11 @@ We'll test the GUI mode first. Run `hello.py` with shell integration of Python 3
 
 From top to bottom, you see:
 
-1. A search bar for filtering out widgets by keywords
+1. A search bar for filtering out widgets by keywords.
 2. The string parameter compound widget, with Reset and Help (?) buttons. 
 3. The number parameter compound widget, with Reset and Help (?) buttons. 
 4. A submission panel to launch main script and handle parameter presets.
-5. A status bar with a progressbar
+5. A status bar with a progressbar.
 
 No. 1, 4, and 5 come for free as built-in widgets from calling the factory method `ui.build_script_launcher()`. The two core parameters show up in the order of their appearance in `app.json`.
 
