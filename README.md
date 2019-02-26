@@ -1,6 +1,6 @@
 # kkAppKit
 
-A UI library and mini-framework based on [Tkinter](https://wiki.python.org/moin/TkInter) for RAD of  small Python tool applications.
+A UI library and mini-framework based on [Tkinter](https://wiki.python.org/moin/TkInter)，aiming for rapid development of  small tool applications.
 
 ## Version
 1.0.0
