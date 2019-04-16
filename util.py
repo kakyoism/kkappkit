@@ -48,7 +48,8 @@ def build_logger(srcpath, logpath=None):
     # Must have to see DEBUG/INFO at all
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(src_basename)
-
+    logger.setLevel(logging.DEBUG)
+    
     # Hide dependency module's logging
     logger.propagate = False
 
