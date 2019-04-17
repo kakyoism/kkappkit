@@ -651,14 +651,14 @@ class EntryStrip(RowStrip):
         self.widgets['Title']['text'] = config['Title']
         if 'Action' in config.keys():
             self.widgets['Action']['text'] = config['Action']
-        # Rule: bind action based on action type field in config.
-        action_maps = {
-            'Copy': self._copy_to_clipboard
-        }
-        for k, v in action_maps.items():
-            if config['Action'].startswith(k):
-                self.handlers['OnAction'] = v
-                break
+            # Rule: bind action based on action type field in config.
+            action_maps = {
+                'Copy': self._copy_to_clipboard
+            }
+            for k, v in action_maps.items():
+                if config['Action'].startswith(k):
+                    self.handlers['OnAction'] = v
+                    break
         super().configure_internal({})
 
     def _on_action(self):
