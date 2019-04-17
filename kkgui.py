@@ -86,7 +86,7 @@ class Prompt:
         epilog = 'Continue anyways?' \
             if confirm else 'But I\'ll continue for now.'
         msg = """
-{}. But I will continue anyways.
+{}.
 
 Possible Causes:
 {}
