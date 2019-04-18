@@ -24,7 +24,7 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.3.1"
+__version__ = "0.6.1"
 
 
 #
