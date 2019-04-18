@@ -283,6 +283,20 @@ def threaded_main(target, daemon=True):
     thread.start()
 
 
+def get_md5_checksum(file):
+    """Compute md5 checksum of a file."""
+    if not isfile(file):
+        return None
+    myhash = hashlib.md5()
+    with open(file, 'rb') as f:
+        while True:
+            b = f.read(8096)
+            if not b:
+                break
+            myhash.update(b)
+    return myhash.hexdigest()
+
+
 class SingletonDecorator:
     """
     Decorator to build Singleton class.
