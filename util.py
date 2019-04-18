@@ -88,8 +88,14 @@ def is_gui_mode(argv):
     """Use GUI mode if no command line options are found."""
     return len(argv) == 1  # no command line options, so run GUI.
 
+
 def is_multiline(text):
     return len(text.strip().split('\n')) > 1
+
+
+def is_python3():
+    return sys.version_info[0] > 2
+
 
 def load_json(path):
     """
@@ -292,6 +298,16 @@ class SingletonDecorator:
         if self.instance is None:
             self.instance = self.klass(*args, **kwargs)
         return self.instance
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
 
 def test():
     pass
