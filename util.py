@@ -97,8 +97,12 @@ def load_json(path):
     :param path: path to the config file
     :return: config as a dict
     """
-    with open(path, 'rU', encoding=TXT_CODEC, errors='backslashreplace') as f:
-        text = f.read()
+    if is_python3():
+        with open(path, 'r', encoding=TXT_CODEC, errors='backslashreplace', newline=None) as f:
+            text = f.read()
+    else:
+        with open(path, 'rU', encoding=TXT_CODEC, errors='backslashreplace') as f:
+            text = f.read()
     # Add object_pairs_hook=collections.OrderedDict hook for py3.5 and lower.
     return json.loads(text)
 
