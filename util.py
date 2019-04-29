@@ -79,6 +79,10 @@ def build_logger(srcpath, logpath=None):
     return logger
 
 
+def format_error_message(situation, expected, got, cause, suggestion, action):
+    return '{}.\n\tExpected: {};\n\tGot: {};\n\tCauses: {};\n\tAction: {}'.format(situation, expected, got, cause, suggestion, action)
+
+
 def is_cli_mode(argv):
     """Use CLI mode if found command line options."""
     return len(argv) > 1
