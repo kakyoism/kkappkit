@@ -13,7 +13,8 @@ Covering areas:
 import argparse
 import json
 import logging
-from os.path import abspath, basename, dirname, join, splitext
+import os
+from os.path import abspath, basename, dirname, exists, join, splitext
 import sys
 import threading
 
@@ -69,6 +70,9 @@ def build_logger(srcpath, logpath=None):
         logpath = join(abspath(dirname(srcpath)), 'app.log')
 
     # Log file for coders: with debug messages.
+    logfolder = abspath(dirname(logpath))
+    if not exists(logfolder):
+        os.makedirs(logfolder)
     handler = logging.FileHandler(logpath)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter(
