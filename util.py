@@ -115,7 +115,7 @@ def load_json(path):
         with open(path, 'r', encoding=TXT_CODEC, errors='backslashreplace', newline=None) as f:
             text = f.read()
     else:
-        with open(path, 'rU', encoding=TXT_CODEC, errors='backslashreplace') as f:
+        with open(path, 'rU') as f:
             text = f.read()
     # Add object_pairs_hook=collections.OrderedDict hook for py3.5 and lower.
     return json.loads(text)
@@ -127,8 +127,12 @@ def save_json(path, config):
     Unicode as you write, then use json.dump() to write to that file.
     Validate keys to avoid JSON and program out-of-sync.
     """
-    with open(path, 'w', encoding=TXT_CODEC) as f:
-        json.dump(config, f, ensure_ascii=False, indent=4)
+    if is_python3():
+        with open(path, 'w', encoding=TXT_CODEC) as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+    else:
+        with open(path, 'w') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
 
 
 def parse_args_config(argv, app_info):
