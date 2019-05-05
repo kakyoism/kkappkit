@@ -11,6 +11,7 @@ Covering areas:
 
 # Import std-modules.
 import argparse
+import collections
 import json
 import logging
 import os
@@ -118,7 +119,7 @@ def load_json(path):
         with open(path, 'rU') as f:
             text = f.read()
     # Add object_pairs_hook=collections.OrderedDict hook for py3.5 and lower.
-    return json.loads(text)
+    return json.loads(text, object_pairs_hook=collections.OrderedDict)
 
 
 def save_json(path, config):
