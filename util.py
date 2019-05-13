@@ -84,8 +84,8 @@ def build_logger(srcpath, logpath=None):
     return logger
 
 
-def format_error_message(situation, expected, got, cause, suggestion, action):
-    return '{}.\n\tExpected: {};\n\tGot: {};\n\tCauses: {};\n\tAction: {}'.format(situation, expected, got, cause, suggestion, action)
+def format_error_message(situation, expected, got, suggestion, action):
+    return '{}.\n\tExpected: {};\n\tGot: {};\n\tSuggestions: {};\n\tAction: {}'.format(situation, expected, got, suggestion, action)
 
 
 def is_cli_mode(argv):
