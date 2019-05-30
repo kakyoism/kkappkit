@@ -12,12 +12,20 @@ Covering areas:
 # Import std-modules.
 import argparse
 import collections
+import cProfile as profile
+import functools
+import hashlib
 import json
 import logging
+import math
 import os
-from os.path import abspath, basename, dirname, exists, join, splitext
+from os.path import abspath, basename, dirname, exists, isfile, isdir, join, split, splitext
+from pprint import pprint
+import pstats
+import subprocess
 import sys
 import threading
+import traceback
 
 # Metadata
 __author__ = "Beinan Li"
@@ -26,12 +34,14 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.6.1"
+__version__ = "0.5.1"
 
 
 #
 # Globals
 #
+
+_script_dir = abspath(dirname(__file__))
 
 TXT_CODEC = 'utf-8'  # Importable.
 MAIN_CFG_FILENAME = 'app.json'
@@ -51,12 +61,12 @@ def build_logger(srcpath, logpath=None):
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(src_basename)
     logger.setLevel(logging.DEBUG)
-    
+
     # Hide dependency module's logging
     logger.propagate = False
 
     # Avoid redundant logs from duplicated handlers created by other modules.
-    if logger.hasHandlers():
+    if len(logger.handlers) > 1:
         return logger
 
     # Console log for end-users: no debug messages.
@@ -71,9 +81,9 @@ def build_logger(srcpath, logpath=None):
         logpath = join(abspath(dirname(srcpath)), 'app.log')
 
     # Log file for coders: with debug messages.
-    logfolder = abspath(dirname(logpath))
-    if not exists(logfolder):
-        os.makedirs(logfolder)
+    logdir = abspath(dirname(logpath))
+    if not exists(logdir):
+        os.makedirs(logdir)
     handler = logging.FileHandler(logpath)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter(
@@ -84,8 +94,11 @@ def build_logger(srcpath, logpath=None):
     return logger
 
 
-def format_error_message(situation, expected, got, suggestion, action):
-    return '{}.\n\tExpected: {};\n\tGot: {};\n\tSuggestions: {};\n\tAction: {}'.format(situation, expected, got, suggestion, action)
+_logger = build_logger(__file__)
+
+
+def format_error_message(situation, expected, got, suggestions, action):
+    return '{}.\n\tExpected: {};\n\tGot: {};\n\tSuggestions: {};\n\tAction: {}'.format(situation, expected, got, suggestions, action)
 
 
 def is_cli_mode(argv):
@@ -145,7 +158,6 @@ def parse_args_config(argv, app_info):
     :return: argument parsed.
     """
     name = 'python {}'.format(app_info['Script'])
-    base_name = splitext(basename(app_info['Script']))[0]
     script_dir = abspath(dirname(app_info['Script']))
     cfg_file = abspath(join(script_dir, MAIN_CFG_FILENAME))
     default_cfg_file = join(script_dir, DEFAULT_CFG_FILENAME)
@@ -247,7 +259,7 @@ def query_yes_no(question, default=True):
 
     default_str = default_dict[default]
     prompt_str = '{}\n{}'.format(question, default_str) \
-    if question else '{}'.format(default_str)
+        if question else '{}'.format(default_str)
 
     while True:
         choice = input_(prompt_str).lower()
@@ -310,9 +322,51 @@ def get_md5_checksum(file):
     return myhash.hexdigest()
 
 
+def logged(log='trace'):
+    def wrap(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            logger = logging.getLogger(log)
+            logger.debug("Calling function '{}' with args={} kwargs={}".format(function.__name__, args, kwargs))
+            try:
+                response = function(*args, **kwargs)
+            except Exception as error:
+                logger.debug("Function '{}' raised {} with error '{}'".format(function.__name__, error.__class__.__name__, str(error)))
+                raise error
+            logger.debug("Function '{}' returned {}".format(function.__name__, response))
+            return response
+        return wrapper
+    return wrap
+
+
+def organize_concurrency(ntasks, nprocs=4):
+    if ntasks < nprocs:
+        return [(0, ntasks)]
+    tasks_per_proc = int(math.ceil(float(ntasks) / float(nprocs)))
+    ranges = [(i*tasks_per_proc, (i+1)*tasks_per_proc if i < nprocs-1 else ntasks) for i in range(nprocs)]
+    return ranges
+
+
+def profile_runs(funcname, modulefile, nruns=5):
+    module_name = splitext(basename(modulefile))[0]
+    for i in range(nruns):
+        filename = 'profile_{}_{}.pstats.log'.format(funcname, i)
+        profile.runctx('import {}; print({}, {}.{}())'.format(module_name, i, module_name, funcname), globals(), locals(), filename)
+    # Read all 5 stats files into a single object
+    stats = pstats.Stats('profile_{}_0.pstats'.format(funcname))
+    for i in range(1, nruns):
+        stats.add('profile_{}_{}.pstats'.format(funcname, i))
+    # Clean up filenames for the report
+    stats.strip_dirs()
+    # Sort the statistics by the cumulative time spent
+    # in the function
+    stats.sort_stats('cumulative')
+    stats.print_stats()
+
+
 class SingletonDecorator:
     """
-    Decorator to build Singleton class.
+    Decorator to build Singleton class, single-inheritance only.
     Usage:
         class MyClass: ...
         myobj = SingletonDecorator(MyClass, args, kwargs)
