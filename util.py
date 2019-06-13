@@ -17,13 +17,16 @@ import functools
 import hashlib
 import json
 import logging
+import logging.config
 import math
+import multiprocessing
 import os
 from os.path import abspath, basename, dirname, exists, isfile, isdir, join, split, splitext
-from pprint import pprint
+from pprint import pprint, pformat
 import pstats
 import subprocess
 import sys
+import tempfile
 import threading
 import traceback
 
@@ -34,18 +37,101 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.5.1"
+__version__ = "0.9.0"
 
 
 #
 # Globals
 #
-
 _script_dir = abspath(dirname(__file__))
-
 TXT_CODEC = 'utf-8'  # Importable.
 MAIN_CFG_FILENAME = 'app.json'
 DEFAULT_CFG_FILENAME = 'default.json'
+
+
+def build_default_logger(logdir, name=None, cfgfile=None):
+    """
+    Create per-file logger and output to shared log file.
+    - If found config file under script folder, use it;
+    - Otherwise use default config: save to /project_root/project_name.log.
+    - 'filename' in config is a filename; must prepend folder path to it.
+    :return: logger object.
+    """
+    try:
+        os.makedirs(logdir)
+    except:
+        pass
+
+    cfg_file = cfgfile or join(_script_dir, 'logging.json')
+    logging_config = None
+    try:
+        if sys.version_info.major > 2:
+            with open(cfg_file, 'r', encoding=TXT_CODEC, errors='backslashreplace', newline=None) as f:
+                text = f.read()
+        else:
+            with open(cfg_file, 'rU') as f:
+                text = f.read()
+        # Add object_pairs_hook=collections.OrderedDict hook for py3.5 and lower.
+        logging_config = json.loads(text, object_pairs_hook=collections.OrderedDict)
+        logging_config['handlers']['file']['filename'] = join(logdir, logging_config['handlers']['file']['filename'])
+    except Exception:
+        filename = name or basename(basename(logdir.strip('\\/')))
+        log_path = join(logdir, '{}.log'.format(filename))
+        logging_config = {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "console": {
+                    "format": "%(asctime)s: %(levelname)s: %(pathname)s: \n%(message)s\n"
+                },
+                "file": {
+                    "format": "%(asctime)s: %(levelname)s: %(pathname)s: %(lineno)d: \n%(message)s\n"
+                }
+            },
+            "handlers": {
+                    "console": {
+                        "level": "INFO",
+                        "formatter": "console",
+                        "class": "logging.StreamHandler",
+                        "stream": "ext://sys.stdout"
+                    },
+                    "file": {
+                        "level": "DEBUG",
+                        "formatter": "file",
+                        "class": "logging.FileHandler",
+                        "encoding": "utf-8",
+                        "filename": log_path
+                    }
+            },
+            "loggers": {
+                "": {
+                    "handlers": ["console", "file"],
+                    "level": "INFO",
+                    "propagate": True
+                },
+                "default": {
+                    "handlers": ["console", "file"],
+                    "level": "WARN",
+                    "propagate": True
+                }
+            }
+        }
+    logging.config.dictConfig(logging_config)
+    return logging.getLogger('default')
+
+
+_logger = build_default_logger(logdir=join(_script_dir, os.pardir, 'temp'))
+
+
+def catch_unknown_exception(exc_type, exc_value, exc_traceback):
+    """Global exception to handle uncaught exceptions"""
+    exc_info = exc_type, exc_value, exc_traceback
+    _logger.error('Unhandled exception: ', exc_info=exc_info)
+    # _logger.exception('Unhandled exception: ')  # Only works in try-except block.
+    # sys.__excepthook__(*exc_info)  # Keep this commented out to avoid message duplication.
+
+
+sys.excepthook = catch_unknown_exception
 
 
 def build_logger(srcpath, logpath=None):
@@ -92,9 +178,6 @@ def build_logger(srcpath, logpath=None):
     logger.addHandler(handler)
 
     return logger
-
-
-_logger = build_logger(__file__)
 
 
 def format_error_message(situation, expected, got, suggestions, action):
@@ -322,46 +405,209 @@ def get_md5_checksum(file):
     return myhash.hexdigest()
 
 
-def logged(log='trace'):
+def logprogress(msg='Task', loghook=_logger.info, errorhook=_logger.error):
     def wrap(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            logger = logging.getLogger(log)
-            logger.debug("Calling function '{}' with args={} kwargs={}".format(function.__name__, args, kwargs))
+            loghook("Progress: Start {} ...".format(msg))
             try:
                 response = function(*args, **kwargs)
             except Exception as error:
-                logger.debug("Function '{}' raised {} with error '{}'".format(function.__name__, error.__class__.__name__, str(error)))
+                errorhook("Function '{}' raised {} with error '{}'.".format(function.__name__, error.__class__.__name__, str(error)))
                 raise error
-            logger.debug("Function '{}' returned {}".format(function.__name__, response))
+            loghook("Progress: Done.")
             return response
         return wrapper
     return wrap
 
 
-def organize_concurrency(ntasks, nprocs=4):
+def logcall(msg='trace', loghook=_logger.debug, errorhook=_logger.error):
+    def wrap(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            loghook("Calling function '{}' with args={} kwargs={}: {}.".format(function.__name__, args, kwargs, msg))
+            try:
+                response = function(*args, **kwargs)
+            except Exception as error:
+                loghook("Function '{}' raised {} with error '{}'.".format(function.__name__, error.__class__.__name__, str(error)))
+                raise error
+            loghook("Function '{}' returned {}.".format(function.__name__, response))
+            return response
+        return wrapper
+    return wrap
+
+
+def organize_concurrency(ntasks, nprocs=None, useio=False):
+    """
+    Suggest concurrency approach based on tasks and number of processes.
+    - Use Processes when processes are few or having I/O tasks.
+    - Use Pool for many processes or no I/O.
+    - Use sequential when tasks are
+    :param ntasks: number of total tasks.
+    :param nprocs: number of processes, None means to let algorithm decide.
+    :param useio: are we I/O-bound?
+    :return: dict of all needed parameters.
+    """
+    if ntasks <= 1:
+        return {'Type': 'Sequential'}
+
+    # manual process allocation
+    if not nprocs:
+        nprocs = multiprocessing.cpu_count()
+
+    # many processes and no I/O
+    if ntasks >= nprocs and not useio:
+        return {
+            'Type': 'Pool',
+            'Processes': nprocs
+        }
+
+    # must be after pool decision, otherwise everything uses Pool.
     if ntasks < nprocs:
-        return [(0, ntasks)]
-    tasks_per_proc = int(math.ceil(float(ntasks) / float(nprocs)))
-    ranges = [(i*tasks_per_proc, (i+1)*tasks_per_proc if i < nprocs-1 else ntasks) for i in range(nprocs)]
-    return ranges
+        nprocs = ntasks
+
+    # few processes or lots of I/O
+    tasks_per_proc = int(math.floor(float(ntasks) / float(nprocs)))
+    ranges = [(i * tasks_per_proc, (i + 1) * tasks_per_proc if i < nprocs - 1 else ntasks) for i in range(nprocs)]
+    return {
+        'Type': 'Process',
+        'Ranges': ranges
+    }
+
+
+def ranged_worker(worker, rg, shared, lock):
+    results = [worker(shared['Tasks'][t]) for t in range(rg[0], rg[1])]
+    # pprint(results)
+    with lock:
+        tmp = shared['Results']
+        for r, result in enumerate(results):
+            tmp.append(result)
+        shared['Results'] = tmp
+    # pprint('tmp: {}'.format(tmp))
+
+
+def execute_concurrency(worker, shared, lock, algorithm):
+    """
+    Execute tasks and return results, based on algorithm.
+    - worker is unit sequential worker, using single arg.
+    - worker returns result as (task['Index'], value).
+    - shared is a manager().dict().
+    - shared has keys: Title, Tasks.
+    - shared['Tasks']: tuple of args for each task worker instance
+    - shared['Tasks'][i] has keys: Title, Index, Args, Result
+        - Title: info for progress report
+        - Index: order of tasks, None for unordered
+        - Args: worker input args
+        - Result: worker returned results in order
+    """
+    # TODO: measure timeout for .join()
+    if algorithm['Type'] == 'Sequential':
+        results = []
+        for t, task in enumerate(shared['Tasks']):
+            _logger.debug('Execute {} in order: {} of {}: {}'.format(shared['Title'], t+1, len(shared['Tasks']), task['Title']))
+            results.append(worker(task))
+        return [result[1] for result in results]
+    elif algorithm['Type'] == 'Pool':
+        _logger.debug('Execute {} in pool of {} processes ...'.format(shared['Title'], algorithm['Processes']))
+        #
+        # Known Issue:
+        # - https://bugs.python.org/issue9400
+        # - Python multiprocessing.Pool is buggy at join()
+        # Reference:
+        # - https://stackoverflow.com/questions/15314189/python-multiprocessing-pool-hangs-at-join
+        #
+        try:
+            with multiprocessing.Pool(processes=algorithm['Processes']) as pool:
+                results = pool.map(worker, shared['Tasks'])
+                pool.close()
+                pool.join()
+        except Exception:
+            traceback.print_exc()
+        return [result[1] for result in results]
+    elif algorithm['Type'] == 'Process':
+        _logger.debug('Execute {} using {} processes ...'.format(shared['Title'], len(algorithm['Ranges'])))
+        jobs = [multiprocessing.Process(target=ranged_worker, args=(worker, rg, shared, lock)) for rg in algorithm['Ranges']]
+        njobs = len(jobs)
+        for j, job in enumerate(jobs):
+            _logger.debug('Start Process {} of {} ...'.format(j+1, njobs))
+            job.start()
+        for j, job in enumerate(jobs):
+            _logger.debug('Join Process: {} of {} ...'.format(j+1, njobs))
+            job.join()
+        results = [result[1] for result in sorted(shared['Results'], key=lambda e: e[0])]
+        return results
+    raise ValueError(format_error_message('Found undefined concurrency algorithm.', expected='One of: {}, {}, {}'.format('Sequential', 'Pool', 'Process'), got=algorithm['Type'], suggestions=('Check if this API is up to date', 'retry me'), action='Aborted'))
 
 
 def profile_runs(funcname, modulefile, nruns=5):
     module_name = splitext(basename(modulefile))[0]
+    stats_dir = join(abspath(dirname(modulefile)), 'stats')
+    try:
+        os.makedirs(stats_dir)
+    except Exception:
+        traceback.print_exc()
     for i in range(nruns):
-        filename = 'profile_{}_{}.pstats.log'.format(funcname, i)
-        profile.runctx('import {}; print({}, {}.{}())'.format(module_name, i, module_name, funcname), globals(), locals(), filename)
+        stats_file = join(stats_dir, 'profile_{}_{}.pstats.log'.format(funcname, i))
+        profile.runctx('import {}; print({}, {}.{}())'.format(module_name, i, module_name, funcname), globals(), locals(), stats_file)
     # Read all 5 stats files into a single object
-    stats = pstats.Stats('profile_{}_0.pstats'.format(funcname))
+    stats = pstats.Stats(join(stats_dir, 'profile_{}_0.pstats.log'.format(funcname)))
     for i in range(1, nruns):
-        stats.add('profile_{}_{}.pstats'.format(funcname, i))
+        stats.add(join(stats_dir, 'profile_{}_{}.pstats.log'.format(funcname, i)))
     # Clean up filenames for the report
     stats.strip_dirs()
     # Sort the statistics by the cumulative time spent
     # in the function
     stats.sort_stats('cumulative')
     stats.print_stats()
+
+
+class RerunLock:
+    """Lock process from reentering when seeing lock file on disk."""
+    def __init__(self, name, folder=None, warnhook=_logger.warning, errorhook=_logger.error):
+        filename = 'lock_{}'.format(name) if name else 'lock_{}'.format(next(tempfile._get_candidate_names()))
+        self.lockFile = join(folder, filename) if folder else join(_script_dir, os.pardir, filename)
+        self.warnHook = warnhook
+        self.errorHook = errorhook
+
+    def lock(self):
+        if not self.is_locked():
+            with open(self.lockFile, 'w') as f:
+                pass
+            return True
+        else:
+            self.warnHook('Rerun disabled using file: {}. Unlock it before locking again. Aborted. You can ignore this message if your program is already running as planned.'.format(self.lockFile))
+            return False
+
+    def unlock(self):
+        try:
+            os.remove(self.lockFile)
+            self.warnHook('Rerun enabled after removing lock file: {}. You can ignore this message if your program finishes with success.'.format(self.lockFile))
+        except FileNotFoundError:
+            self.warnHook('Failed to find lock file: {}. Rerun is enabled. Ignored.'.format(self.lockFile))
+        except Exception:
+            failure = traceback.format_exc()
+            self.errorHook('{}\nFailed to enable rerun by deleting reentrance lock file: {}. You must delete it by hand to rerun your program. Ignored.'.format(failure, self.lockFile))
+
+    def is_locked(self):
+        return exists(self.lockFile)
+
+
+def rerun_lock(name, folder=None, warnhook=_logger.warning, errorhook=_logger.error):
+    """Decorator for reentrance locking on functions"""
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            my_lock = None
+            try:
+                my_lock = RerunLock(name, folder, warnhook, errorhook)
+                if not my_lock.lock():
+                    return 1
+                ret = f(*args, **kwargs)
+            finally:  # Leave exception to global handler.
+                my_lock.unlock()
+            return ret
+        return wrapper
+    return decorator
 
 
 class SingletonDecorator:
