@@ -37,7 +37,7 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.9.0"
+__version__ = "0.5.1"
 
 
 #
@@ -49,12 +49,31 @@ MAIN_CFG_FILENAME = 'app.json'
 DEFAULT_CFG_FILENAME = 'default.json'
 
 
+class MaxLevelFilter(object):
+    def __init__(self, level):
+        self.__level = level
+
+    def filter(self, log):
+        return log.levelno <= self.__level
+
+
+class MinLevelFilter(object):
+    def __init__(self, level):
+        self.__level = level
+
+    def filter(self, log):
+        return log.levelno >= self.__level
+
+
 def build_default_logger(logdir, name=None, cfgfile=None):
     """
     Create per-file logger and output to shared log file.
     - If found config file under script folder, use it;
     - Otherwise use default config: save to /project_root/project_name.log.
     - 'filename' in config is a filename; must prepend folder path to it.
+    :logdir: directory the log file is saved into.
+    :name: basename of the log file,
+    :cfgfile: config file in the format of dictConfig.
     :return: logger object.
     """
     try:
@@ -80,6 +99,16 @@ def build_default_logger(logdir, name=None, cfgfile=None):
         logging_config = {
             "version": 1,
             "disable_existing_loggers": False,
+            "filters": {
+                "infofilter": {
+                    "()": "util.MaxLevelFilter",
+                    "level": 20
+                },
+                "warnfilter": {
+                    "()": "util.MinLevelFilter",
+                    "level": 30
+                }
+            },
             "formatters": {
                 "console": {
                     "format": "%(asctime)s: %(levelname)s: %(pathname)s: \n%(message)s\n"
@@ -93,7 +122,15 @@ def build_default_logger(logdir, name=None, cfgfile=None):
                         "level": "INFO",
                         "formatter": "console",
                         "class": "logging.StreamHandler",
-                        "stream": "ext://sys.stdout"
+                        "stream": "ext://sys.stdout",
+                        "filters": ["infofilter"]
+                    },
+                    "console_err": {
+                        "level": "WARN",
+                        "formatter": "console",
+                        "class": "logging.StreamHandler",
+                        "stream": "ext://sys.stderr",
+                        "filters": ["warnfilter"]
                     },
                     "file": {
                         "level": "DEBUG",
@@ -105,19 +142,21 @@ def build_default_logger(logdir, name=None, cfgfile=None):
             },
             "loggers": {
                 "": {
-                    "handlers": ["console", "file"],
+                    "handlers": ["console", "console_err", "file"],
                     "level": "INFO",
                     "propagate": True
                 },
                 "default": {
-                    "handlers": ["console", "file"],
-                    "level": "WARN",
+                    "handlers": ["console", "console_err", "file"],
+                    "level": "DEBUG",
                     "propagate": True
                 }
             }
         }
+    if name:
+        logging_config['loggers'][name] = logging_config['loggers']['default']
     logging.config.dictConfig(logging_config)
-    return logging.getLogger('default')
+    return logging.getLogger(name or 'default')
 
 
 _logger = build_default_logger(logdir=join(_script_dir, os.pardir, 'temp'))
@@ -563,9 +602,10 @@ def profile_runs(funcname, modulefile, nruns=5):
 
 class RerunLock:
     """Lock process from reentering when seeing lock file on disk."""
-    def __init__(self, name, folder=None, warnhook=_logger.warning, errorhook=_logger.error):
+    def __init__(self, name, folder=None, infohook=_logger.info, warnhook=_logger.warning, errorhook=_logger.error):
         filename = 'lock_{}'.format(name) if name else 'lock_{}'.format(next(tempfile._get_candidate_names()))
         self.lockFile = join(folder, filename) if folder else join(_script_dir, os.pardir, filename)
+        self.infoHook = infohook
         self.warnHook = warnhook
         self.errorHook = errorhook
 
@@ -581,7 +621,7 @@ class RerunLock:
     def unlock(self):
         try:
             os.remove(self.lockFile)
-            self.warnHook('Rerun enabled after removing lock file: {}. You can ignore this message if your program finishes with success.'.format(self.lockFile))
+            self.infoHook('Rerun enabled after removing lock file: {}. You can ignore this message if your program finishes with success.'.format(self.lockFile))
         except FileNotFoundError:
             self.warnHook('Failed to find lock file: {}. Rerun is enabled. Ignored.'.format(self.lockFile))
         except Exception:
@@ -592,14 +632,14 @@ class RerunLock:
         return exists(self.lockFile)
 
 
-def rerun_lock(name, folder=None, warnhook=_logger.warning, errorhook=_logger.error):
+def rerun_lock(name, folder=None, infohook=_logger.info, warnhook=_logger.warning, errorhook=_logger.error):
     """Decorator for reentrance locking on functions"""
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             my_lock = None
             try:
-                my_lock = RerunLock(name, folder, warnhook, errorhook)
+                my_lock = RerunLock(name, folder, infohook, warnhook, errorhook)
                 if not my_lock.lock():
                     return 1
                 ret = f(*args, **kwargs)
