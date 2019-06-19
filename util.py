@@ -50,6 +50,17 @@ DEFAULT_CFG_FILENAME = 'default.json'
 
 
 class MaxLevelFilter(object):
+    """
+    Logging filter: Show log messages below input level.
+    - CRITICAL = 50
+    - FATAL = CRITICAL
+    - ERROR = 40
+    - WARNING = 30
+    - WARN = WARNING
+    - INFO = 20
+    - DEBUG = 10
+    - NOTSET = 0
+    """
     def __init__(self, level):
         self.__level = level
 
@@ -58,6 +69,7 @@ class MaxLevelFilter(object):
 
 
 class MinLevelFilter(object):
+    """Logging filter: Show log messages above input level."""
     def __init__(self, level):
         self.__level = level
 
