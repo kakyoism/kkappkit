@@ -49,7 +49,7 @@ MAIN_CFG_FILENAME = 'app.json'
 DEFAULT_CFG_FILENAME = 'default.json'
 
 
-class MaxLevelFilter(object):
+class LowPassLogFilter(object):
     """
     Logging filter: Show log messages below input level.
     - CRITICAL = 50
@@ -68,13 +68,21 @@ class MaxLevelFilter(object):
         return log.levelno <= self.__level
 
 
-class MinLevelFilter(object):
+class HighPassLogFilter(object):
     """Logging filter: Show log messages above input level."""
     def __init__(self, level):
         self.__level = level
 
     def filter(self, log):
         return log.levelno >= self.__level
+
+
+class BandPassLogFilter(object):
+    def __init__(self, levelbounds):
+        self.__levelbounds = levelbounds
+
+    def filter(self, log):
+        return self.__levelbounds[0] <= log.levelno <= self.__levelbounds[1]
 
 
 def build_default_logger(logdir, name=None, cfgfile=None):
@@ -112,18 +120,22 @@ def build_default_logger(logdir, name=None, cfgfile=None):
             "version": 1,
             "disable_existing_loggers": False,
             "filters": {
-                "infofilter": {
-                    "()": "util.MaxLevelFilter",
-                    "level": 20
+                "info_lpf": {
+                  "()": "util.LowPassLogFilter",
+                  "level": 20
                 },
-                "warnfilter": {
-                    "()": "util.MinLevelFilter",
-                    "level": 30
+                "info_bpf": {
+                  "()": "util.BandPassLogFilter",
+                  "levelbounds": [20, 20]
+                },
+                "warn_hpf": {
+                  "()": "util.HighPassLogFilter",
+                  "level": 30
                 }
             },
             "formatters": {
                 "console": {
-                    "format": "%(asctime)s: %(levelname)s: %(pathname)s: \n%(message)s\n"
+                    "format": "%(asctime)s: %(levelname)s: %(module)s: %(lineno)d: \n%(message)s\n"
                 },
                 "file": {
                     "format": "%(asctime)s: %(levelname)s: %(pathname)s: %(lineno)d: \n%(message)s\n"
@@ -135,14 +147,14 @@ def build_default_logger(logdir, name=None, cfgfile=None):
                         "formatter": "console",
                         "class": "logging.StreamHandler",
                         "stream": "ext://sys.stdout",
-                        "filters": ["infofilter"]
+                        "filters": ["info_bpf"]
                     },
                     "console_err": {
                         "level": "WARN",
                         "formatter": "console",
                         "class": "logging.StreamHandler",
                         "stream": "ext://sys.stderr",
-                        "filters": ["warnfilter"]
+                        "filters": ["warn_hpf"]
                     },
                     "file": {
                         "level": "DEBUG",
@@ -161,7 +173,7 @@ def build_default_logger(logdir, name=None, cfgfile=None):
                 "default": {
                     "handlers": ["console", "console_err", "file"],
                     "level": "DEBUG",
-                    "propagate": True
+                    "propagate": False
                 }
             }
         }
@@ -232,7 +244,7 @@ def build_logger(srcpath, logpath=None):
 
 
 def format_error_message(situation, expected, got, suggestions, action):
-    return '{}.\n\tExpected: {};\n\tGot: {};\n\tSuggestions: {};\n\tAction: {}'.format(situation, expected, got, suggestions, action)
+    return '{}.\n\tExpected: {};\n\tGot: {};\n\tSuggestions: {};\n\tAction: {}.'.format(situation, expected, got, suggestions, action)
 
 
 def is_cli_mode(argv):
@@ -551,6 +563,7 @@ def execute_concurrency(worker, shared, lock, algorithm):
         - Args: worker input args
         - Result: worker returned results in order
     """
+    global _logger
     # TODO: measure timeout for .join()
     if algorithm['Type'] == 'Sequential':
         results = []
