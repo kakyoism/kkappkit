@@ -37,7 +37,7 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.5.1"
+__version__ = "0.6.0"
 
 
 #
@@ -518,23 +518,21 @@ def organize_concurrency(ntasks, nprocs=None, useio=False):
     if not nprocs:
         nprocs = multiprocessing.cpu_count()
 
-    # many processes and no I/O
-    if ntasks >= nprocs and not useio:
+    # io-bound
+    if useio:
+        nprocs = 10
         return {
-            'Type': 'Pool',
-            'Processes': nprocs
+            'Type': 'Thread',
+            'Count': nprocs
         }
 
-    # must be after pool decision, otherwise everything uses Pool.
-    if ntasks < nprocs:
-        nprocs = ntasks
-
-    # few processes or lots of I/O
-    tasks_per_proc = int(math.floor(float(ntasks) / float(nprocs)))
-    ranges = [(i * tasks_per_proc, (i + 1) * tasks_per_proc if i < nprocs - 1 else ntasks) for i in range(nprocs)]
+    # cpu-bound
+    # # brute-force schedule
+    # tasks_per_proc = int(math.floor(float(ntasks) / float(nprocs)))
+    # ranges = [(i * tasks_per_proc, (i + 1) * tasks_per_proc if i < nprocs - 1 else ntasks) for i in range(nprocs)]
     return {
         'Type': 'Process',
-        'Ranges': ranges
+        'Count': nprocs
     }
 
 
@@ -571,8 +569,8 @@ def execute_concurrency(worker, shared, lock, algorithm):
             _logger.debug('Execute {} in order: {} of {}: {}'.format(shared['Title'], t+1, len(shared['Tasks']), task['Title']))
             results.append(worker(task))
         return [result[1] for result in results]
-    elif algorithm['Type'] == 'Pool':
-        _logger.debug('Execute {} in pool of {} processes ...'.format(shared['Title'], algorithm['Processes']))
+    elif algorithm['Type'] == 'Process':
+        _logger.debug('Execute {} in pool of {} processes ...'.format(shared['Title'], algorithm['Count']))
         #
         # Known Issue:
         # - https://bugs.python.org/issue9400
@@ -587,19 +585,14 @@ def execute_concurrency(worker, shared, lock, algorithm):
                 pool.join()
         except Exception:
             traceback.print_exc()
+        # Results are always sorted in pool.
         return [result[1] for result in results]
-    elif algorithm['Type'] == 'Process':
-        _logger.debug('Execute {} using {} processes ...'.format(shared['Title'], len(algorithm['Ranges'])))
-        jobs = [multiprocessing.Process(target=ranged_worker, args=(worker, rg, shared, lock)) for rg in algorithm['Ranges']]
-        njobs = len(jobs)
-        for j, job in enumerate(jobs):
-            _logger.debug('Start Process {} of {} ...'.format(j+1, njobs))
-            job.start()
-        for j, job in enumerate(jobs):
-            _logger.debug('Join Process: {} of {} ...'.format(j+1, njobs))
-            job.join()
-        results = [result[1] for result in sorted(shared['Results'], key=lambda e: e[0])]
-        return results
+    elif algorithm['Type'] == 'Thread':
+        import concurrent.futures
+        _logger.debug('Execute {} in pool of {} threads ...'.format(shared['Title'], algorithm['Count']))
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=algorithm['Count'])
+        results = executor.map(worker, shared['Tasks'])
+        return [result[1] for result in results]
     raise ValueError(format_error_message('Found undefined concurrency algorithm.', expected='One of: {}, {}, {}'.format('Sequential', 'Pool', 'Process'), got=algorithm['Type'], suggestions=('Check if this API is up to date', 'retry me'), action='Aborted'))
 
 
