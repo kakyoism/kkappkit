@@ -74,7 +74,7 @@ The typical workflow with kkAppKit:
 
 
 ### Hello World!
-If you skim through the source code section below, you might be scared at how incredibly long it looks for a Hello World (80 lines). There are two reasons:
+If you skim through the source code section below, you might be scared at how incredibly long it looks like. It is long for a Hello World (80 lines). There are two reasons:
 
 - The goal of this example is to show a real picture of my day-to-day work. There is no hiding of necessary details there.
 - I follow `PEP8` as much as possible, so many lines could've been merged into one, but I avoid that style here for readability.
