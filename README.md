@@ -8,7 +8,7 @@ A UI library and mini-framework based on [Tkinter](https://wiki.python.org/moin/
 ## Motivation
 
 ### Back story
-On a regular day, my colleagues ask me to write a small tool. So I roll up my sleeves, finish `myscript.py`, and it works for me, that is, with command line (CLI):
+On a regular day, my colleagues ask me to write a small tool. So I roll up my sleeves and finish `myscript.py`. It works for me, that is, through command line (CLI):
 
 ```sh
 python myscript.py -V -C config.json
@@ -16,25 +16,25 @@ python myscript.py -V -C config.json
 
 I could tune the parameters through my JSON config file myself. But this doesn't please my non-engineer colleagues: They need intuitive control, i.e., a GUI. Then it takes a bit of work: Lay out the frontend controls, link them with backend data, and code up sophisticated behaviours.
 
-However, that's still not enough. Being agile, the tool won't be *complete*. It will undergo constant revisions. My colleagues need the freedom to tweak the data model and sometimes the GUI themselves. They also demand better diagnostics and error handling: "What's this KeyError here?". Then I'd have to run it under CLI mode to get a full picture of the backend, then often dive into the dirty code and weed out the cryptic log messages, a sin of sloppy programmers. 
+However, that's still not enough. Being agile, the tool will **never** be *complete*. It will remain bleeding-edge. Despite the instability, my colleagues need the freedom to tweak the data model and sometimes the GUI themselves. They also demand better diagnostics and error handling: "What's this KeyError here?". When that happens, I'd have to run it under CLI mode to get a full picture of the backend, then dive in and weed out the cryptic log messages, a sin of sloppy programmers. 
 
 Imagine doing this all over again on their next request.
 
 "*There's gotta be a better way!*"
 
 ### The Vision
-I must rapidly deliver agile tools to internal non-engineer users, so that the app ...
+I must rapidly deliver my app to internal non-engineer users, so that it ...
 
 - supports both GUI and CLI mode, decoupling frontend and backend.
-- gives non-engineer user offline/realtime parameter controls, presets, and per-parameter documentation
+- gives non-engineer user offline/realtime parameter controls, presets, and per-parameter help doc.
 - allows user to reflect changes in data to UI with little programmer help.
-- makes its runtime state as clear as possible to non-engineer, e.g., shows key progress stages, pops up detailed diagnostics upon errors.
-- introduces least third-party dependencies on UI libs or frameworks to reduce bloat and simplify distribution.
+- makes its runtime state as clear as possible to non-engineer, e.g., shows progress, pops up human-readable diagnostics upon errors.
+- reduces bloat from third-party dependencies such as huge app frameworks to simplify distribution.
 
 For now, I don't aim at complex applications such as a digital audio workstation, nor do I try to attack aesthetics such as UI theming. Python is my language of choice.
 
 ### Why Tkinter for the GUI?
-Considering the vision, choosing Tkinter gives me the following benefits:
+From the vision, Tkinter gives me the following benefits:
 
 - **It's always there!** It's first-party as a standard Python library, which simplifies distribution.
 - **It's stable.** Being a [Tcl/TK](https://www.tcl.tk) binding, Tkinter rarely changes. I personally enjoy Tkinter's create-configure-bind-layout workflow.
