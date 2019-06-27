@@ -578,8 +578,9 @@ def execute_concurrency(worker, shared, lock, algorithm):
         # Reference:
         # - https://stackoverflow.com/questions/15314189/python-multiprocessing-pool-hangs-at-join
         #
+        results = []
         try:
-            with multiprocessing.Pool(processes=algorithm['Processes']) as pool:
+            with multiprocessing.Pool(processes=algorithm['Count']) as pool:
                 results = pool.map(worker, shared['Tasks'])
                 pool.close()
                 pool.join()
