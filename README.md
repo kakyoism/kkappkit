@@ -440,7 +440,7 @@ Syntax
 
 ### Hand-written Widgets
 
-Other than the data-model widgets, there are pre-written widget classes for convenience. They are not part of the JSON config format and thus cannot be generated.
+Other than the data-model widgets, there are pre-defined widget classes for convenience. They are not part of the JSON config format and thus cannot be generated.
 
 ### ScrollFrame
 
