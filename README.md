@@ -489,4 +489,4 @@ Currently the kit is only tested on macOS (High Sierra and Mojave), but there is
 
 ## Acknowledgements
 
-I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to think about my own problems and start working on my own pragmatic UI solution instead of blindly committing to a random framework out there.
+I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to think about my own problems and start working on my own pragmatic UI solution instead of making a blind committment to a random framework out there.
