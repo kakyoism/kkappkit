@@ -250,8 +250,8 @@ You can see that with kkAppKit, we can:
 - generate the GUI based on a config file.
 - focus on writing main logic and designing data model; 
 - handle default values, presets, and per-parameter help documentation.
-- allow user to quickly modify the data model and doc, and reflect the changes onto the UI for free.
-- keep the app transparent by giving user useful diagnostics (more on this later).
+- quickly modify the data model and doc, and reflect the changes onto the UI for free.
+- keep the app transparent by showing useful diagnostics (more on this later).
 
 ### More examples
 
