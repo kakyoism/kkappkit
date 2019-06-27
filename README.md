@@ -438,9 +438,9 @@ Syntax
 
 
 
-### Hand-written Widgets
+### Private Widgets
 
-Other than the data-model widgets, there are pre-defined widget classes for convenience. They are not part of the JSON config format and thus cannot be generated.
+Other than the data-model widgets for user to configure in apps, there are pre-defined widget classes for convenience. User has no access to them without coding. They are *hard-coded* and is thus not part of the JSON data-model.
 
 ### ScrollFrame
 
