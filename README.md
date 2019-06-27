@@ -36,25 +36,25 @@ For now, I don't aim at complex applications such as a digital audio workstation
 ### Why Tkinter for the GUI?
 From the vision, Tkinter gives me the following benefits:
 
-- **It's always there!** It's first-party as a standard Python library, which simplifies distribution.
-- **It's stable.** Being a [Tcl/TK](https://www.tcl.tk) binding, Tkinter rarely changes. I personally enjoy Tkinter's create-configure-bind-layout workflow.
+- **It's always there!** It's a first-party standard library, which simplifies distribution.
+- **It's stable.** Being a binding to the dinasaur [Tcl/TK](https://www.tcl.tk), Tkinter rarely changes. I personally enjoy Tkinter's create-configure-bind-layout workflow.
 - **Its features seem good enough for writing small tools.** So far. Its widget set, though much smaller than its peers', is compact and configurable. Native look and styling are possible.
 
 ### What is this all about then?
 Tkinter has well-known problems, such as:
 
-- The lack of a designer tool. Everything is implemented by code.
+- The lack of a designer tool. You must code everything up.
 - Limited widget set with minimal documentation.
-- Being a language binding of Tcl/TK, not very transparent despite being open source.
+- Being a language-binding of Tcl/TK, not very transparent despite being open source.
 
-However, only the first problem is a showstopper in my context: User needs to tweak the data model and  UI easily with little ad-hoc coding.
+However, only the first problem is a showstopper in my book: User needs to tweak the data model and UI without coding.
 
-So a big part of this work is to ease the tweaking by creating a custom UI reflection mechanism based on Tkinter, similar to [XRC for wxWidgets](https://docs.wxwidgets.org/3.1/overview_xrc.html). Other (on-going) features include providing specialized compound widgets, handling blocking and async controls transparently, etc.
+So a big part of this work is to support data reflection in UI for Tkinter, similar to [XRC for wxWidgets](https://docs.wxwidgets.org/3.1/overview_xrc.html). Other (on-going) features include providing specialized compound widgets, handling blocking and async controls transparently, etc.
 
 ### Caveats
-Many UI lib efforts, such as the great [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI), aim at innovative workflows. Here, instead, I'm only interested in building a thin layer upon Tkinter, keeping the familiar Tkinter flavour: The create-configure-bind-layout workflow for most compound widgets.
+Many third-party UI libs, such as the great [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI), aim at innovative workflows. Here, instead, I'm only interested in building a thin layer upon Tkinter while keeping the familiar Tkinter flavour: The create-configure-bind-layout workflow.
 
-The reflection mechanism currently adopts a vertical layout, like an *endless page*, meaning all the controls are laid out by rows inside a scrollable frame, one control per row. This is inspired by many form-filling web interface, such as Google Chrome's settings page.
+The fundamental constraints I set for myself is that the reflection currently adopts a vertical layout, like an *endless page*, meaning all the controls are laid out in **rows** inside a scrollable frame, **one compound control per row**. This is inspired by many form-filling web interface, such as Google Chrome's settings page.
 
 Also, being very new to UI development, I haven't found the right way to test Tkinter-based GUI automatically. So test framework is out of the equation at this point.
 
@@ -68,20 +68,20 @@ Yes, I believe this shall be my own pet project for a very long time. This doc i
 The typical workflow with kkAppKit:
 
 - Create a project folder and a main Python script.
-- Create and write up JSON configuration files: `app.json` and `default.json`. The former holds the control parameters and GUI specs the main script relies on; the latter holds the default preset.
-- In the main script, write the main logic in a main function. This function also accounts for the CLI mode of your app.  
+- Create and write up JSON configuration files: `app.json` and `default.json`. The former holds the control parameters and GUI specs the main script relies on; the latter holds the default preset of those parameters.
+- In the main script, write a main function. This function also accounts for the CLI mode of your app.  
 - In the main script, call a factory method among the kit's API to generate the GUI for you based on the config file. This method returns the Tkinter main top-level window, e.g., root. Launch your Tkinter main event loop from the root window.
 
 
 ### Hello World!
 If you skim through the source code section below, you might be scared at how incredibly long it looks for a Hello World (80 lines). There are two reasons:
 
-- The goal of this example is to show what's really in my day-to-day work. There is no hiding of necessary details there.
+- The goal of this example is to show a real picture of my day-to-day work. There is no hiding of necessary details there.
 - I follow `PEP8` as much as possible, so many lines could've been merged into one, but I avoid that style here for readability.
 
 With this very first example, we'll see a GUI that allows us to edit a text string and a number, and show them in a pop-up message box upon launching the main script under GUI mode, and prints out the same data under CLI mode.
 
-First we create a folder called `hello_world` and a config file `app.json` under it. This is the main config file our app gets its control parameters from. Let's edit the JSON file like this.
+First we create a folder called `hello_world` and a config file `app.json` under it. This is our main config file. Our app gets its control parameters from this file. Let's edit the JSON file like this.
 
 ```javascript
 {
@@ -113,7 +113,7 @@ In this file we defined the titles of the parameters, their values to start with
 - its two-level control granularity: a coarse step of 0.1 used by a slider widget, and a fine step of 0.01 used by a spinbox widget.
 - The precision of a decimal number: This controls how many digits we see in the spinbox as we tune the number.
 
-Secondly, we duplicate `app.json` and rename it to `default.json`. This will contain the default values used by the resetting feature.
+Secondly, we duplicate `app.json` and rename it to `default.json`. This will contain the default values when we reset the number using one of the kit's features.
 
 Then, we create our main script `hello.py`, which looks like this:
 
@@ -202,9 +202,9 @@ if __name__ == '__main__':
 
 ```
 
-Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, most of that is just necessary bootstrapping in a real-world tool and we are not shy from doing things properly; the only UI code in the example, however, is just the `run_gui()` function, which costs only two subroutines, one being a factory method. No explicit widget or layout coding was needed. All the details come from our `app.json` config file. Anybody can write up this config easily.
+Wow! That is long! For a Hello World, what we did may seem an overkill. But wait, most of that is just necessary bootstrapping in a real-world tool and we are not shy from doing things properly; the only UI code in the example, however, is just the `run_gui()` function, which costs only two subroutines, one being a factory method. No need for explicit widget or layout coding here. All the details come from our `app.json` config file. Anybody can write up this config easily.
 
-As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency via showing progress and status, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little boilerplate cost will become ignorable. But, we are not done yet.
+As said before, we include in this example the necessary features of a real-world tool according to our vision, e.g., transparency via showing progress and status, in this bare bone example. For anything larger than that, especially when it comes to realtime control via a ton of parameters, you will quickly see the benefits and the little boilerplate cost will be ignorable. But, we are not done yet.
 
 Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we are ready to run this app.
 
@@ -220,9 +220,9 @@ From top to bottom, you see:
 4. A submission panel to launch main script and handle parameter presets.
 5. A status bar with a progressbar.
 
-No. 1, 4, and 5 come for free as built-in widgets from calling the factory method `ui.build_script_launcher()`. The two core parameters show up in the order of their appearance in `app.json`.
+No. 1, 4, and 5 come for free as the kit's built-in widgets from calling the factory method `ui.build_script_launcher()`. The two core parameters show up in the order of their appearance in `app.json`.
 
-Now drag the slider or edit the spinbox so that the number shows 0.5, then press the bottom-right button `Go!`. You'll see the following prompt:
+Now drag the slider or edit the spinbox so that the number shows `0.5`, then press the bottom-right button `Go!`. You'll see the following prompt:
 
 ![](hello_world/helloworld-popup.png)
 
@@ -249,7 +249,7 @@ You can see that with kkAppKit, we can:
 - consolidate the GUI and CLI mode easily.
 - generate the GUI based on a config file.
 - focus on writing main logic and designing data model; 
-- handle default values, presets, and per-parameter documentation.
+- handle default values, presets, and per-parameter help documentation.
 - allow user to quickly modify the data model and doc, and reflect the changes onto the UI for free.
 - keep the app transparent by giving user useful diagnostics (more on this later).
 
@@ -258,7 +258,7 @@ You can see that with kkAppKit, we can:
 The hello-world example shows how to work out an offline control with the kkAppKit, i.e., the parameters are first saved into `app.json` before running the main script, and never changes during the run. Two more examples are included in sub-folders:
 
 - One shows a more complex offline case: To show text on top of a picture, with the font and colour of the text configurable, using the third-party lib PIL fork [pillow](https://python-pillow.org). 
-- The other is a realtime control example: Playing an oscillator tone with minimal control such as frequency and gain, using [Csound](http://www.csounds.com) as the synth backend. The GUI talks to Csound using [Open Sound Control (OSC)](http://opensoundcontrol.org). Although Csound bundles a [FLTK](https://www.fltk.org) binding, similar to Python, here I decouple the frontend completely from the backend.
+- The other is a realtime control example: Playing an oscillator tone with minimal control such as frequency and gain, using [Csound](http://www.csounds.com) as the synth backend. The GUI talks to Csound using [Open Sound Control (OSC)](http://opensoundcontrol.org). Although Csound bundles a [FLTK](https://www.fltk.org) binding to allow mixed frontend and backend code, but here I decouple the frontend completely from the backend, which allows me to quickly switch to another synth backend later.
 
 These are specialized examples and the code is straightforward to follow. So I'll skip the details here.
 
@@ -268,16 +268,19 @@ For now, simply copy `kkgui.py` and `util.py` to your app's folder.
 
 ## Configuration
 
-kkAppKit defines a standard JSON format for specifying data model for UI reflection. The format may undergo revision and new data-UI models may be added.
+kkAppKit defines a standard JSON data model for UI reflection. The format may undergo revision and new data-UI models may be added.
 
 The format supports two types of top-level fields: 
 
-- Control, such as Check, Entry, Number, Options, and Path; these demand a Help field for documentation.
+- Controls, such as Check, Entry, Number, Options, and Path; these demand a Help field for documentation.
 - Cosmetics, such as Banner, Info, and Separator; these only affects the UI's look.
 
 The order of fields in the JSON file represents the vertical order of appearance of their generated widgets.
 
-CAUTION: A top-level field name must be all-lowercase ASCII characters. This is because we use it as the Tkinter widget name, and Tkinter requires these names to be that way. You may wonder "Why not fix the casing in the kit?" This is because JSON is case-sensitive, so we might end up with conflicting fields that would differ in JSON only by case, but would look the same to Tkinter if we fixed it only before feeding Tkinter.
+CAUTION: A top-level field name must be **all-lowercase ASCII** characters. This is because
+
+- top-level fields are used as Tkinter widget names, and Tkinter supports ASCII names only. 
+- Tkinter widget instance names are case-insensitive while JSON fields are case-sensitive, so we might end up with conflicting fields if we use anything other than all-lowercasing. 
 
 ### Banner
 
@@ -445,13 +448,13 @@ This is the *endless page*. A frame with a vertical scrollbar where generated wi
 
 ### SearchBar
 
-Use this to show only the widgets relevant to a user-provided keyword. It starts filtering as you type. You can also specify domains where the keywords will be searched for. Call its `.configure_internal()` method to specify domains.
+Use this to show only the widgets relevant to a user-provided keyword. It starts filtering as you type. You can also narrow down the search scope with it. Call its `.configure_internal()` method to specify the scope.
 
 Example
 
 ```python
 search_bar.configure_internal({
-    'Domains': {
+    'Scope': {
         'Title': 'Where',
         'MultiOptions': ['Name', 'Title', 'Help']
     }
@@ -460,7 +463,7 @@ search_bar.configure_internal({
 
 This tells the SearchBar to look for keywords under the `Name`, `Title`, and `Help` domains. What do these domains mean? They are some properties of a compound widget and are retrieved by calling the property accessors.
 
-SearchBar can be adapted to search for anything you want. Right now it's used for widgets because we only use it with `ScrollFrame`, which implements the `.filter_widgets()` method as `SearchBar`'s `OnSearch` handler.
+You can use SearchBar to  can be adapted to search for anything you want. Right now it's used for widgets because we only use it with `ScrollFrame`, which implements the `.filter_widgets()` method as SearchBar's `OnSearch` handler.
 
 ### SubmitStrip
 
@@ -477,13 +480,13 @@ Currently the kit is only tested on macOS (High Sierra and Mojave), but there is
 ## Implementation details
 
 - Each compound widget supports Tkinter's geometry managers `pack` and `grid`. However, only `grid` is recommended because proper widget filtering is only possible with `grid`. `pack` makes it difficult to recall the original widget order after you revert the filtering.
-- The compound widgets all have their own handlers and properties in addition to their parent Tkinter widget properties. `.configure_internal()` method is used to configure such properties. Their inherited `.configure()` is used for configure basic properties. Their overriden `.bind` is used to bind additional handlers.
-- A compound widget reuses the corresponding top-level field in the JSON config file as its name. This name registers with Tkinter.
+- The compound widgets all have their own handlers and properties in addition to their parent Tkinter widget properties. `.configure_internal()` method is used to configure the add-on properties. Their inherited `.configure()` is used for configure basic properties. Their overriden `.bind` is used to bind additional handlers.
+- A compound widget reuses the its top-level field name in the JSON config file as its name. This name registers with Tkinter.
 - The widget filtering based on SearchBar relies on a `eval()` call on special property accessors defined in widgets.
-- The `OnHelp` handler behind a Help(?) button can be used to retrieve help string in any form, you may also customize how to show the help, e.g., on a docked panel. By default, it gets the doc from config file, and pops up a top-level window.
+- The `OnHelp` handler behind a Help(?) button can be used to retrieve help string in any form, you may also customize how to show the help, e.g., on a docked panel. By default, it gets the doc from the config file, and pops up a top-level window.
 - Prompt offers `.info()`, `.warning()`, and `.error()` methods, similar to the `logging` module, however, a twist here is that it enforces writing readable diagnostics. You must provide three pieces of info: description, cause, and suggestion. If a logger is given, calling these API will both pop up a prompt, and write log messages into `app.log`.
 
 
 ## Acknowledgements
 
-I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to  think about my own problems and start working on my own pragmatic UI solution instead of blindly committing to a random framework out there.
+I must thank the author of PySimpleGUI for his thorough documentation. His insight inspired me to think about my own problems and start working on my own pragmatic UI solution instead of blindly committing to a random framework out there.
