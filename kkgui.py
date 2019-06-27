@@ -1185,7 +1185,7 @@ class SearchBar(tk.Frame):
         self.widgets = collections.OrderedDict()
         self.gridWeights = {}
         self.handlers['OnSearch'] = None
-        self.widgets['Domains'] = MultiOptionMenu(self,
+        self.widgets['Scope'] = MultiOptionMenu(self,
                                                   name='where',
                                                   text='Where')
         self.widgets['Search'] = ttk.Combobox(self, textvariable=self.input)
@@ -1197,7 +1197,7 @@ class SearchBar(tk.Frame):
         self.widgets['Search'].bind('<Return>', self._on_key_enter)
 
     def configure_internal(self, config):
-        key = 'Domains'
+        key = 'Scope'
         if key in config.keys():
             self.widgets[key].configure_internal(config[key])
 
@@ -1206,13 +1206,13 @@ class SearchBar(tk.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1000)
         self.grid_columnconfigure(2, weight=1)
-        self.widgets['Domains'].grid(row=0, column=0, sticky='e')
+        self.widgets['Scope'].grid(row=0, column=0, sticky='e')
         self.widgets['Search'].grid(row=0, column=1, sticky='e')
         self.widgets['Reset'].grid(row=0, column=2, sticky='w')
         super().grid(*args, **kwargs)
 
     def pack(self, *args, **kwargs):
-        self.widgets['Domains'].pack(side='left', fill='x', expand=False)
+        self.widgets['Scope'].pack(side='left', fill='x', expand=False)
         self.widgets['Search'].pack(side='left', fill='x', expand=True)
         self.widgets['Reset'].pack(side='left', fill='x', expand=False)
         super().pack(*args, **kwargs)
@@ -1236,7 +1236,7 @@ class SearchBar(tk.Frame):
         self.widgets['Search'].set(self.defaultText)
 
     def get_selected_domains(self):
-        return [key for key, domain in self.widgets['Domains'].choices.items()
+        return [key for key, domain in self.widgets['Scope'].choices.items()
                 if domain.get()]
 
     def bind_internal(self, eventmaps):
@@ -1486,7 +1486,7 @@ def build_script_launcher(title, app_dir, progress_queue,
 
     search_bar = SearchBar(root, name='search')
     search_bar.configure_internal({
-        'Domains': {
+        'Scope': {
             'Title': 'Where',
             'MultiOptions': ['Name', 'Title', 'Help']
         }
@@ -1538,7 +1538,7 @@ def test1():
     search_bar = SearchBar(right_frm, name='searchprop')
     search_bar.configure_internal(
         {
-            'Domains': {'Title': 'Where',
+            'Scope': {'Title': 'Where',
                         'MultiOptions': ['Name', 'Title', 'Help']}
         }
     )
