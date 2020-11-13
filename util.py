@@ -85,7 +85,7 @@ class BandPassLogFilter(object):
         return self.__levelbounds[0] <= log.levelno <= self.__levelbounds[1]
 
 
-def build_default_logger(logdir, name=None, cfgfile=None):
+def build_default_logger(logdir, name=None, cfgfile=None, verbose=False):
     """
     Create per-file logger and output to shared log file.
     - If found config file under script folder, use it;
@@ -122,11 +122,11 @@ def build_default_logger(logdir, name=None, cfgfile=None):
             "filters": {
                 "info_lpf": {
                   "()": "util.LowPassLogFilter",
-                  "level": 20
+                  "level": 10 if verbose else 20,
                 },
                 "info_bpf": {
                   "()": "util.BandPassLogFilter",
-                  "levelbounds": [20, 20]
+                  "levelbounds": [10, 20] if verbose else [20, 20],
                 },
                 "warn_hpf": {
                   "()": "util.HighPassLogFilter",
@@ -143,7 +143,7 @@ def build_default_logger(logdir, name=None, cfgfile=None):
             },
             "handlers": {
                     "console": {
-                        "level": "INFO",
+                        "level": "DEBUG" if verbose else "INFO",
                         "formatter": "console",
                         "class": "logging.StreamHandler",
                         "stream": "ext://sys.stdout",
