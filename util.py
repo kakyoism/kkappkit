@@ -450,7 +450,7 @@ def threaded_main(target, daemon=True):
     """
     thread = threading.Thread(target=target,
                               args=([sys.argv[0], '-c'],),
-                              daemon=True)
+                              daemon=daemon)
     thread.start()
 
 
