@@ -9,7 +9,7 @@ python-versions = ">=3.6"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "1b0fe05bf3bfa23198fefe787964ffa952c1c46c4c254a47861d1095491b0993"
+content-hash = "3ddb1236ae114b41bfd6268c5196718e1e5141462819ce21707e58584c9f88b0"
 
 [metadata.files]
 pillow = [
