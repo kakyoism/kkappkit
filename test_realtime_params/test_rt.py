@@ -158,7 +158,7 @@ def run_gui():
             }
         },
         window_size=(768, 300),
-        mode='indeterminate'
+        progress_mode='indeterminate'
     )
     threaded_main()  # Launch Csound and keep it running.
     root.mainloop()

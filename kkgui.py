@@ -281,17 +281,17 @@ class ConfigMan:
     """
     def __init__(self, app_dir, *args, **kwargs):
         self.app_dir = app_dir
-        cfgFile = join(app_dir, util.MAIN_CFG_FILENAME)
-        self.config = util.load_json(cfgFile) if exists(cfgFile) else {}
+        cfg_file = join(app_dir, util.MAIN_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if exists(cfg_file) else {}
 
     def load(self):
-        cfgFile = join(self.app_dir, util.MAIN_CFG_FILENAME)
-        self.config = util.load_json(cfgFile) if exists(cfgFile) else {}
+        cfg_file = join(self.app_dir, util.MAIN_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if exists(cfg_file) else {}
         return self.config
 
     def load_default(self):
-        cfgFile = join(self.app_dir, util.DEFAULT_CFG_FILENAME)
-        self.config = util.load_json(cfgFile) if exists(cfgFile) else {}
+        cfg_file = join(self.app_dir, util.DEFAULT_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if exists(cfg_file) else {}
         return self.config
 
     def load_from(self, path):
@@ -681,7 +681,7 @@ class PreciseScale(ttk.Scale):
 
     def _value_changed(self, new_value):
         new_value = round(float(new_value), self.precision)
-        self.winfo_toplevel().globalsetvar(self.cget('variable'), (new_value))
+        self.winfo_toplevel().globalsetvar(self.cget('variable'), new_value)
         self.onChange(new_value)  # Call user specified function.
 
 
@@ -714,8 +714,8 @@ class NumberStrip(RowStrip):
         self.widgets['Slider']['to'] = config['Range'][1]
         self.widgets['Slider']['from'] = config['Range'][0]
         # Fit spinbox size to value range
-        charCount = len(str(self.widgets['Spin']['to']))
-        self.widgets['Spin'].configure(width=max(charCount+1, 6))
+        char_count = len(str(self.widgets['Spin']['to']))
+        self.widgets['Spin'].configure(width=max(char_count+1, 6))
 
         # CAUTION: ttk.Scale has no increment or resolution
         # Set slider increment to int to avoid float increment when data is int.
@@ -737,6 +737,8 @@ Unsupported var type: {}, expected tk.IntVar or tk.DoubleVar.
 
     def _float_increment(self, evt=None):
         data = self.widgets['Slider'].get()
+        if int(data) != data:
+            self.widgets['Slider'].set(round(data))
 
 
 class CheckStrip(RowStrip):
@@ -855,7 +857,7 @@ class ProgressStrip(tk.Frame):
         self.gridConfig = {}
         # Start checking queue for progress.
         if mode == 'determinate':
-            # Once assigned variable, progressbar turns on 'determinate' mode.
+            # Once assigned variable, progressbar turns on 'determinate' progress_mode.
             self.widgets['Progress'].configure(variable=self.progress)
             self._watch()
         else:
@@ -1080,8 +1082,8 @@ class SubmitStrip(tk.Frame):
         - Log file is called <app_basename>.log under the app folder.
         :return:
         """
-        logURL = pathlib.Path(join(self.config_man.app_dir, 'app.log')).as_uri()
-        webbrowser.open(logURL)
+        log_url = pathlib.Path(join(self.config_man.app_dir, 'app.log')).as_uri()
+        webbrowser.open(log_url)
 
     def _on_submit(self):
         """
@@ -1185,9 +1187,7 @@ class SearchBar(tk.Frame):
         self.widgets = collections.OrderedDict()
         self.gridWeights = {}
         self.handlers['OnSearch'] = None
-        self.widgets['Scope'] = MultiOptionMenu(self,
-                                                  name='where',
-                                                  text='Where')
+        self.widgets['Scope'] = MultiOptionMenu(self, name='where', text='Where')
         self.widgets['Search'] = ttk.Combobox(self, textvariable=self.input)
         self.widgets['Reset'] = ttk.Button(self,
                                            text='Clear',
@@ -1337,9 +1337,9 @@ def create_simple_root(title, size=None, resizable=(False, False), onquit=None):
     root.resizable(width=resizable[0], height=resizable[1])
 
     # CAUTION: on macOS, Icon becomes the dock image.
-    iconFile = join(_script_dir, 'icon.gif')
-    if exists(iconFile):
-        root.iconphoto(True, tk.PhotoImage(file=iconFile))
+    icon_file = join(_script_dir, 'icon.gif')
+    if exists(icon_file):
+        root.iconphoto(True, tk.PhotoImage(file=icon_file))
 
     root.clipboard_clear()
     root.attributes('-topmost', True)
@@ -1378,7 +1378,7 @@ class ParamUIBuilder:
         config = self.config_man.load()
         row_idx = 0
         for k, v in config.items():
-            widget_type = self._get_type(v)
+            widget_type = ParamUIBuilder._get_type(v)
             name = k.lower()
             if widget_type == 'bool':
                 row = CheckStrip(self.parent, name=name)
@@ -1414,7 +1414,8 @@ class ParamUIBuilder:
             row.grid(row=row_idx, column=0, sticky=FULL_EXPAND)
             row_idx += 1
 
-    def _get_type(self, field):
+    @staticmethod
+    def _get_type(field):
         # Retrieve primitive data type by decoding config field.
         # :param field: dict that satisfies
         #     - bool: {'Value': bool, ...}
@@ -1469,7 +1470,7 @@ def build_submit_ui(parent, targets, config_man,
 
 def build_script_launcher(title, app_dir, progress_queue,
                           handlers={}, window_size=(768, 768),
-                          mode='determinate'):
+                          progress_mode='determinate'):
     """
     Build common launcher for a multi-parameterized script.
     :param title: Window title.
@@ -1477,6 +1478,7 @@ def build_script_launcher(title, app_dir, progress_queue,
     :param progress_queue: Queue that stores progress messages for threads.
     :param handlers: Main handlers for submit, cancel, quit.
     :param window_size: Size of the root window.
+    :param progress_mode: whether progressbar is determinate or not
     :return: root window.
     """
     root = create_simple_root(
@@ -1503,16 +1505,16 @@ def build_script_launcher(title, app_dir, progress_queue,
     })
 
     # Generate param UI
-    configMan = util.SingletonDecorator(ConfigMan)(app_dir)
-    paramBuilder = ParamUIBuilder(mainframe.frame,
-                                  configMan,
-                                  watchers=handlers['Watchers']
-                                  if 'Watchers' in handlers.keys() else None)
-    paramBuilder.build()
+    config_man = util.SingletonDecorator(ConfigMan)(app_dir)
+    param_builder = ParamUIBuilder(mainframe.frame,
+                                   config_man,
+                                   watchers=handlers['Watchers']
+                                   if 'Watchers' in handlers.keys() else None)
+    param_builder.build()
     submit_strip = build_submit_ui(
         root,
         mainframe.frame.winfo_children(),
-        configMan,
+        config_man,
         # on_submit=functools.partial(main, argv=[sys.argv[0], '-c']),
         on_submit=handlers['OnSubmit']
         if 'OnSubmit' in handlers.keys() else None,
@@ -1521,8 +1523,8 @@ def build_script_launcher(title, app_dir, progress_queue,
     )
     submit_strip.configure_internal({'Cancel': {'text': 'Quit'}})
     submit_strip.pack(side='top', fill='both', expand=False)
-    progressBar = ProgressStrip(root, queue=progress_queue, mode=mode)
-    progressBar.pack(side='top', fill='both', expand=False)
+    progress_bar = ProgressStrip(root, queue=progress_queue, mode=progress_mode)
+    progress_bar.pack(side='top', fill='both', expand=False)
     return root
 
 
@@ -1539,7 +1541,8 @@ def test1():
     search_bar.configure_internal(
         {
             'Scope': {'Title': 'Where',
-                        'MultiOptions': ['Name', 'Title', 'Help']}
+                      'MultiOptions': ['Name', 'Title', 'Help']
+                      }
         }
     )
     search_bar.pack(side='top', fill='x', expand=False)
