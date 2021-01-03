@@ -6,10 +6,18 @@ category = "dev"
 optional = false
 python-versions = ">=3.6"
 
+[[package]]
+name = "python-osc"
+version = "1.7.4"
+description = "Open Sound Control server and client implementations in pure Python"
+category = "dev"
+optional = false
+python-versions = "*"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "3ddb1236ae114b41bfd6268c5196718e1e5141462819ce21707e58584c9f88b0"
+content-hash = "7b60b6a98214a2f81d75dad0b59ef0d8804c57de4a35ba0a0dad2db389d6257d"
 
 [metadata.files]
 pillow = [
@@ -41,4 +49,7 @@ pillow = [
     {file = "Pillow-8.1.0-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:81c3fa9a75d9f1afafdb916d5995633f319db09bd773cb56b8e39f1e98d90820"},
     {file = "Pillow-8.1.0-pp37-pypy37_pp73-win32.whl", hash = "sha256:b6f00ad5ebe846cc91763b1d0c6d30a8042e02b2316e27b05de04fa6ec831ec5"},
     {file = "Pillow-8.1.0.tar.gz", hash = "sha256:887668e792b7edbfb1d3c9d8b5d8c859269a0f0eba4dda562adb95500f60dbba"},
+]
+python-osc = [
+    {file = "python-osc-1.7.4.tar.gz", hash = "sha256:760f9d7a8c586a5347eb309336df08b308892cc6ca558b0874e7594bcb07d032"},
 ]
