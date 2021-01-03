@@ -116,7 +116,7 @@ def threaded_main():
 def main(argv):
     app_info = {
         'Script': __file__,
-        'Purpose': 'Run a tone generator and support RTPC.',
+        'Task': 'Run a tone generator and support RTPC.',
         'Version': __version__
     }
     args = util.parse_args_config(argv, app_info)
