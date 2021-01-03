@@ -1,12 +1,9 @@
 # Import built-in modules.
 import functools
-from os.path import abspath, basename, dirname, splitext
+import os
+from os.path import abspath, basename, dirname, join, splitext
 from queue import Queue
 import sys
-
-# Import project modules.
-import kkgui as ui
-import util
 
 #
 # Globals
@@ -15,6 +12,11 @@ __version__ = "0.0.1"
 _basename = splitext(basename(__file__))[0]
 _script_dir = abspath(dirname(__file__))
 _progress_queue = Queue()
+
+# Import project modules.
+sys.path.append(join(_script_dir, os.pardir))
+import kkgui as ui
+import util
 
 
 def main(argv):

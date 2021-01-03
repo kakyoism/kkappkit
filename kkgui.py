@@ -43,7 +43,7 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.6.4"
+__version__ = "0.6.5"
 
 
 #
@@ -1102,7 +1102,7 @@ class SubmitStrip(tk.Frame):
         app handler instead, which may or may not close the window.
         """
         if not callable(self.handlers['OnCancel']):
-            root = self.targets[0].winfo_toplevel()
+            root = self.winfo_toplevel()
             if root is not None:
                 root.destroy()
         else:
@@ -1592,7 +1592,8 @@ def test1():
     action_strip = SubmitStrip(
         root,
         prop_panel.frame.winfo_children(),
-        config_man=util.SingletonDecorator(ConfigMan)(_script_dir))
+        config_man=util.SingletonDecorator(ConfigMan)(_script_dir)
+    )
     action_strip.pack(side='top', fill='both', expand=False)
     root.mainloop()
 
