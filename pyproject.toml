@@ -12,6 +12,12 @@ keywords = [
     "frontend",
     "ui",
 ]
+packages = [
+    { include = "hello_world" },
+    { include = "test_offline_params" },
+    { include = "test_realtime_params" },
+    { include = "*.py" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
