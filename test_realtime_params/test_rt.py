@@ -29,7 +29,7 @@ __credits__ = ["Beinan Li"]
 __license__ = "MIT"
 __maintainer__ = "Beinan Li"
 __email__ = "li.beinan@gmail.com"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 
 _basename = splitext(basename(__file__))[0]
