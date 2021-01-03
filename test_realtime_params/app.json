@@ -14,7 +14,7 @@
     },
     "script": {
         "Title": "Script:         ",
-        "Value": "/Users/kakyo/Desktop/0.Dev/work/kkGUI/test_realtime_params/tonegen.csd",
+        "Value": "/Users/kakyo/Desktop/_dev/kkappkit/test_realtime_params/tonegen.csd",
         "Type": "Path",
         "Action": "Browse ...",
         "FileTypes": [

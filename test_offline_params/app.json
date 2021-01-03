@@ -22,7 +22,7 @@
     },
     "in_image": {
         "Title": "Input:    ",
-        "Value": "/Users/kakyo/Desktop/0.Dev/work/images/test.png",
+        "Value": "/Users/kakyo/Desktop/_dev/work/images/test.png",
         "Type": "Path",
         "Action": "Browse ...",
         "FileTypes": [
@@ -43,7 +43,7 @@
     },
     "out_image": {
         "Title": "Output: ",
-        "Value": "/Users/kakyo/Desktop/0.Dev/work/images/text.png",
+        "Value": "/Users/kakyo/Desktop/_dev/work/images/text.png",
         "Type": "Path",
         "Action": "Browse ...",
         "FileTypes": [
