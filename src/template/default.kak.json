@@ -14,8 +14,8 @@
     "api": "/path/to/api/"
   },
   "ui": {
-    "layout": "/path/to/my.kaklayout.json",
-    "theme": "/path/to/my.kaktheme.json",
-    "behaviour": "/path/to/my.kakbehav.json"
+    "layout": "/path/to/my_app.kaklayout.json",
+    "theme": "/path/to/my_app.kaktheme.json",
+    "behaviour": "/path/to/my_app.kakbehav.json"
   }
 }

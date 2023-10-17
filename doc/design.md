@@ -1,11 +1,10 @@
 # Design
 
-## Q&A
-### Do we have to know what app this is?
+## Do we have to know what app this is?
 - No, better parsing from backend because app is just a frontend and all the features are in the backend
 - So, the config should contain no app name, version, description and so on; the frontend version should be bound to the backend, e.g., its .toml
 
-### Should we include all configuration in one file?
+## Should we include all configuration in one file?
 - No, we want to support as many types of legacy scripts as possible
 - So, to parse those interfaces and generate RPC service stubs, we only specify the following at the app-config level:
   - where the backend repo is on the local machine, assuming service source code is saved under that repo as flat sub-folders
@@ -15,5 +14,34 @@
 - Because UI can be infinitely complicated, we simply point from app-config to the layout-config, which is a separate file
 - As a next step, layout-config can further point to widget-configs
 
+## How do config files refer to each other?
+### layout <=> app
+- `.kakbehav.json` defines how ui binds to services through RPC
+- `.kak.json` defines services that do the real work
+- So `.kakbehav.json` only needs to know the service names, and parameters to call them
+### layout <=> widget
+- `.kaklayout.json` specifies how widgets are laid out on a single-page app panel, without knowing widget's implementation
+- each `my.kakwgt.json` specifies a widget's implementation, without knowing how it is laid out
+- So `.kaklayout.json` needs to specify widget names, and builder will find the corresponding widget config files
+- All widgets are derived from the same base, so that layout only needs to know how to place the base widget, and the base widget knows how to render itself
+- for optimal SNR, widget filtering is enabled at all times, e.g., widgets can be hidden-shown based on search-based visibility
+- this means a default layout manager must be provided, e.g., a vertical grid layout that can hide rows based on keyword search
+### widget <=> widget
+- e.g., when a searchbar needs to know which widgets to hide, it needs to talk to a layout manager, which is likely a widget itself (panel)
+- e.g., a checkbox may gray out a button, which is another widget
+- so `.kkwgt.json` must refer to each other when necessary and define a list of ui reaction, e.g, disable/enable, hide/show, etc.
+### theme <=> layout, widget
+- `.kktheme.json` does not need to know app, but it needs to know widgets 
+- `.kklayout.json` knows about themes, e.g., when laying ouw groups of widgets, how do we pick fonts for groups, how much margin/padding to use between groups, etc.
 
-
+## Do we limit the feature scope of apps? e.g., do we aim for spreadsheet apps? media players? IDEs?
+- To keep the framework as simple as possible, for V1 we support:
+  - shoot-and-forget scripts, e.g., a script that takes a screenshot and saves it to a file
+  - controllers, e.g., a synth that allows real-time parameter control
+- We avoid supporting spreadsheet or media players because: 
+  - they are too complicated to implement
+  - they are too specific to be generalized
+  - they are too easy to implement with existing tools, e.g., Excel, VLC, etc.
+- For commercial-ready apps, commercial game-engines and app-engines are more suitable, e.g., Unreal and flutter are mature and free to use for commercial purposes, so we don't compete with them; but they are simply too heavy for small-scale development and requires building for platforms
+- So the most suitable apps are those that are small enough to configure in a few minutes to generate a working prototype, but large enough to be useful, e.g., a task scheduler that needs a few pages of preferences to be set up before launching, which would be too time-consuming with CLI; a synth prototype that requires only a few sliders and switches
+- After building such client-side prototypes, and if they are useful, we can then decide whether to build a full-fledged app with a game engine, or to build a web app, etc.
