@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "kkappkit"
 version = "0.6.5"
-description = "A UI library and mini-framework based on Tkinter，aiming for rapid development of small tool applications."
+description = "A mini-framework for building small Python GUI applications"
 authors = ["Beinan Li <li.beinan@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -20,7 +20,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.11"
+kkpyutil = "*"
 
 [tool.poetry.dev-dependencies]
 Pillow = "*"

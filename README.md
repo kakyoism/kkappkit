@@ -1,67 +1,34 @@
 # kkAppKit
 
-A UI library and mini-framework based on [Tkinter](https://wiki.python.org/moin/TkInter)，aiming for rapid development of  small tool applications.
+A mini-framework for building small Python GUI applications, based on [Tkinter](https://wiki.python.org/moin/TkInter)
 
-## Version
-1.0.0
+## Design Goals
+End-User UX
+- Simple layout, e.g. all-vertical, endless-page
+- Supports offline and realtime control
+- Supports CLI and GUI mode
+- Supports presets and per-parameter help doc
 
-## Motivation
-
-### Back story
-On a regular day, my colleagues ask me to write a small tool. So I roll up my sleeves and finish `myscript.py`. It works for me, that is, through command line (CLI):
-
-```sh
-python myscript.py -V -C config.json
-```
-
-I could tune the parameters through my JSON config file myself. But this doesn't please my non-engineer colleagues: They need intuitive control, i.e., a GUI. Then it takes a bit of work: Lay out the frontend controls, link them with backend data, and code up sophisticated behaviours.
-
-However, that's still not enough. Being agile, the tool will **never** be *complete*. It will remain bleeding-edge. Despite the instability, my colleagues need the freedom to tweak the data model and sometimes the GUI themselves. They also demand better diagnostics and error handling: "What's this KeyError here?". When that happens, I'd have to run it under CLI mode to get a full picture of the backend, then dive in and weed out the cryptic log messages, a sin of sloppy programmers. 
-
-Imagine doing this all over again on their next request.
-
-"*There's gotta be a better way!*"
-
-### The Vision
-I must rapidly deliver my app to internal non-engineer users, so that it ...
-
-- supports both GUI and CLI mode, decoupling frontend and backend.
-- gives non-engineer user offline/realtime parameter controls, presets, and per-parameter help doc.
-- allows user to reflect changes in data to UI with little programmer help.
-- makes its runtime state as clear as possible to non-engineer, e.g., shows progress, pops up human-readable diagnostics upon errors.
-- reduces bloat from third-party dependencies such as huge app frameworks to simplify distribution.
-
-For now, I don't aim at complex applications such as a digital audio workstation, nor do I try to attack aesthetics such as UI theming. Python is my language of choice.
-
-### Why Tkinter for the GUI?
-From the vision, Tkinter gives me the following benefits:
-
-- **It's always there!** It's a first-party standard library, which simplifies distribution.
-- **It's stable.** Being a binding to the dinasaur [Tcl/TK](https://www.tcl.tk), Tkinter rarely changes. I personally enjoy Tkinter's create-configure-bind-layout workflow.
-- **Its features seem good enough for writing small tools.** So far. Its widget set, though much smaller than its peers', is compact and configurable. Native look and styling are possible.
-
-### What is this all about then?
-Tkinter has well-known problems, such as:
-
-- The lack of a designer tool. You must code everything up.
-- Limited widget set with minimal documentation.
-- Being a language-binding of Tcl/TK, not very transparent despite being open source.
-
-However, only the first problem is a showstopper in my book: User needs to tweak the data model and UI without coding.
-
-So a big part of this work is to support data reflection in UI for Tkinter, similar to [XRC for wxWidgets](https://docs.wxwidgets.org/3.1/overview_xrc.html). Other (on-going) features include providing specialized compound widgets, handling blocking and async controls transparently, etc.
-
-### Caveats
-Many third-party UI libs, such as the great [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI), aim at innovative workflows. Here, instead, I'm only interested in building a thin layer upon Tkinter while keeping the familiar Tkinter flavour: The create-configure-bind-layout workflow.
-
-The fundamental constraints I set for myself is that the reflection currently adopts a vertical layout, like an *endless page*, meaning all the controls are laid out in **rows** inside a scrollable frame, **one compound control per row**. This is inspired by many form-filling web interface, such as Google Chrome's settings page.
-
-Also, being very new to UI development, I haven't found the right way to test Tkinter-based GUI automatically. So test framework is out of the equation at this point.
-
-Yes, I believe this shall be my own pet project for a very long time. This doc is thus for my own reference as well, for now.
+Dev UX
+- Supports frontend-backend decoupling
+- Ready-to-use compound widgets for solving common UI patterns
+- Simple declarative configuration to reduce app UI code
+- Minimum third-party dependencies
 
 
-## Getting started
+## How to work with kkappkit? (draft)
+- Dev writes backend features that can function as a CLI tool or a series of collaborative services 
+- Dev writes a configuration file to specify app architecture, e.g., layout, UI events, service entries
+- kkAppKit (Framework) reads the config file and generates the UI, leaving hooks for backend logic
+- At runtime the app, via Framework, starts an RPC server to register all user services; The GUI acts as a client to RPC the services to finish the real work; bidirectional-comm between the frontend and backend ensures results reflect on the UI 
+
+## Why not use a full-fledged framework like PySide, PyGTK?
+- Most of them are too big for small tools, making CI and distribution difficult
+- Most of them rely on a designer tool (GUI), which is not my cup of tea
+- With Python ecosystem, Tkinter is the only first-party GUI lib, which simplifies distribution
+- I want to keep the Tkinter flavour: create-configure-bind-layout
+
+## Getting started (DEPRECATED)
 
 ### Workflow
 
@@ -125,7 +92,7 @@ from queue import Queue
 import sys
 
 # Import project modules.
-import kkgui as ui
+from src import kkgui as ui
 import util
 
 #
@@ -210,7 +177,7 @@ Finally, we copy `kkgui.py` and `util.py` modules into the app folder. Now we ar
 
 We'll test the GUI mode first. Run `hello.py` with shell integration of Python 3, or open a Terminal or Command Prompt and type in `python3 hello.py`. You should see the following GUI (mine runs on macOS).
 
-![](hello_world/helloworld-gui.png)
+![](demo/hello_world/helloworld-gui.png)
 
 From top to bottom, you see:
 
@@ -224,7 +191,7 @@ No. 1, 4, and 5 come for free as the kit's built-in widgets from calling the fac
 
 Now drag the slider or edit the spinbox so that the number shows `0.5`, then press the bottom-right button `Go!`. You'll see the following prompt:
 
-![](hello_world/helloworld-popup.png)
+![](demo/hello_world/helloworld-popup.png)
 
 That concludes our GUI-mode example.
 
