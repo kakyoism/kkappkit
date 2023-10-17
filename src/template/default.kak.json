@@ -16,6 +16,7 @@
   "ui": {
     "layout": "/path/to/my_app.kaklayout.json",
     "theme": "/path/to/my_app.kaktheme.json",
-    "behaviour": "/path/to/my_app.kakbehav.json"
+    "behaviour": "/path/to/my_app.kakbehav.json",
+    "binding": "/path/to/my_app.kakbind.json"
   }
 }
