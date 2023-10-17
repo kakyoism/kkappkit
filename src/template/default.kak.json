@@ -1,0 +1,21 @@
+{
+  "format": "1",
+  "backend": {
+    "root": "</path/to/backend_root with a pyproject.toml>",
+    "prototype": {
+      "my_service1": "src/cli.py",
+      "my_service2": "src/cli.py"
+    }
+  },
+  "server": {
+    "protocol": "grpc",
+    "ip": "127.0.0.1",
+    "port": "*",
+    "api": "/path/to/api/"
+  },
+  "ui": {
+    "layout": "/path/to/my.kaklayout.json",
+    "theme": "/path/to/my.kaktheme.json",
+    "behaviour": "/path/to/my.kakbehav.json"
+  }
+}

@@ -1,6 +1,6 @@
 # kkAppKit
 
-A mini-framework for building small Python GUI applications, based on [Tkinter](https://wiki.python.org/moin/TkInter)
+A framework for building small Python GUI applications, based on [Tkinter](https://wiki.python.org/moin/TkInter)
 
 ## Design Goals
 End-User UX
