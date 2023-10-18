@@ -2,9 +2,9 @@
   "format": "1",
   "backend": {
     "root": "</path/to/backend_root with a pyproject.toml>",
-    "prototype": {
-      "my_service1": "src/cli.py",
-      "my_service2": "src/cli.py"
+    "service": {
+      "my_service": "src/cli.py",
+      "my_command": "/path/to/my.kakcmd.json"
     }
   },
   "server": {

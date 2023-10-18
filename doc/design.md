@@ -55,6 +55,7 @@
 - To sum up, the layout starts as multi-page, and each page is implemented as an endless page to work with searchbar
 
 ## Do we have implementation constraints for the resulting app?
+- RPC allows us to use any backend language, but the framework itself and the frontend is Python-based
 - The framework demands on a particular backend folder structure 
   - Services must be saved as flat sub-folders under a common root dir (backend)
   - Services must define a CLI using argparse
@@ -65,7 +66,36 @@
 - Theme must define emphasis styles using font, color, and shape
 - We must limit the types of widgets that may affect other widgets, e.g., checkbox; it'd be much better to contain inter-widget influences inside a compound widget, so that configs don't have to define such influences
   - implement a widget for a dismissible widget group so that its checkbox can hide/show or enable/disable the whole group
+- CLI argparse arguments must use primitive types that can be passed along through RPC, e.g., supported by protobuf with gRPC
 
 ## Do we allow for custom data bindings?
 - We must provide default bindings so that UI is mostly generated with one-click for primitive data types, e.g., int, float, list, etc.
 - Advanced widgets can be defined to bind with domain-specific data types, e.g., a parameter with a threshold can be a float-slider that auto-switches its background color when the slider value passes the threshold; the CLI parser can apply such a type system to the parameter, and the UI can be generated accordingly; this is most likely a V2 feature
+- Avoid making a sophisticated type system, which is often beautifully implemented in game engines and app-engines with a DSL, e.g., dart
+- Instead, allow CLI to stay with primitive types, but tag arguments in widget-configs to define data roles; then in binding-config use role tags to bind with advanced widgets
+
+## What kind of dev workflow do we promote?
+- think of UX in terms of layout first: what the app LOOKS like
+  - In layout-config, define how widgets are arranged on a page or pages
+  - Each widget corresponds to an app role, e.g., samplerate.kakwgt.json; this way we think in terms of domain concepts, e.g., samplerate, instead of implementation details, e.g., a slider
+- then we think of widgets in terms of data: how widget ops affect data and how to retrieve data from widgets:
+  - In widget-config, define how widget ops affect data, e.g., sampling-rate is discrete and should be seen as an option widget like ComboBox; also because SR is unique, it must be a single-selection option 
+  - Does the widget send out events on changing its value (RTPC),  or we bind data statically with the widget by keeping widget values in memory, consolidating all values from all the widgets as a parameter set, and finally shooting out a single event containing the parameter set on submit (form-filling)?
+  - For an RTPC parameter, the widget must define an event
+  - For a form entry, the widget must use a data binding
+  - For a widget that is both, then both the above are needed
+  - For a compound widget whose sub-widgets can do any or both the above, then sub-widgets must be defined in a list with predefined layout, each using a binding or an event or both
+  - The handlers of these events will be generated later into a mediator module where RPCs can be hooked up
+  - For form-filling, where data are first consolidated then sent out as a whole, codegen will generate submit button event handler, in which all widgets' values are retrieved through their bindings, and sent out in an RPC call
+  - For RTPC, where data are sent out on every change, codegen will generate event handlers for each widget, in which the widget's value is retrieved through its binding, and sent out in an RPC call
+  - All the above are defined in role.kakwgt.json
+- Then we implement features using CLI for easier TDD
+- Finally, we think of the aesthetics and infographics of the UI using theming
+
+## Given all the constraints, do we have to support RPC?
+- The build pipeline implies that the backend services are written in Python, because ast parsing is used
+- That means we have full access to backend code, so we can just import the backend code and call the functions directly
+- Services written in other languages cannot be registered to server anyway, so the multi-language benefit does not apply once frontend is written in a fixed language 
+- As long as we have the glue layer, where event handlers are defined, we still enjoy frontend/backend separation
+- so there is no need to support RPC in this architecture
+- but we can support any subprocess backend as executable with arguments, this can be defined in a command-config .kakcmdex.json
