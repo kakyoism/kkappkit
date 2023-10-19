@@ -5,16 +5,19 @@
   "description": "My app",
   "tutorial": [
     "example 1: do this",
-    "my_app -i input_file -o output_file"
+    "<app_name> -i input_file -o output_file"
   ],
   "frontend": {
-    "binding": "/path/to/my_app.kkbind.json",
-    "behaviour": "/path/to/my_app.kkbehav.json",
-    "theme": "/path/to/my_app.kktheme.json"
+    "binding": "oneshot.kkbind.json",
+    "behaviour": "default.kkbehav.json",
+    "theme": "default.kktheme.json"
   },
-  "communication": "/path/to/subproc.kkcomm.json",
+  "communication": "subproc.kkcomm.json",
   "backend": {
-    "root": "</path/to/backend_root>"
+    "root": {
+      "macOS": "</path/to/backend_root>",
+      "Windows": "<c:/path/to/backend_root>"
+    }
   },
-  "distribution": "/path/to/my_app.kkdist.json"
+  "distribution": "pyinstaller.kkdist.json"
 }
