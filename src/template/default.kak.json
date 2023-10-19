@@ -1,22 +1,20 @@
 {
   "format": "1",
+  "name": "my_app",
+  "author": ["my_name <my_email>"],
+  "description": "My app",
+  "tutorial": [
+    "example 1: do this",
+    "my_app -i input_file -o output_file"
+  ],
+  "frontend": {
+    "binding": "/path/to/my_app.kkbind.json",
+    "behaviour": "/path/to/my_app.kkbehav.json",
+    "theme": "/path/to/my_app.kktheme.json"
+  },
+  "communication": "/path/to/subproc.kkcomm.json",
   "backend": {
-    "root": "</path/to/backend_root with a pyproject.toml>",
-    "service": {
-      "my_service": "src/cli.py",
-      "my_command": "/path/to/my.kakcmd.json"
-    }
+    "root": "</path/to/backend_root>"
   },
-  "server": {
-    "protocol": "grpc",
-    "ip": "127.0.0.1",
-    "port": "*",
-    "api": "/path/to/api/"
-  },
-  "ui": {
-    "layout": "/path/to/my_app.kaklayout.json",
-    "theme": "/path/to/my_app.kaktheme.json",
-    "behaviour": "/path/to/my_app.kakbehav.json",
-    "binding": "/path/to/my_app.kakbind.json"
-  }
+  "distribution": "/path/to/my_app.kkdist.json"
 }
