@@ -1,23 +1,23 @@
 # kkAppKit
 
-A framework for building small Python GUI applications, based on [Tkinter](https://wiki.python.org/moin/TkInter)
+A code-generator for building small desktop applications with Python and [Tkinter](https://wiki.python.org/moin/TkInter)
 
 ## Design Goals
 Target app types
-- Small productivity tools that focus on a single task
+- Small desktop productivity tools
 - Proof-of-concept prototypes, demos, and tutorials
 
 End-User UX
 - Simple layout, e.g. all-vertical, endless-page
-- Supports offline and realtime control
+- Supports shoot-and-forget (oneshot) and realtime-control apps
 - Supports CLI and GUI
-- Supports parameter presets and per-parameter help doc
+- Supports some common app features such as presets and context help
 
 Dev UX
 - Supports frontend-backend decoupling
-- Ready-to-use compound widgets for solving common UI patterns
-- Simple declarative configuration with code generation
-- Minimum third-party dependencies
+- Ready-to-use widgets for solving common UI patterns
+- Simple declarative configuration that drives code generation
+- Minimum dependencies: The generated app will not depend on the kit and no code needs to be downloaded from PyPI
 
 ## How to work with kkappkit? (draft)
 - Dev use kkappkit to initialize an app project
@@ -27,9 +27,9 @@ Dev UX
 - Dev integrates backend implementation to frontend based on the configuration
 - Optionally, dev builds a standalone app bundle for distribution based on the configuration
 
-## Why not use a full-fledged framework like PySide, PyGTK?
+## Why not use a full-fledged framework like PySide, PyGTK, or Electron?
 - Most of them are too big for small tools, making CI and distribution difficult; Tkinter is the only first-party GUI lib, which simplifies distribution
-- They aim for flexibility and power, which makes them hard to learn and use; I want to bake in just enough policies to cater to the RAD-style dev experience without making the framework too opinionated
+- They aim for flexibility and power, which makes them hard to learn and use; I want to bake in just enough policies for the RAD style without making the framework too opinionated
 
 ## Getting started (DEPRECATED)
 
