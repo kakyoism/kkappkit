@@ -14,7 +14,7 @@ from matplotlib.ticker import FuncFormatter
 import numpy as np
 from scipy.io import wavfile
 
-from src import kkgui as ui
+from src.gui import kkgui as ui
 
 if sys.version_info.major < 3:
     import Tkinter as tk

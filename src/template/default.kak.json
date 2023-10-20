@@ -17,7 +17,8 @@
     "root": {
       "macOS": "</path/to/backend_root>",
       "Windows": "<c:/path/to/backend_root>"
-    }
+    },
+    "tech": "python"
   },
   "distribution": "pyinstaller.kkdist.json"
 }

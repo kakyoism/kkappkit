@@ -1,8 +1,13 @@
 # Analysis
 
+## Is kkappkit an offline builder or a runtime library?
+- If we aim for a runtime, then the app would still have to import  codegen part, which would still be part of the package unless "from...import" is used; this does not make much sense for the app
+- If we aim for offline builder, then UI code will be baked into the app, which would give us maintenance headache
+- Can we use a set of global widgets that's constantly updated for all apps? This would be a good idea if we want to build a widget library, but it's not a good idea for a RAD tool, because we want to keep the app as self-contained as possible
+- So it makes more sense to make kkappkit a code-gen, and the dev can detach the app from kkappkit afterward; if an widget update is needed, then simply re-run the code-gen and let user update from the app store instead of pulling from kkappkit PyPI as a runtime dependency 
+
 ## Do we have to know what app this is?
-- No, better parsing from backend because app is just a frontend and all the features are in the backend
-- So, the config should contain no app name, version, description and so on; the frontend version should be bound to the backend, e.g., its .toml
+- Yes, we want to generate the app completely from config files. This way the appkit may eventually become techstack-agnostic
 
 ## Should we include all configuration in one file?
 - No, we want to support as many types of legacy scripts as possible

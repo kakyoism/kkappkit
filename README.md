@@ -3,30 +3,33 @@
 A framework for building small Python GUI applications, based on [Tkinter](https://wiki.python.org/moin/TkInter)
 
 ## Design Goals
+Target app types
+- Small productivity tools that focus on a single task
+- Proof-of-concept prototypes, demos, and tutorials
+
 End-User UX
 - Simple layout, e.g. all-vertical, endless-page
 - Supports offline and realtime control
-- Supports CLI and GUI mode
-- Supports presets and per-parameter help doc
+- Supports CLI and GUI
+- Supports parameter presets and per-parameter help doc
 
 Dev UX
 - Supports frontend-backend decoupling
 - Ready-to-use compound widgets for solving common UI patterns
-- Simple declarative configuration to reduce app UI code
+- Simple declarative configuration with code generation
 - Minimum third-party dependencies
 
-
 ## How to work with kkappkit? (draft)
-- Dev writes backend features that can function as a CLI tool or a series of collaborative services 
-- Dev writes a configuration file to specify app architecture, e.g., layout, UI events, service entries
-- kkAppKit (Framework) reads the config file and generates the UI, leaving hooks for backend logic
-- At runtime the app, via Framework, starts an RPC server to register all user services; The GUI acts as a client to RPC the services to finish the real work; bidirectional-comm between the frontend and backend ensures results reflect on the UI 
+- Dev use kkappkit to initialize an app project
+- Dev designs the app by writing configuration files, e.g., data model, UI bindings and events, frontend-backend communication, distribution, etc.
+- Dev generates the interface (CLI/GUI) code based on the configuration
+- Dev implements backend core as a CLI tool that could be an oneshot, or a realtime controller, or both
+- Dev integrates backend implementation to frontend based on the configuration
+- Optionally, dev builds a standalone app bundle for distribution based on the configuration
 
 ## Why not use a full-fledged framework like PySide, PyGTK?
-- Most of them are too big for small tools, making CI and distribution difficult
-- Most of them rely on a designer tool (GUI), which is not my cup of tea
-- With Python ecosystem, Tkinter is the only first-party GUI lib, which simplifies distribution
-- I want to keep the Tkinter flavour: create-configure-bind-layout
+- Most of them are too big for small tools, making CI and distribution difficult; Tkinter is the only first-party GUI lib, which simplifies distribution
+- They aim for flexibility and power, which makes them hard to learn and use; I want to bake in just enough policies to cater to the RAD-style dev experience without making the framework too opinionated
 
 ## Getting started (DEPRECATED)
 
@@ -92,7 +95,7 @@ from queue import Queue
 import sys
 
 # Import project modules.
-from src import kkgui as ui
+from src.gui import kkgui as ui
 import util
 
 #
