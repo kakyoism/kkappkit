@@ -8,11 +8,11 @@
     "<app_name> -i input_file -o output_file"
   ],
   "frontend": {
-    "binding": "oneshot.kkbind.json",
-    "behaviour": "default.kkbehav.json",
-    "theme": "default.kktheme.json"
+    "binding": "oneshot.kakbind.json",
+    "behaviour": "default.kakbehav.json",
+    "theme": "default.kaktheme.json"
   },
-  "communication": "subproc.kkcomm.json",
+  "communication": "subproc.kakcomm.json",
   "backend": {
     "root": {
       "macOS": "</path/to/backend_root>",
@@ -20,5 +20,5 @@
     },
     "tech": "python"
   },
-  "distribution": "pyinstaller.kkdist.json"
+  "distribution": "pyinstaller.kakdist.json"
 }
