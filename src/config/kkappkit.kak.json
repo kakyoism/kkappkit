@@ -5,11 +5,11 @@
   "description": "A code-generator for building small desktop applications with Python and Tkinter",
   "tutorial": [
     "# generate an empty app-config for a new app",
-    "%(app_name)s -n my_app",
+    "%(appname)s/run -n my_app",
     "# after filling up app-config and its sub-configs, generate or update app according to the entire config set",
-    "%(app_name)s -g /path/to/my_app/.kak.json",
+    "%(appname)s/run -g /path/to/my_app/my_app.kak.json",
     "# same as above, but backup and erase the existing content and start anew",
-    "%(app_name)s -g /path/to/my_app/.kak.json -f"
+    "%(appname)s/run -g /path/to/my_app/my_app.kak.json -f"
   ],
   "frontend": {
     "binding": "oneshot.kakbind.json",
@@ -19,8 +19,8 @@
   "communication": "subproc.kakcomm.json",
   "backend": {
     "root": {
-      "macOS": "</path/to/backend_root>",
-      "Windows": "<c:/path/to/backend_root>"
+      "macOS": "../..",
+      "Windows": "..\\.."
     },
     "tech": "python"
   },
