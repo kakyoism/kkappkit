@@ -19,7 +19,7 @@
     "parameterized": {
       "sender": "kakbind.key3",
       "request": "/function",
-      "parameter": [
+      "arg": [
         "kakbind.key3",
         "kakbind.key4"
       ]
