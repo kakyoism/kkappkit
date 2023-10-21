@@ -1,0 +1,104 @@
+{
+  "_version": 1,
+  "bio": {
+    "title": "Bio:",
+    "help": "text, with multiline support",
+    "type": "str",
+    "default": "",
+    "range": [0, null],
+    "required": false,
+    "events": [],
+    "group": "personal_info.basic"
+  },
+  "age": {
+    "title": "Age:",
+    "help": "an integer",
+    "type": "int",
+    "default": 0,
+    "range": [0, null],
+    "steps": [1, 10],
+    "required": false,
+    "events": ["change"],
+    "group": "personal_info.basic"
+  },
+  "height": {
+    "title": "Height (m):",
+    "help": "a float number",
+    "type": "float",
+    "default": 1.73,
+    "range": [0.0, 3.0],
+    "steps": [0.01, 0.1],
+    "Precision": 4,
+    "required": false,
+    "events": ["change"],
+    "group": "personal_info.basic"
+  },
+  "gender": {
+    "title": "Gender:",
+    "help": "single-selection with str as default, option-menu, no user option can be added when range.max==1",
+    "options": ["Male", "Female", "[Secret]"],
+    "type": "str",
+    "default": "[Secret]",
+    "range": [1, 1],
+    "required": false,
+    "events": [],
+    "group": "personal_info.skills"
+  },
+  "language": {
+    "title": "Language:",
+    "help": "multi-selection with list as default; allow user to add new option when range.max==null",
+    "options": ["English", "French", "Chinese"],
+    "type": "str",
+    "default": ["English"],
+    "range": [1, null],
+    "required": false,
+    "events": [],
+    "group": "personal_info.skills"
+  },
+  "portfolio": {
+    "title": "Portfolio:",
+    "help": "file browser, with add/remove/paste, single-selection when range.max is 1, multi-selection when range.max is null",
+    "type": "File",
+    "default": {
+      "macOS": "",
+      "Windows": ""
+    },
+    "range": [0, 1],
+    "required": false,
+    "events": [],
+    "group": "personal_info.work"
+  },
+  "music_collections": {
+      "title": "Repo:",
+      "help": "folder browser, similar with file browser",
+      "type": "Folder",
+      "default": {
+        "macOS": [],
+        "Windows": []
+      },
+      "range": [0, null],
+      "required": false,
+      "binding": "bind",
+      "events": [],
+      "group": "personal_info.work"
+  },
+  "todo": {
+      "title": "TODO:",
+      "help": "list, ComboBox with CRUD",
+      "type": "list",
+      "default": [],
+      "range": [0, null],
+      "required": false,
+      "events": [],
+      "group": "personal_info.work"
+  },
+  "auto_save_preset": {
+      "title": "Auto-save parameters as preset:",
+      "help": "boolean, global settings, always default to false in generated CLI even if it's true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change",
+      "type": "bool",
+      "default": true,
+      "required": false,
+      "events": ["change"],
+      "group": "settings"
+  }
+}

@@ -12,8 +12,8 @@
     "%(appname)s/run -g /path/to/my_app/my_app.kak.json -f"
   ],
   "frontend": {
-    "binding": "oneshot.kakbind.json",
-    "behaviour": "default.kakbehav.json",
+    "binding": "default.kakbind.json",
+    "behaviour": "oneshot.kakbehav.json",
     "theme": "default.kaktheme.json"
   },
   "communication": "subproc.kakcomm.json",
