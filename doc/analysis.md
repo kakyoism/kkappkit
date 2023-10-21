@@ -146,3 +146,12 @@
 - with oneshot apps, form entries can automatically send error messages to statusbar, and log to log file
 - with controller apps, there would be no need to validate or show control parameters on statusbar or log for performance reasons; but in the debug-build, logging might be useful
 - as long as some parameters should bind with statusbar and the others should not, we need to define a list of parameters that should bind with statusbar
+
+## How to define a control protocol?
+- Controller app is GUI only with V1; it's possible to later support app-specific REPL commands for CLI, but that's not the focus of V1
+- The elements of control: sender, receiver, message, and protocol
+- OSC protocol defines an IP-like command ID, and a parameter list
+- gRPC defines a package-service-request-reply structure
+- Frontend is usually the sender/client (Tkinter widgets), and the server 
+- Server IP/port should be in binding-config; the protocol should only care about the message format, e.g., OSC commands, gRPC requests, etc.
+- The control-config should be independent of the binding-config, and only generates a mediator/bridge module as the mechanism for sending commands

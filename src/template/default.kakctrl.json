@@ -1,10 +1,29 @@
 {
   "_version": 1,
   "action": {
-    "protocol": "osc",
     "start": "GO!",
-    "stop": "Stop",
+    "stop": "Quit",
     "reset": "Reset"
+  },
+  "protocol": {
+    "type": "osc",
+    "shoot_and_forget": {
+      "sender": "kakbind.key1",
+      "request": "/push"
+    },
+    "bidirectional": {
+      "sender": "kakbind.key2",
+      "request": "/question",
+      "response": "/answer"
+    },
+    "parameterized": {
+      "sender": "kakbind.key3",
+      "request": "/function",
+      "parameter": [
+        "kakbind.key3",
+        "kakbind.key4"
+      ]
+    }
   },
   "status": {},
   "progress": "infinite"
