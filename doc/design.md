@@ -1,5 +1,21 @@
 # Design
 
+## behaviour-config
+- Define the behaviour of the app, e.g., oneshot, rt-control, etc.
+- Top-level keys represent UI elements and their behaviours; implementation details are not exposed to the user, e.g., lock-free queues 
+- The app behaviour reflects on the bottom action panel along with other non-parameter panels, e.g., statusbar, etc.
+- Progress can be finite or infinite; finite progressbar should display the color bar along with the fraction of progress; no descriptive text is shown, which is the job of statusbar
+
+## binding-config
+- Parameters are laid out from top to bottom as top-level key-value groups; their order is preserved both in the sidebar groups and in the group pages
+- Every parameter is bound to a tk variable 
+- Does not differentiate between oneshot and rt-control
+- Snake-case top-level keys are auto-used for widget title, unless sub-key *title* is specified
+- *title* will be a separate row on top of the widget
+- *validate* key is optional, and default to false if not specified; once specified, custom validation is enabled and statusbar will show validation tips; value text will be highlighted if validation fails
+- *group* format: <sidebar-entry>.<page-group>
+- *slaves* define widgets to be influenced by the current widget; the current widget is the master widget; one master can slave on several groups of slaves with group-specific effects, e.g., enable one but disable another; custom actions must be defined in code; on change, these effects are applied in sequence
+
 ## app-config
 - When generate a new project, all the configs should be generated at the fixed location with fixed filenames
 - If we want to apply template configs, just manually overwrite the generated ones

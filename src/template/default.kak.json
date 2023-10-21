@@ -9,7 +9,7 @@
   ],
   "frontend": {
     "binding": "default.kakbind.json",
-    "behaviour": "oneshot.kakbehav.json",
+    "behaviour": "default.kakform.json",
     "theme": "default.kaktheme.json"
   },
   "communication": "subproc.kakcomm.json",

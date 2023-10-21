@@ -72,7 +72,15 @@
     "required": false,
     "events": ["change"],
     "group": "hobbies",
-    "slaves": ["music_collections", "dreams"]
+    "slaving": [
+      {
+        "action": "enable",
+        "slaves": [
+          "music_collections",
+          "dreams"
+        ]
+      }
+    ]
   },
   "music_collections": {
       "title": "Music Collection Folders:",
@@ -84,7 +92,6 @@
       },
       "range": [0, null],
       "required": false,
-      "binding": "bind",
       "events": [],
       "group": "personal_info.hobbies"
   },

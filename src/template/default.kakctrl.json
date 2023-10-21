@@ -1,0 +1,10 @@
+{
+  "_version": 1,
+  "action": {
+    "start": "GO!",
+    "stop": "Stop",
+    "reset": "Reset"
+  },
+  "status": {},
+  "progress": "infinite"
+}

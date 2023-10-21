@@ -1,11 +1,10 @@
 {
   "_version": 1,
-  "status": {},
-  "progress": "percent",
-  "control": {
-    "type": "submit",
+  "action": {
     "submit": "GO!",
     "quit": "Cancel",
     "reset": "Reset"
-  }
+  },
+  "status": {},
+  "progress": "finite"
 }
