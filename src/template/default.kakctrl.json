@@ -1,6 +1,7 @@
 {
   "_version": 1,
   "action": {
+    "protocol": "osc",
     "start": "GO!",
     "stop": "Stop",
     "reset": "Reset"
