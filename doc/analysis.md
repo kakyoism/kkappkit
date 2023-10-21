@@ -131,3 +131,18 @@
 - However, there is one scenario that is close to microservice case: the intended task may reuse two existing CLI tools as possible steps, then we could generate a GUI that use them both and possible some new services
 - In this case, we can still hide those services as imp detail and only provide a facade service in the app-config to generate UI for the whole task
 
+## How to let one widget affect another?
+- Sometimes we add a checkbox for enabling/disabling a set of the widgets below it, to express a conditional config
+- this requires dev to define a master-slave binding from the checkbox master to its slaves, for instance
+- hence, we can mark the master and its slaves
+- because UI ops are one at a time, so it's safe to allow multiple masters on one slave in addition to one master on multiple slaves
+- as an alternative, we could let slaves to define its masters, but that'd be more work than define from the master end where we can edit everything in one place
+
+## What do we specify in behaviour-config?
+- The goals for having a status report
+  - giving feedback on all kinds of form-filling actions, e.g., validation errors without msgbox: red text on the widget, with tooltip on statusbar, the full info in the log
+- statusbar is a good place for briefing the current status, e.g., "ready", "working", "done", "error", "age must be a number", etc. 
+- log is a good place for detailed info, e.g., "failed to connect to server at ..., diagnostics: ...", etc.; statusbar can provide a button to open the log in web-browser 
+- with oneshot apps, form entries can automatically send error messages to statusbar, and log to log file
+- with controller apps, there would be no need to validate or show control parameters on statusbar or log for performance reasons; but in the debug-build, logging might be useful
+- as long as some parameters should bind with statusbar and the others should not, we need to define a list of parameters that should bind with statusbar

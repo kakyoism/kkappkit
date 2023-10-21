@@ -1,0 +1,11 @@
+{
+  "_version": 1,
+  "status": {},
+  "progress": "infinite",
+  "control": {
+    "type": "control",
+    "start": "GO!",
+    "stop": "Stop",
+    "reset": "Reset"
+  }
+}
