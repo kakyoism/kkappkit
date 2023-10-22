@@ -1,19 +1,19 @@
 {
-  "format": "1",
+  "version": 1,
   "name": "kkappkit",
-  "author": ["Beinan Li <li.beinan@gmail.com>"],
+  "authors": ["Beinan Li <li.beinan@gmail.com>"],
   "description": "A code-generator for building small desktop applications with Python and Tkinter",
   "tutorial": [
     "# generate an empty app-config for a new app",
-    "%(appname)s/run -n my_app",
+    "${name}/run -n my_app",
     "# after filling up app-config and its sub-configs, generate or update app according to the entire config set",
-    "%(appname)s/run -g /path/to/my_app/my_app.kak.json",
-    "# same as above, but backup and erase the existing content and start anew",
-    "%(appname)s/run -g /path/to/my_app/my_app.kak.json -f"
+    "${name}/run -g /path/to/my_app/my_app.kak.json",
+    "# same as above, but backup and erase the existing content, then start anew",
+    "${name}/run -g /path/to/my_app/my_app.kak.json -f"
   ],
   "frontend": {
     "binding": "default.kakbind.json",
-    "behaviour": "oneshot.kakbehav.json",
+    "control": "offline.kakctrl.json",
     "theme": "default.kaktheme.json"
   },
   "communication": "subproc.kakcomm.json",

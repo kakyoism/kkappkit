@@ -1,7 +1,7 @@
 {
-  "version": "1",
+  "version": 1,
   "name": "my_app",
-  "author": ["my_name <my_email>"],
+  "authors": ["my_name <my_email>"],
   "description": "My app",
   "tutorial": [
     "example 1: do this",
