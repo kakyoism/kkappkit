@@ -2,15 +2,10 @@
   "_version": 1,
   "protocol": "subprocess",
   "submit": {
-    "sender": "kak.frontend.control.action.submit",
-    "request": ["poetry", "run", "python", "%(cli)s"],
-    "payload": {
-      "--auto-save-preset": "kak.frontend.binding.auto_save_preset",
-      "--session-id": "kak.name"
-    },
-    "env": {
-      "PYTHONPATH": "."
-    },
-    "cwd": "."
+    "sender": "${kakctrl}.action.submit",
+    "topic": "poetry run python ${cli}",
+    "payload": "${kakbind}",
+    "response": "",
+    "cwd": "${kak}.backend.root.${platform}"
   }
 }

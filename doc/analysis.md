@@ -155,3 +155,34 @@
 - Frontend is usually the sender/client (Tkinter widgets), and the server 
 - Server IP/port should be in binding-config; the protocol should only care about the message format, e.g., OSC commands, gRPC requests, etc.
 - The control-config should be independent of the binding-config, and only generates a mediator/bridge module as the mechanism for sending commands
+
+## Do we need custom environment variable? syntax?
+- Yes we do. It should be clear which part of a JSON string must be substituted and which part is literal
+- Then the syntax had better be:
+  - familiar to devs; reuse established syntax
+  - easy to parse
+  - easy to read
+- Candidates: `%(<var_name>)s`, `$<var_name>`, `$<var_name>$`, `${<var_name>}`, `{{<var_name>}}`
+- `%(<var_name>)s` is the syntax for Python string formatting, which is easy to parse and read, but not familiar to devs
+- `$<var_name>$` is the JetBrains snippet syntax, not familiar to most devs, and not easy to parse when there are consecutive vars
+- `$<var_name>` is the basic BASH variable syntax, familiar to devs, but not easy to parse when it's followed by literal text
+- `${<var_name>}` is the BASH variable syntax with braces, familiar to devs, and easy to parse, and somewhat easy to read
+- `{{<var_name>}}` is the Jinja2 syntax, not familiar to devs, easy to parse, and somewhat verbose to write up
+
+## What should the code-gen's analytical chain be like?
+- dev: kak => kakctrl => kakcomm => kakbind/kaktheme =>
+- distribute: app => kakdist
+- Before analysis, config files are copied from kkappkit's template folder to the app's designated folder
+
+## Looks like we need a syntax system to make the formats a bit more rigorous to make the system more robust. What should it be like?
+- Take cross-config reference as an example
+- We need to reference
+  - config file: JSON
+  - JSON fields inside the file
+- Constraints
+  - No field has mixture of literal and variable, i.e., the text components are all variables, e.g., JSON keys or build-vars
+- Approaches for referencing fields
+  - compact oneliner: `${cfgfile}.<parent_field>.<sub_field>....`
+  - compound fields: `{"file": "${cfgfile}", "field": "<parent_field>.<sub_field>...."`
+- The compact approach is easy to write, but harder to parse
+- The compound approach is easy to parse, but harder to write

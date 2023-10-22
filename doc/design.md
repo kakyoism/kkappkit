@@ -1,5 +1,11 @@
 # Design
 
+## build variables
+- syntax: `${<var_name>}`
+- `CLI`: app's command line interface source file path
+- `PLATFORM`: platform name, e.g., `macOS`, `Windows`, etc.
+- `APP_NAME`: app's name
+
 ## behaviour-config
 - Define the behaviour of the app, e.g., oneshot, rt-control, etc.
 - Top-level keys represent UI elements and their behaviours; implementation details are not exposed to the user, e.g., lock-free queues 

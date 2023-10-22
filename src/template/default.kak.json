@@ -5,7 +5,7 @@
   "description": "My app",
   "tutorial": [
     "example 1: do this",
-    "<app_name> -i input_file -o output_file"
+    "${name} -i input_file -o output_file"
   ],
   "frontend": {
     "binding": "default.kakbind.json",

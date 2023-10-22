@@ -2,20 +2,20 @@
   "_version": 1,
   "protocol": "osc",
   "shoot_and_forget": {
-    "sender": "kak.frontend.kakbind.key1",
-    "request": "/push"
+    "sender": "${kakbind}.key1",
+    "topic": "/push"
   },
   "bidirectional": {
-    "sender": "kak.frontend.kakbind.key2",
-    "request": "/question",
+    "sender": "${kakbind}.key2",
+    "topic": "/question",
     "response": "/answer"
   },
   "parameterized": {
-    "sender": "kak.frontend.kakbind.key3",
-    "request": "/function",
+    "sender": "${kakbind}.key3",
+    "topic": "/function",
     "payload": {
-      "arg1": "kak.frontend.kakbind.key3",
-      "arg2": "kak.frontend.kakbind.key4"
+      "arg1": "${kakbind}.key3",
+      "arg2": "${kakbind}.key4"
     }
   }
 }
