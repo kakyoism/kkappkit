@@ -1,0 +1,15 @@
+{
+  "_version": 1,
+  "action": {
+    "preset": "Preset",
+    "reset": "Reset",
+    "stop": "Quit",
+    "run": "GO!"
+  },
+  "status": {
+    "brief": "...",
+    "detail": "View Log",
+    "session": "More ..."
+  },
+  "progress": "infinite"
+}

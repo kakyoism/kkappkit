@@ -9,7 +9,7 @@
   ],
   "frontend": {
     "binding": "default.kakbind.json",
-    "behaviour": "default.kakform.json",
+    "control": "offline.kakctrl.json",
     "theme": "default.kaktheme.json"
   },
   "communication": "subproc.kakcomm.json",

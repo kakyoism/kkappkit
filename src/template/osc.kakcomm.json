@@ -1,0 +1,21 @@
+{
+  "_version": 1,
+  "protocol": "osc",
+  "shoot_and_forget": {
+    "sender": "kak.frontend.kakbind.key1",
+    "request": "/push"
+  },
+  "bidirectional": {
+    "sender": "kak.frontend.kakbind.key2",
+    "request": "/question",
+    "response": "/answer"
+  },
+  "parameterized": {
+    "sender": "kak.frontend.kakbind.key3",
+    "request": "/function",
+    "payload": {
+      "arg1": "kak.frontend.kakbind.key3",
+      "arg2": "kak.frontend.kakbind.key4"
+    }
+  }
+}
