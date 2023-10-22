@@ -175,14 +175,23 @@
 - Before analysis, config files are copied from kkappkit's template folder to the app's designated folder
 
 ## Looks like we need a syntax system to make the formats a bit more rigorous to make the system more robust. What should it be like?
-- Take cross-config reference as an example
-- We need to reference
+- take cross-config reference as an example
+- we need to reference
   - config file: JSON
   - JSON fields inside the file
-- Constraints
-  - No field has mixture of literal and variable, i.e., the text components are all variables, e.g., JSON keys or build-vars
-- Approaches for referencing fields
+- constraints
+  - no field has mixture of literal and variable, i.e., the text components are all variables, e.g., JSON keys or build-vars
+- approaches for referencing fields
   - compact oneliner: `${cfgfile}.<parent_field>.<sub_field>....`
   - compound fields: `{"file": "${cfgfile}", "field": "<parent_field>.<sub_field>...."`
-- The compact approach is easy to write, but harder to parse
-- The compound approach is easy to parse, but harder to write
+- the compact approach is easy to write, but harder to parse
+- the compound approach is easy to parse, but harder to write
+- the design constraints:
+  - we want this system to be easy to learn
+  - and we want people to write it by hand in the design process
+- so we must minimize custom syntax, but writing cross-referencing by hand implies a learning curve
+- the shortest referencing path is a UUID, but it's not human-readable
+- to flatten the learning curve, the workflow can allow human to write the initial template with a minimal meta-language, then the codegen generates the UUIDs, finally human can complete the cross-referencing using the generated UUIDs; user can always use text search to associate IDs with their sources (usually widgets)
+- we can define the format constraints: only widgets use IDs, and in kakcomm, first-level keys are always widget IDs
+- ID-driven cross-referencing will hurt readability, so we can offer an optional `note` field for each config field, so that human can comment with readable reminders; we can also generate a private field, e.g., `_sender` or `_path`, to store the source of the field, e.g., the dot-formatted config-field path
+- in other words, instead of human writing the paths, we can generate the paths instead, and human can focus on the protocal itself, i.e., topic, payload, response, etc.

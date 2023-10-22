@@ -1,10 +1,22 @@
 {
-  "_version": 1,
+  "version": 1,
   "action": {
-    "preset": "Preset",
-    "reset": "Reset",
-    "stop": "Quit",
-    "run": "GO!"
+    "preset": {
+      "id": "",
+      "text": "Preset"
+    },
+    "reset": {
+      "id": "",
+      "text": "Reset"
+    },
+    "stop": {
+      "id": "",
+      "text": "Quit"
+    },
+    "run": {
+      "id": "",
+      "text": "GO!"
+    }
   },
   "status": {
     "brief": "...",

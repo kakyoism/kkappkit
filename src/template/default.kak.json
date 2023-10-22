@@ -1,5 +1,5 @@
 {
-  "format": "1",
+  "version": "1",
   "name": "my_app",
   "author": ["my_name <my_email>"],
   "description": "My app",

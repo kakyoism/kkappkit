@@ -1,21 +1,27 @@
 {
-  "_version": 1,
+  "version": 1,
   "protocol": "osc",
-  "shoot_and_forget": {
+  "field-id-1": {
     "sender": "${kakbind}.key1",
-    "topic": "/push"
+    "topic": "/push",
+    "payload": null,
+    "response": null,
+    "note": "shoot and forget"
   },
-  "bidirectional": {
+  "field-id-2": {
     "sender": "${kakbind}.key2",
     "topic": "/question",
-    "response": "/answer"
+    "payload": null,
+    "response": "/answer",
+    "note": "bidirectional"
   },
-  "parameterized": {
+  "field-id-3": {
     "sender": "${kakbind}.key3",
     "topic": "/function",
     "payload": {
       "arg1": "${kakbind}.key3",
       "arg2": "${kakbind}.key4"
-    }
+    },
+    "note": "parameterized"
   }
 }

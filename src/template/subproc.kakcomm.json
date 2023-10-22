@@ -1,11 +1,11 @@
 {
-  "_version": 1,
+  "version": 1,
   "protocol": "subprocess",
-  "submit": {
+  "uuid-1": {
     "sender": "${kakctrl}.action.submit",
     "topic": "poetry run python ${cli}",
     "payload": "${kakbind}",
-    "response": "",
+    "response": null,
     "cwd": "${kak}.backend.root.${platform}"
   }
 }

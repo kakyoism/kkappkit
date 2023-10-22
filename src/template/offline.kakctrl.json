@@ -1,10 +1,22 @@
 {
-  "_version": 1,
+  "version": 1,
   "action": {
-    "preset": "Preset",
-    "reset": "Reset",
-    "quit": "Quit",
-    "submit": "GO!"
+    "preset": {
+      "id": "",
+      "text": "Preset"
+    },
+    "reset": {
+      "id": "",
+      "text": "Reset"
+    },
+    "quit": {
+      "id": "",
+      "text": "Quit"
+    },
+    "submit": {
+      "id": "",
+      "text": "GO!"
+    }
   },
   "status": {
     "brief": "...",
