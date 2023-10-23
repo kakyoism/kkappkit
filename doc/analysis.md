@@ -195,3 +195,42 @@
 - we can define the format constraints: only widgets use IDs, and in kakcomm, first-level keys are always widget IDs
 - ID-driven cross-referencing will hurt readability, so we can offer an optional `note` field for each config field, so that human can comment with readable reminders; we can also generate a private field, e.g., `_sender` or `_path`, to store the source of the field, e.g., the dot-formatted config-field path
 - in other words, instead of human writing the paths, we can generate the paths instead, and human can focus on the protocal itself, i.e., topic, payload, response, etc.
+
+## How should kkappkit interact with the app?
+- Candidate approaches
+  - make kkappkit a dependency
+  - make kkappkit a git submodule
+  - ship kkappkit as part of the app, e.g., as its ci pipeline
+- Relevant questions:
+  1. is the app actually an app project, i.e., open-source?
+  2. should we debug the app onsite after it's shipped to end-users?
+  3. should we support auto-update?
+- The idea of making a standalone app is to relieve user from the burden of learning the implementation detail
+- The app dev should be able to fix the app on site without dependencies, meaning the build pipeline should be self-contained, even when without the internet
+- The only way to ensure this is to ship the build pipeline with the app
+- Then how to migrate when pipeline upgrades?
+- Wait for the dev to ship the new version, which is the expected workflow for a standalone app
+
+## The current analytical model is still confusing. Can we improve it?
+- Confusion: There is no obvious implementation path by looking at the config files
+- the model-view-controller (MVC) pattern is a good start, but we don't have it right now; frontend is View, backend is Model, and the mediator is Controller
+- we have a model in .kakbind.json, but it contains both data model (argparse-inspired argument definition) and some ui design (events, group). So a scientist or a backend-dev would have no idea how to fill up the events and groups because those are unrelated with the core algorithm; both designer and dev must edit this config; this would slow down the design process
+- the model should also define inter-data influences, which is actually a model thing; the design of using a checkbox to enable/disable is just a frontend manifestation; so this info is currently in .kakbind.json and rightfully so
+- .kakctrl.json seems out of place; it seems merely a gimmick UI that bears no info about model/view/controller; it defines the bottom action hub, and thus a view entity
+- for backend to work with both CLI and GUI, it needs a model that both CLI and GUI operate on; for CLI, its usually the parsed arguments, and a wrapper object (model) for GUI, both can be abstracted away with a worker class
+- views like offline form submission bar (control panels) have no direct access to model, but rely on a controller that knows both model and view; even with a subprocess IPC imp, views should only consider its looks without defining the CLI commands
+- kkcomm should act as a controller: it should define for each data entry:
+  - events 
+  - protocols
+  - requests and responses for events
+- there should be a separate view config for data model and control panel that collaboratively define the layout of the whole app, e.g., sidebar, statusbar, etc.
+- endless page is good enough, later when introducing voice commands, sidebar would be totally unnecessary especially for a small app
+- So an updated workflow
+  - edit .kkmdl.json to define the data model, i.e., CLI args
+  - generate ids for each data entry
+  - edit bind.kkview.json to define the layout, grouping, theme of data-binding widgets, and control panels, for each data-enetry ID
+  - edit ctrl.kkview.json to define the layout, theme of control panels, for each ID
+  - edit layout.kkview.json to layout the widget groups if we have 2+ .kkview.json files
+  - generate ids for each control on the panel
+  - edit .kkcomm.json to define the control protocol, including events (triggers), sender, requests, responses, and protocol tech
+  - edit .kkdist.json to define how to package and ship the app

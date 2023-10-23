@@ -3,19 +3,23 @@
   "action": {
     "preset": {
       "id": "",
-      "text": "Preset"
+      "text": "Preset",
+      "events": ["lclick"]
     },
     "reset": {
       "id": "",
-      "text": "Reset"
+      "text": "Reset",
+      "events": ["lclick"]
     },
     "quit": {
       "id": "",
-      "text": "Quit"
+      "text": "Quit",
+      "events": ["lclick"]
     },
     "submit": {
       "id": "",
-      "text": "GO!"
+      "text": "GO!",
+      "events": ["lclick"]
     }
   },
   "status": {
