@@ -16,5 +16,5 @@
   "backend": {
     "tech": "python"
   },
-  "distribution": "pyinstaller.kakdist.json"
+  "distribution": "{{name}}.kakdist.json"
 }

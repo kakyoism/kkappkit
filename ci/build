@@ -1,0 +1,10 @@
+#! /bin/sh
+
+set -e
+pushd . &> /dev/null
+
+ScriptDir="$( cd "$( dirname "$0" )" && pwd )"
+cd "$ScriptDir"/..
+poetry run python codegen/kkappkit.py -g codegen/kkappkit.kak.json "$@"
+
+popd &> /dev/null

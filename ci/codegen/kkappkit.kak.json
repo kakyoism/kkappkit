@@ -4,21 +4,23 @@
   "authors": ["Beinan Li <li.beinan@gmail.com>"],
   "description": "Code-generator for building small desktop applications with Python and Tkinter",
   "tutorial": [
-    "# generate new app project with skeleton configs under current working directory",
+    "# generate new offline app project with skeleton configs under current working directory",
     "${name}/run -n my_app",
+    "# same as above, but using a different template",
+    "${name}/run -n my_app -t controller",
     "# after filling up app-config and its sub-configs, generate or update app according to the entire config set",
     "cd my_app && ./build",
     "# same as above, but backup and erase the existing content, then start anew",
     "cd my_app && ./build -f"
   ],
   "frontend": {
-    "binding": "build/{{name}}.kakbind.json",
-    "control": "build/{{name}}.kakctrl.json",
-    "theme": "build/{{name}}.kaktheme.json"
+    "binding": "{{name}}.kakbind.json",
+    "control": "{{name}}.kakctrl.json",
+    "theme": "{{name}}.kaktheme.json"
   },
-  "communication": "build/{{name}}.kakcomm.json",
+  "communication": "{{name}}.kakcomm.json",
   "backend": {
     "tech": "python"
   },
-  "distribution": "pyinstaller.kakdist.json"
+  "distribution": "{{name}}.kakdist.json"
 }
