@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "{004471E1-DC2B-4E11-9A7F-D901AAAE3A64}": {
+    "protocol": "subprocess",
+    "sender": "${kakctrl}.action.submit",
+    "topic": "poetry run python ${cli}",
+    "payload": "${kakbind}",
+    "response": null,
+    "cwd": "${backend_root}"
+  }
+}

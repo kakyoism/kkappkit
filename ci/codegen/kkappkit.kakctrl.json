@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "action": {
+    "preset": {
+      "id": "{61A56070-04D9-4DE9-A342-A48F372A53A4}",
+      "text": "Preset"
+    },
+    "reset": {
+      "id": "{BAA2088B-7811-4A24-B6A3-CE6305564EA6}",
+      "text": "Reset"
+    },
+    "quit": {
+      "id": "{8A8E0329-BDBA-4403-BC8E-51BDC760FD5A}",
+      "text": "Quit"
+    },
+    "submit": {
+      "id": "{004471E1-DC2B-4E11-9A7F-D901AAAE3A64}",
+      "text": "GO!"
+    }
+  },
+  "status": {
+    "brief": "...",
+    "detail": "Log",
+    "session": "More ..."
+  },
+  "progress": "finite"
+}
