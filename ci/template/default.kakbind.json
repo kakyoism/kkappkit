@@ -1,5 +1,5 @@
 {
-  "_version": 1,
+  "version": 1,
   "bio": {
     "id": "",
     "help": "text, with multiline support",

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "kkappkit"
 version = "0.6.5"
-description = "A mini-framework for building small Python GUI applications"
+description = "Code-generator for building small desktop applications with Python and Tkinter"
 authors = ["Beinan Li <li.beinan@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -24,7 +24,9 @@ python = "^3.11"
 kkpyutil = "*"
 
 [tool.poetry.dev-dependencies]
+jinja2 = "*"
 Pillow = "*"
+pytest = "*"
 python-osc = "*"
 
 [build-system]

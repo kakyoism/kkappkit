@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "name": "my_app",
+  "authors": ["my_name <my_email>"],
+  "description": "My app",
+  "tutorial": [
+    "example 1: do this",
+    "{{name}} -i input_file -o output_file"
+  ],
+  "frontend": {
+    "binding": "{{name}}.kakbind.json",
+    "control": "{{name}}.kakctrl.json",
+    "theme": "{{name}}.kaktheme.json"
+  },
+  "communication": "{{name}}.kakcomm.json",
+  "backend": {
+    "tech": "python"
+  },
+  "distribution": "pyinstaller.kakdist.json"
+}

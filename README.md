@@ -95,7 +95,7 @@ from queue import Queue
 import sys
 
 # Import project modules.
-from src.gui import kkgui as ui
+from ci.gui import kkgui as ui
 import util
 
 #
