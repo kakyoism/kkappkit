@@ -71,7 +71,7 @@
     "group": "hobbies",
     "slaving": [
       {
-        "actionz": "enable",
+        "action": "enable",
         "slaves": [
           "music_collections",
           "dreams"

@@ -1,70 +1,82 @@
 {
   "version": 1,
   "bio": {
+    "widget": "default",
     "title": "Basic Information",
     "group": "personal_info.basic",
     "style": [],
     "keywords": []
   },
   "age": {
+    "widget": "default",
     "group": "personal_info.basic",
-    "step": [1, 10],
+    "control": {
+      "step": [1, 10]
+    },
     "style": [],
     "keywords": []
   },
   "height": {
+    "widget": "default",
     "title": "Height (m):",
     "group": "personal_info.basic",
-    "step": [0.01, 0.1],
-    "Precision": 4,
+    "control": {
+      "step": [0.01, 0.1],
+      "Precision": 4
+    },
     "style": [],
     "keywords": []
   },
   "gender": {
+    "widget": "default",
     "group": "personal_info.skills",
     "style": [],
     "keywords": []
   },
   "language": {
+    "widget": "default",
     "group": "personal_info.skills",
     "style": [],
     "keywords": []
   },
   "portfolio": {
+    "widget": "default",
     "group": "personal_info.work",
     "style": [],
     "keywords": []
   },
   "show_hobbies": {
+    "widget": "default",
     "group": "hobbies",
-    "slaving": [
-      {
-        "action": "enable",
-        "slaves": [
-          "music_collections",
-          "dreams"
-        ]
-      }
-    ]
+    "slaving": {
+      "enable": [
+        "music_collections",
+        "dreams"
+      ]
+    }
   },
   "music_collections": {
+    "widget": "default",
     "title": "Music Collection Folders:",
     "group": "personal_info.hobbies",
     "style": [],
     "keywords": []
   },
   "dreams": {
+    "widget": "default",
     "group": "personal_info.hobbies",
     "style": [],
     "keywords": []
   },
   "auto_save_preset": {
+    "widget": "default",
     "title": "Auto-save parameters as preset:",
     "group": "settings",
     "style": [],
     "keywords": []
   },
   "enable_debug_log": {
+    "widget": "default",
     "group": "settings",
     "style": [],
     "keywords": []
