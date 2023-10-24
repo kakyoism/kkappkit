@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "layout": [
+    "submit",
+    "status",
+    "progress"
+  ],
+  "widgets": {
+    "submit": {
+      "widget": "default",
+      "title": "GO!",
+      "style": []
+    },
+    "status": {
+      "widget": "default",
+      "title": "...",
+      "style": []
+    },
+    "progress": {
+      "widget": "default",
+      "style": []
+    }
+  }
+}

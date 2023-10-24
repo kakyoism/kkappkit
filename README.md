@@ -1,6 +1,6 @@
 # kkAppKit
 
-A code-generator for building small desktop applications with Python and [Tkinter](https://wiki.python.org/moin/TkInter)
+Framework for building small desktop applications with Python and [Tkinter](https://wiki.python.org/moin/TkInter)
 
 ## Design Goals
 Target app types

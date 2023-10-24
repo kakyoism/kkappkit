@@ -1,8 +1,10 @@
 {
   "version": 1,
   "name": "kkappkit",
-  "authors": ["Beinan Li <li.beinan@gmail.com>"],
-  "description": "Code-generator for building small desktop applications with Python and Tkinter",
+  "authors": [
+    "Beinan Li <li.beinan@gmail.com>"
+  ],
+  "description": "Framework for building small desktop applications with Python and Tkinter",
   "tutorial": [
     "# generate new offline app project with skeleton configs under current working directory",
     "${name}/run -n my_app",
@@ -13,14 +15,26 @@
     "# same as above, but backup and erase the existing content, then start anew",
     "cd my_app && ./build -f"
   ],
-  "frontend": {
-    "binding": "{{name}}.kakbind.json",
-    "control": "{{name}}.kakctrl.json",
-    "theme": "{{name}}.kaktheme.json"
+  "view": {
+    "layout": [
+      [
+        "search"
+      ],
+      [
+        "input"
+      ],
+      [
+        "control"
+      ]
+    ],
+    "widgets": {
+      "search": "./search.view.json",
+      "input": "./input.view.json",
+      "control": "./ctrl.view.json"
+    },
+    "theme": "./dark.theme.json"
   },
-  "communication": "{{name}}.kakcomm.json",
-  "backend": {
-    "tech": "python"
-  },
-  "distribution": "{{name}}.kakdist.json"
+  "controller": "./default.ctrlr.json",
+  "model": "./input.model.json",
+  "distribution": "./default.dist.json"
 }

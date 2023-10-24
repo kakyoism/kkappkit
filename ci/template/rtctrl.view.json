@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "layout": [
+    "rtctrl",
+    "status"
+  ],
+  "widgets": {
+    "rtctrl": {
+      "widget": "default",
+      "title": "On/Off",
+      "style": []
+    },
+    "status": {
+      "widget": "default",
+      "title": "...",
+      "style": []
+    }
+  }
+}
