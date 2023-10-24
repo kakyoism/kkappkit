@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "bio": {
+    "title": "Basic Information",
+    "group": "personal_info.basic",
+    "style": [],
+    "keywords": []
+  },
+  "age": {
+    "group": "personal_info.basic",
+    "step": [1, 10],
+    "style": [],
+    "keywords": []
+  },
+  "height": {
+    "title": "Height (m):",
+    "group": "personal_info.basic",
+    "step": [0.01, 0.1],
+    "Precision": 4,
+    "style": [],
+    "keywords": []
+  },
+  "gender": {
+    "group": "personal_info.skills",
+    "style": [],
+    "keywords": []
+  },
+  "language": {
+    "group": "personal_info.skills",
+    "style": [],
+    "keywords": []
+  },
+  "portfolio": {
+    "group": "personal_info.work",
+    "style": [],
+    "keywords": []
+  },
+  "show_hobbies": {
+    "group": "hobbies",
+    "slaving": [
+      {
+        "action": "enable",
+        "slaves": [
+          "music_collections",
+          "dreams"
+        ]
+      }
+    ]
+  },
+  "music_collections": {
+    "title": "Music Collection Folders:",
+    "group": "personal_info.hobbies",
+    "style": [],
+    "keywords": []
+  },
+  "dreams": {
+    "group": "personal_info.hobbies",
+    "style": [],
+    "keywords": []
+  },
+  "auto_save_preset": {
+    "title": "Auto-save parameters as preset:",
+    "group": "settings",
+    "style": [],
+    "keywords": []
+  },
+  "enable_debug_log": {
+    "group": "settings",
+    "style": [],
+    "keywords": []
+  }
+}

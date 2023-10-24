@@ -228,12 +228,13 @@
 - So an updated workflow
   - edit .kkmdl.json to define the data model, i.e., CLI args
   - generate ids for each data entry
-  - edit bind.kkview.json to define the layout, grouping, theme of data-binding widgets, and control panels, for each data-enetry ID
+  - edit bind.kkview.json to define the layout, grouping, theme of data-binding widgets, and control panels, for each data-entry ID
   - edit ctrl.kkview.json to define the layout, theme of control panels, for each ID
   - edit layout.kkview.json to layout the widget groups if we have 2+ .kkview.json files
   - generate ids for each control on the panel
   - edit .kkcomm.json to define the control protocol, including events (triggers), sender, requests, responses, and protocol tech
   - edit .kkdist.json to define how to package and ship the app
+- If we pair up MVC, because model keys are both readable and unique (first-level keys), they are natural app-scope uuids; there is no need to generate uuid in the human-editable configuration; we could still generate IDs in the imp if needed
 
 ## Do we have better options for the config file naming?
 - Current naming: <app_specific>.kak<config_type>.json
@@ -243,3 +244,9 @@
   - Pros: more intuitive, and the middlename is more readable
   - Cons: name clashing is possible, but they can be protected by a folder, e.g., `kkappkit/<app_specific>.<config_type>.json`
 - Conclusion: the alternative is a better approach
+
+## What's with the frontend-backend-communication to MVC switch?
+- frontend-backend-communication is a good idea, but it's an analytical model instead of a design model; it's therefore not fit for a role of codegen configuration
+- MVC is a design pattern, and therefore a better fit for codegen configuration
+- The current design is a mix of both, which is confusing; so we removed backend 
+- As for the backend field, currently all it specifies is Python as its tech-stack. But that's not useful and it's impossible to use anything otherwise to interface with Tkinter; other tech-stacks usually have mature frontend-backend duo, e.g., flutter, JS frameworks, etc.; so we can throw it away after converting to MVC

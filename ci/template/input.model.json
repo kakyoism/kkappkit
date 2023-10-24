@@ -1,7 +1,6 @@
 {
   "version": 1,
   "bio": {
-    "id": "",
     "help": "text, with multiline support",
     "type": "str",
     "default": "",
@@ -12,31 +11,25 @@
     "keywords": []
   },
   "age": {
-    "id": "",
     "help": "an integer",
     "type": "int",
     "default": 0,
     "range": [0, null],
-    "step": [1, 10],
     "required": false,
     "events": ["change"],
     "group": "personal_info.basic"
   },
   "height": {
-    "id": "",
     "title": "Height (m):",
     "help": "a float number",
     "type": "float",
     "default": 1.73,
     "range": [0.0, 3.0],
-    "step": [0.01, 0.1],
-    "Precision": 4,
     "required": false,
     "events": ["change"],
     "group": "personal_info.basic"
   },
   "gender": {
-    "id": "",
     "help": "single-selection with str as default, option-menu, no user option can be added when range.max==1",
     "options": ["Male", "Female", "[Secret]"],
     "type": "str",
@@ -47,7 +40,6 @@
     "group": "personal_info.skills"
   },
   "language": {
-    "id": "",
     "help": "multi-selection with list as default; allow user to add new option when range.max==null",
     "options": ["English", "French", "Chinese"],
     "type": "str",
@@ -59,7 +51,6 @@
     "group": "personal_info.skills"
   },
   "portfolio": {
-    "id": "",
     "help": "file browser, with add/remove/paste, single-selection when range.max is 1, multi-selection when range.max is null",
     "type": "File",
     "default": {
@@ -72,7 +63,6 @@
     "group": "personal_info.work"
   },
   "show_hobbies": {
-    "id": "",
     "help": "boolean, as master to a slave set",
     "type": "bool",
     "default": false,
@@ -90,7 +80,6 @@
     ]
   },
   "music_collections": {
-    "id": "",
     "title": "Music Collection Folders:",
     "help": "folder browser, similar with file browser",
     "type": "Folder",
@@ -104,7 +93,6 @@
     "group": "personal_info.hobbies"
   },
   "dreams": {
-    "id": "",
     "help": "list, ComboBox with CRUD",
     "type": "list",
     "default": [],
@@ -114,7 +102,6 @@
     "group": "personal_info.hobbies"
   },
   "auto_save_preset": {
-    "id": "",
     "title": "Auto-save parameters as preset:",
     "help": "boolean, global settings, always default to false in generated CLI even if it's true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change; on change, always save a fixed file; on success, save to a time-stamped file to preset folder and also the session folder",
     "type": "bool",
@@ -124,7 +111,6 @@
     "group": "settings"
   },
   "enable_debug_log": {
-    "id": "",
     "help": "boolean, global settings, useful for collecting runtime diagnostics for data analysis, but better disabled in production for optimal performance",
     "type": "bool",
     "default": false,

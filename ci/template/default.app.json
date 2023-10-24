@@ -1,21 +1,28 @@
 {
   "version": 1,
   "name": "my_app",
-  "authors": ["my_name <my_email>"],
+  "authors": [
+    "my_name <my_email>"
+  ],
   "description": "My app",
   "tutorial": [
     "example 1: do this",
     "{{name}} -i input_file -o output_file"
   ],
-  "frontend": {
-    "binding": "{{name}}.kakbind.json",
-    "control": "{{name}}.kakctrl.json",
-    "theme": "{{name}}.kaktheme.json"
+  "view": {
+    "layout": [
+      ["search"],
+      ["input"],
+      ["control"]
+    ],
+    "widget": {
+      "search": "./search.view.json",
+      "input": "./input.view.json",
+      "control": "./ctrl.view.json"
+    },
+    "theme": "./dark.theme.json"
   },
-  "communication": "{{name}}.kakcomm.json",
-  "model": "{{name}}.kakmdl.json",
-  "backend": {
-    "tech": "python"
-  },
+  "controller": "./default.ctrlr.json",
+  "model": "./input.model.json",
   "distribution": "{{name}}.kakdist.json"
 }
