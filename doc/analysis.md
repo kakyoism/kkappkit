@@ -234,3 +234,12 @@
   - generate ids for each control on the panel
   - edit .kkcomm.json to define the control protocol, including events (triggers), sender, requests, responses, and protocol tech
   - edit .kkdist.json to define how to package and ship the app
+
+## Do we have better options for the config file naming?
+- Current naming: <app_specific>.kak<config_type>.json
+  - Pros: `kak-` prefix is short and unique, minimizing name clashing
+  - Cons: `kak-` prefix is not intuitive, so it hurts the SNR of the middlename 
+- Alternative: <app_specific>.<config_type>.json
+  - Pros: more intuitive, and the middlename is more readable
+  - Cons: name clashing is possible, but they can be protected by a folder, e.g., `kkappkit/<app_specific>.<config_type>.json`
+- Conclusion: the alternative is a better approach
