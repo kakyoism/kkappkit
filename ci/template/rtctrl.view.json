@@ -1,8 +1,8 @@
 {
   "version": 1,
   "layout": [
-    "rtctrl",
-    "status"
+    ["rtctrl"],
+    ["status"]
   ],
   "widgets": {
     "rtctrl": {

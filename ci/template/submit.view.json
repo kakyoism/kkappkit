@@ -1,9 +1,9 @@
 {
   "version": 1,
   "layout": [
-    "submit",
-    "status",
-    "progress"
+    ["submit"],
+    ["status"],
+    ["progress"]
   ],
   "widgets": {
     "submit": {
