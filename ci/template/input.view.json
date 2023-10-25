@@ -24,7 +24,7 @@
     "age": {
       "widget": "default",
       "group": "personal_info.basic",
-      "control": {
+      "config": {
         "step": [1, 10]
       },
       "style": [],
@@ -34,7 +34,7 @@
       "widget": "default",
       "title": "Height (m):",
       "group": "personal_info.basic",
-      "control": {
+      "config": {
         "step": [0.01, 0.1],
         "Precision": 4
       },
@@ -62,12 +62,8 @@
     "show_hobbies": {
       "widget": "default",
       "group": "hobbies",
-      "slaving": {
-        "enable": [
-          "music_collections",
-          "dreams"
-        ]
-      }
+      "style": [],
+      "keywords": []
     },
     "music_collections": {
       "widget": "default",

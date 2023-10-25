@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "bio": {
+    "events": []
+  },
+  "age": {
+    "events": ["change"]
+  },
+  "height": {
+    "events": ["change"]
+  },
+  "gender": {
+    "events": []
+  },
+  "language": {
+    "events": []
+  },
+  "portfolio": {
+    "events": []
+  },
+  "show_hobbies": {
+    "events": ["change"],
+    "slaving": {
+      "enable": [
+        "music_collections",
+        "dreams"
+      ]
+    }
+  },
+  "music_collections": {
+    "events": []
+  },
+  "dreams": {
+    "events": []
+  },
+  "auto_save_preset": {
+    "events": ["change"]
+  },
+  "enable_debug_log": {
+    "events": ["change"]
+  }
+}

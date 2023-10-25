@@ -1,7 +1,6 @@
 {
   "version": 1,
   "name": {
-    "id": "{C428D6E3-FE51-4D2D-89F3-57A436E1C30E}",
     "help": "the name of the target app",
     "type": "str",
     "default": "",
@@ -12,7 +11,6 @@
     "keywords": []
   },
   "target_folder": {
-    "id": "{0034C137-7FD9-44A0-838E-D2567269FF75}",
     "title": "App root is a sub-folder of:",
     "help": "Will generate app root folder under this folder",
     "type": "Folder",
@@ -26,7 +24,6 @@
     "group": "general.basic"
   },
   "generate_with_config": {
-    "id": "{B851D1C0-9E10-461B-B29B-07BB75654853}",
     "help": "path to app-config file, will use default location when left empty",
     "type": "File",
     "default": {
@@ -39,7 +36,6 @@
     "group": "general.basic"
   },
   "template": {
-    "id": "{A3EFB127-7661-437D-866C-7C6043D3CBA7}",
     "help": "pick preconfigured config files based on app type",
     "options": ["offline", "controller"],
     "type": "str",
@@ -50,7 +46,6 @@
     "group": "general.advanced"
   },
   "force_overwrite": {
-    "id": "{3BEC36F7-8150-4CBA-8D94-A2B407AE07AE}",
     "help": "force backup and overwrite the existing app project",
     "type": "bool",
     "default": false,
@@ -59,7 +54,6 @@
     "group": "general.advanced"
   },
   "auto_save_preset": {
-    "id": "{E96557FF-1275-4C5A-8297-0C66727D3268}",
     "title": "Auto-save parameters as preset:",
     "help": "if enabled, will save arguments to session folder when program terminates on success or failure",
     "type": "bool",
@@ -69,7 +63,6 @@
     "group": "settings"
   },
   "enable_debug_log": {
-    "id": "{AC5EF4F3-0746-4DD8-99B2-E804C1B9388C}",
     "help": "if enabled, will collect more runtime diagnostics",
     "type": "bool",
     "default": false,
