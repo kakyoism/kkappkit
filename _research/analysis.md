@@ -250,3 +250,21 @@
 - MVC is a design pattern, and therefore a better fit for codegen configuration
 - The current design is a mix of both, which is confusing; so we removed backend 
 - As for the backend field, currently all it specifies is Python as its tech-stack. But that's not useful and it's impossible to use anything otherwise to interface with Tkinter; other tech-stacks usually have mature frontend-backend duo, e.g., flutter, JS frameworks, etc.; so we can throw it away after converting to MVC
+
+## Is the current scope too big?
+- probably yse. Once we introduce MVP, it's no longer a code-gen but a designer tool, or a middleware.
+- then the config files expand to include:
+  - data model
+  - view model
+  - control model
+  - layout model
+  - theme model
+  - distribution model
+- the details involved in configuring the entire set is simply another UI language, except that we design it in JSON instead of a DSL
+- we are gonna ask the question again: who's the most frequent user?
+- probably just me, and I'm not a designer, so I don't need a designer tool; let's just KISS; do not make it another flutter
+- this means it should offer fewer features and forget about flexibility; it's too big if it's bigger than pysimplegui
+- for v1, we should cut the following features
+  - themes
+  - configurable control panels
+- this means, we only configure the data model and events, and the rest is generated

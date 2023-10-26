@@ -1,38 +1,30 @@
 import argparse
 
-import kkappkit_core as core
+import {{app_core}} as core
 
 
 def main():
     parser = create_parser()
     add_arguments(parser)
-    core.main(parser.parse_args())
+    worker = core.Core(parser.parse_args())
+    worker.main()
 
 
 def create_parser():
     return argparse.ArgumentParser(
-        prog='kkappkit',
-        description='Code-generator for building small desktop applications with Python and Tkinter',
+        prog='{{name}}',
+        description='{{description}}',
         add_help=True,
         epilog="""\
 # =============
-# EXAMPLES
+# TUTORIAL
 # =============
-# generate an empty app-config for a new app
-kkappkit/run -n my_app
-
-# after filling up app-config and its sub-configs, generate or update app according to the entire config set
-kkappkit/run -g /path/to/my_app/my_app.kak.json
-
-# same as above, but backup and erase the existing content, then start anew"
-kkappkit/run -g /path/to/my_app/my_app.kak.json -f
+{{tutorial}}
 
 # =============
 # REMARKS
 # =============
-Build Variables:
-- ${name}: the name of the target app
-- ${cli}: the path to the app's commandline interface script
+{{remarks}}
 """,
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -41,23 +33,23 @@ Build Variables:
 def add_arguments(parser):
     parser.add_argument(
         '-n',
-        '--name',
+        '--app-name',
         action='store',
-        dest='name',
+        dest='appName',
         type=str,
         default='',
         required=False,
         help='the name of the target app'
     )
     parser.add_argument(
-        '-g',
-        '--generate-with-config',
+        '-p',
+        '--parent-folder',
         action='store',
-        dest='generateWithConfig',
+        dest='parDir',
         type=str,
-        default='',
+        default='.',
         required=False,
-        help='path to app-config file, will use default location when left empty'
+        help='parent folder of the app'
     )
     parser.add_argument(
         '-f',

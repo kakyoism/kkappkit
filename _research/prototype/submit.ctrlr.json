@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "model": "./input.model.json",
+  "view": "./submit.view.json",
+  "widgets": {
+    "submit": {
+      "click": {
+        "protocol": "subprocess",
+        "topic": "poetry run python ${cli}",
+        "payload": "{{model}}"
+      }
+    }
+  }
+}
