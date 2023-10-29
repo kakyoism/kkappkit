@@ -20,6 +20,7 @@ class Core:
         self.logger = util.build_default_logger(session_dir, name=name, verbose=True)
         self.root = osp.abspath(f'{osp.dirname(__file__)}/../')
         self.appPaths = None
+        self.appConfig = None
 
     def main(self):
         self._validate_args()
@@ -71,9 +72,13 @@ class Core:
         return True
 
     def _init_source_files(self):
-        src_files = (
-            osp.abspath(f'{self.root}/src/template/default.app.json')
-        )
+        src_files = [osp.abspath(f'{self.root}/src/template/{fn}') for fn in (
+            'default.app.json',
+            'cli.py',
+            'out.py',
+            'imp.py',
+            'gui.py',
+        )]
         dst_files = (
             osp.abspath(f'{self.appPaths.root}/src/app.json')
         )
@@ -81,15 +86,45 @@ class Core:
             util.copy_file(src, dst, isdstdir=True)
 
     def _generate_code(self):
-        app_config = util.load_json(self.appPaths.appCfg)
-        if is_new_app := not app_config['name']:
-            util.throw(ValueError, 'app.json is likely incomplete because its name is empty', 'fill it up and rebuild the app')
-        # user has filled up app.json; generate code
+        self.appConfig = util.load_json(self.appPaths.appCfg)
+        # TODO: replace with json schema
+        if is_new_app := not self.appConfig['name']:
+            util.throw(ValueError, 'app.json is incomplete because its name is empty', 'complete app-config and rebuild the app')
+        # user has filled up app.json
         self._generate_cli()
+        self._generate_out()
         self._generate_gui()
 
     def _generate_cli(self):
-        pass
+        code_lines = []
+        for arg in self.appConfig['input']:
+            codegen = self._create_cli_codegen(arg)
+            code_lines += codegen.generate()
+        # substitute template
+        code = '\n'.join(code_lines)
+
+    def _generate_out(self):
+        code_lines = []
+        for arg in self.appConfig['output']:
+            codegen = self._create_out_codegen(arg)
+            code_lines += codegen.generate()
+        # substitute template
+        code = '\n'.join(code_lines)
 
     def _generate_gui(self):
+        code_lines = []
+        for arg in self.appConfig['input']:
+            codegen = self._create_gui_codegen(arg)
+            code_lines += codegen.generate()
+        # substitute template
+        code = '\n'.join(code_lines)
+
+    def _create_cli_codegen(self, arg):
         pass
+
+    def _create_out_codegen(self, arg):
+        pass
+
+    def _create_gui_codegen(self, arg):
+        pass
+
