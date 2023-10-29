@@ -1,12 +1,12 @@
 import argparse
 
-import kkappkit_core as core
+import kkappkit_imp as imp
 
 
 def main():
     parser = create_parser()
     add_arguments(parser)
-    worker = core.Core(parser.parse_args())
+    worker = imp.Core(parser.parse_args())
     worker.main()
 
 
@@ -19,21 +19,19 @@ def create_parser():
 # =============
 # EXAMPLES
 # =============
-# generate an empty app-config for a new app
-kkappkit/run -n my_app
+# generate empty app project with default app-config under current working directory (cwd)
+kkgenapp -n
 
-# after filling up app-config and its sub-configs, generate or update app according to the entire config set
-kkappkit/run -g /path/to/my_app/app.json
-
-# same as above, but backup and erase the existing content, then start anew"
-kkappkit/run -g /path/to/my_app/my_app.kak.json -f
+# generate or update app (except app implementation) after editing app-config
+cd /path/to/my_app && kkgenapp
 
 # =============
 # REMARKS
 # =============
-Build Variables:
-- ${name}: the name of the target app
-- ${cli}: the path to the app's commandline interface script
+- Add kkappkit folder to your PATH environment variable to run it from anywhere
+- Build Variables:
+  - {{name}}: the name of the target app
+  - {{cli}}: the path to the app's commandline interface script
 """,
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -48,26 +46,7 @@ def add_arguments(parser):
         type=str,
         default='',
         required=True,
-        help='the name of the target app'
-    )
-    parser.add_argument(
-        '-p',
-        '--parent-folder',
-        action='store',
-        dest='parDir',
-        type=str,
-        default='.',
-        required=True,
-        help='parent folder of the app'
-    )
-    parser.add_argument(
-        '-f',
-        '--force-overwrite',
-        action='store_true',
-        dest='forceOverwrite',
-        default=False,
-        required=False,
-        help='force backup and overwrite the existing app project'
+        help='Name of the new app to create'
     )
 
 
