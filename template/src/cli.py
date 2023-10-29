@@ -1,3 +1,6 @@
+#
+# GENERATED: DO NOT EDIT
+#
 import argparse
 import pprint
 

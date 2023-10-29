@@ -268,3 +268,6 @@
   - themes
   - configurable control panels
 - this means, we only configure the data model and events, and the rest is generated
+
+## Do we need a .sh/.bat-.py delegation?
+- No, because this would introduce two layers of subprocesses, which would add to the complexity despite some maintenance benefit in making .sh/.bat shorter
