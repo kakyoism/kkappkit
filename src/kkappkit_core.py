@@ -104,7 +104,8 @@ class Core:
     def main(self):
         self._validate_args()
         self._create_subdirs()
-        self._init_app_proj()
+        if not self._init_app_proj():
+            return
         self._init_source_files()
         self._generate_code()
 
@@ -124,17 +125,18 @@ class Core:
 
     def _init_app_proj(self):
         if not self.args.forceOverwrite and osp.exists(self.appPaths.depCfg):
-            self.logger.info('pyproject.toml already exists; skipped init')
-            return
+            self.logger.info(f'project already exists: {self.appPaths.depCfg}; skipped init')
+            return False
         util.run_cmd(['poetry', 'init', '-n'], cwd=self.appPaths.root)
         proj_config = toml.load('pyproject.toml')
         proj_config['tool']['poetry']['name'] = self.args.appName
         proj_config['tool']['poetry']['description'] = self.args.appName
         proj_config['tool']['poetry']['authors'] = [getpass.getuser()]
+        return True
 
     def _init_source_files(self):
         src_files = (
-            osp.abspath(f'{self.root}/src/template/app.json')
+            osp.abspath(f'{self.root}/src/template/default.app.json')
         )
         dst_files = (
             osp.abspath(f'{self.appPaths.root}/src/app.json')
@@ -150,3 +152,11 @@ class Core:
         if is_new_app := not app_config['name']:
             self.res.throw(ValueError, 'app.json is empty; fill it up before retrying')
         # user has filled up app.json; generate code
+        self._generate_cli()
+        self._generate_gui()
+
+    def _generate_cli(self):
+        pass
+
+    def _generate_gui(self):
+        pass
