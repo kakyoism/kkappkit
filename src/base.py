@@ -24,7 +24,7 @@ class Core:
         self.logger = logger or util.build_default_logger(session_dir, name=pkg_name, verbose=True)
         self.paths = types.SimpleNamespace()
         self.paths.sessionDir = session_dir
-        self._create_paths()
+        self.create_paths()
 
     @staticmethod
     def is_dev_environment():
@@ -38,10 +38,7 @@ class Core:
         self.main()
         return self.out
 
-    def main(self):
-        raise NotImplementedError('implement in subclass')
-
-    def _create_paths(self):
+    def create_paths(self):
         pass
 
     def _validate_args(self, args):
@@ -52,3 +49,5 @@ class Core:
         # IMPLEMENT VALIDATION HERE
         return self.args
 
+    def main(self):
+        raise NotImplementedError('implement in subclass')

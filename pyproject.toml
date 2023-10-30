@@ -24,7 +24,6 @@ python = "^3.11"
 kkpyutil = "*"
 GitPython = "*"
 jinja2 = "*"
-toml = "*"
 
 [tool.poetry.dev-dependencies]
 jinja2 = "*"

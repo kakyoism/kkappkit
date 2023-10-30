@@ -1,13 +1,13 @@
 import argparse
-
+# project
 import imp as imp
 
 
 def main():
     parser = create_parser()
     add_arguments(parser)
-    worker = imp.Core(parser.parse_args())
-    worker.main()
+    core = imp.Core(parser.parse_args())
+    core.run()
 
 
 def create_parser():

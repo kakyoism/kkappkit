@@ -2,7 +2,7 @@
 # GENERATED: DO NOT EDIT
 #
 import argparse
-
+# project
 import imp
 
 
@@ -10,7 +10,7 @@ def main():
     parser = create_parser()
     add_arguments(parser)
     core = imp.Core(parser.parse_args())
-    out = core.main()
+    out = core.run()
     send(out)
 
 

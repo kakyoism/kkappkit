@@ -1,5 +1,7 @@
+import copy
 import datetime
 import getpass
+import glob
 import json
 import os
 import os.path as osp
@@ -7,65 +9,65 @@ import traceback
 import types
 
 # 3rd party
-import toml
+import tomllib as toml
 import kkpyutil as util
 
+# project
+import base
 
-class Core:
-    def __init__(self, args):
-        self.args = args
-        name = toml.load(osp.join(osp.dirname(__file__), 'pyproject.toml'))['tool']['poetry']['name']
-        tmp_dir = osp.join(util.get_platform_tmp_dir(), name)
-        session_dir = osp.join(tmp_dir, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-        self.logger = util.build_default_logger(session_dir, name=name, verbose=True)
+
+class Core(base.Core):
+    def __init__(self, args, logger=None):
+        super().__init__(args, logger)
         self.root = osp.abspath(f'{osp.dirname(__file__)}/../')
-        self.appPaths = None
-        self.appConfig = None
+        self.dstPaths = None
+        self.dstAppConfig = None
 
     def main(self):
-        self._validate_args()
-        self._create_subdirs()
+        self._copy_skeleton()
         self._lazy_init_app_proj()
         self._generate_code()
 
-    def _validate_args(self):
+    def _create_paths(self):
+        self.paths = types.SimpleNamespace()
+        self.paths.root = self.root,
+        self.paths.resDir = osp.join(self.root, 'res')
+        self.paths.skeletonDir = osp.join(self.paths.resDir, 'skeleton')
+        self.paths.templateDir = osp.join(self.paths.resDir, 'template')
+
+        app_root = os.getcwd()
+        expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
+        if is_new_app := not osp.isfile(expected_app_cfg):
+            app_root = osp.join(os.getcwd(), self.args.appName)
+        self.dstPaths = types.SimpleNamespace(
+            root=app_root,
+            srcDir=osp.join(app_root, 'src'),
+            appCfg=expected_app_cfg,
+            depCfg=osp.join(app_root, 'pyproject.toml'),
+        )
+
+    def _validate_args(self, args):
+        self.args = copy.deepcopy(args)
         app_root = os.getcwd()
         expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
         if gen_app_with_cfg := not self.args.appName:
             if not osp.isfile(expected_app_cfg):
                 util.throw(FileNotFoundError, f'missing app-config under cwd: {expected_app_cfg}', 'retry creating new app with -n <app-name>')
-            # valid existing app
-            self.appPaths = types.SimpleNamespace(
-                root=app_root,
-                srcDir=osp.abspath(f'{app_root}/src'),
-                appCfg=expected_app_cfg,
-                depCfg=osp.abspath(f'{app_root}/pyproject.toml'),
-            )
-            return
-        # new app
-        self.appPaths = types.SimpleNamespace(
-            root=osp.join(os.getcwd(), self.args.appName),
-        )
-        self.appPaths.srcDir = osp.join(self.appPaths.root, 'src')
-        self.appPaths.appCfg = osp.join(self.appPaths.srcDir, 'app.json')
-        self.appPaths.depCfg = osp.join(self.appPaths.root, 'pyproject.toml')
+        return self.args
 
-    def _create_subdirs(self):
-        for sub in (
-                'ci',
-                'res'
-                'src',
-                'test/default'
-        ):
-            osp.abspath(f'{self.args.parDir}/{self.args.name}/{sub}')
-            self.logger.info(f'Create: {sub}')
-            os.makedirs(sub, exist_ok=True)
+    def _copy_skeleton(self):
+        src_files = glob.glob(osp.abspath(f'{self.root}/res/skeleton/*'), recursive=True)
+        for src in src_files:
+            dst = osp.join(self.dstPaths.root, osp.relpath(src, self.paths.skeletonDir))
+            util.copy_file(src, dst, isdstdir=False)
+            self.logger.debug(f'copied: {src} -> {dst}')
 
     def _lazy_init_app_proj(self):
         if not self.args.appName:
             return
-        util.run_cmd(['poetry', 'init', '-n'], cwd=self.appPaths.root)
-        proj_config = toml.load('pyproject.toml')
+        util.run_cmd(['poetry', 'init', '-n'], cwd=self.paths.root)
+        with open(self.paths.depCfg, 'rb') as fp:
+            proj_config = toml.load(fp)
         proj_config['tool']['poetry']['name'] = self.args.appName
         proj_config['tool']['poetry']['authors'] = [getpass.getuser()]
         self._init_source_files()
@@ -80,13 +82,13 @@ class Core:
             'gui.py',
         )]
         dst_files = (
-            osp.abspath(f'{self.appPaths.root}/src/app.json')
+            osp.abspath(f'{self.paths.root}/src/app.json')
         )
         for src, dst in zip(src_files, dst_files):
             util.copy_file(src, dst, isdstdir=True)
 
     def _generate_code(self):
-        self.appConfig = util.load_json(self.appPaths.appCfg)
+        self.appConfig = util.load_json(self.paths.appCfg)
         # TODO: replace with json schema
         if is_new_app := not self.appConfig['name']:
             util.throw(ValueError, 'app.json is incomplete because its name is empty', 'complete app-config and rebuild the app')
@@ -120,11 +122,11 @@ class Core:
         code = '\n'.join(code_lines)
 
     def _create_cli_codegen(self, arg):
-        pass
+        return None
 
     def _create_out_codegen(self, arg):
-        pass
+        return None
 
     def _create_gui_codegen(self, arg):
-        pass
+        return None
 
