@@ -72,13 +72,13 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "kkpyutil"
-version = "1.13.0"
+version = "1.15.0"
 description = "Building blocks for sysadmin and DevOps"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "kkpyutil-1.13.0-py3-none-any.whl", hash = "sha256:68aab45672fc6c3ce6481814c407051262abc402d735b93dcc4fae7c2ed5bad9"},
-    {file = "kkpyutil-1.13.0.tar.gz", hash = "sha256:d04d0f7473661801b9af0500d3596bafded29635b8f6cdab8bb02430e2c0e066"},
+    {file = "kkpyutil-1.15.0-py3-none-any.whl", hash = "sha256:6eb37e3a4f10f256a776ca0f4c788262ed20ec2832841e2c6f7d155c701d3852"},
+    {file = "kkpyutil-1.15.0.tar.gz", hash = "sha256:4c035e65d2737af271721916990d75c7b5774592c31071f961088247e5309179"},
 ]
 
 [[package]]

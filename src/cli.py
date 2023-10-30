@@ -1,6 +1,6 @@
 import argparse
 
-import kkappkit_imp as imp
+import imp as imp
 
 
 def main():

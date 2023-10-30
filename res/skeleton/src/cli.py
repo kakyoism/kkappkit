@@ -2,9 +2,8 @@
 # GENERATED: DO NOT EDIT
 #
 import argparse
-import pprint
 
-import {{imp}} as imp
+import imp
 
 
 def main():
