@@ -5,6 +5,7 @@ import glob
 import json
 import os
 import os.path as osp
+import shutil
 import traceback
 import types
 
@@ -56,11 +57,9 @@ class Core(base.Core):
         return self.args
 
     def _copy_skeleton(self):
-        src_files = glob.glob(osp.abspath(f'{self.root}/res/skeleton/*'), recursive=True)
-        for src in src_files:
-            dst = osp.join(self.dstPaths.root, osp.relpath(src, self.paths.skeletonDir))
-            util.copy_file(src, dst, isdstdir=False)
-            self.logger.debug(f'copied: {src} -> {dst}')
+        src = osp.join(self.paths.resDir, 'skeleton')
+        dst = self.dstPaths.root
+        shutil.copytree(src, dst, dirs_exist_ok=True)
 
     def _lazy_init_app_proj(self):
         if not self.args.appName:
@@ -99,15 +98,15 @@ class Core(base.Core):
 
     def _generate_cli(self):
         code_lines = []
-        for arg in self.appConfig['input']:
-            codegen = self._create_cli_codegen(arg)
+        for name, arg in self.appConfig['input'].items():
+            codegen = ArgumentGen.create_codegen(name, arg)
             code_lines += codegen.generate()
         # substitute template
         code = '\n'.join(code_lines)
 
     def _generate_out(self):
         code_lines = []
-        for arg in self.appConfig['output']:
+        for name, arg in self.appConfig['output'].items():
             codegen = self._create_out_codegen(arg)
             code_lines += codegen.generate()
         # substitute template
@@ -115,8 +114,8 @@ class Core(base.Core):
 
     def _generate_gui(self):
         code_lines = []
-        for arg in self.appConfig['input']:
-            codegen = self._create_gui_codegen(arg)
+        for name, arg in self.appConfig['input'].items():
+            codegen = self._create_gui_codegen(name, arg)
             code_lines += codegen.generate()
         # substitute template
         code = '\n'.join(code_lines)
@@ -130,3 +129,206 @@ class Core(base.Core):
     def _create_gui_codegen(self, arg):
         return None
 
+
+class ArgumentGen:
+    shortSwitches = set()
+
+    def __init__(self, name, arg):
+        self.name = name
+        self.arg = arg
+        self.shortSwitch = self._extract_short_switch()
+        self.longSwitch = f'--{util.convert_compound_cases(self.name, style="kebab", instyle="snake")}'
+        self.action = 'store'
+        self.dest = util.convert_compound_cases(self.name, style="camel", instyle="snake")
+        # for platform dependent defaults
+        default = self.arg['default'][util.PLATFORM] if isinstance(self.arg['default'], dict) else self.arg['default']
+        self.default = f"\'{default}\'" if self.arg['type'] == 'str' else default
+
+    @staticmethod
+    def create_codegen(name, arg):
+        if arg['type'] == 'bool':
+            return BoolGen(name, arg)
+        if 'option' in arg:
+            return OptionGen(name, arg)
+        util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in codd gen'])
+
+    def generate(self):
+        return f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    dest='{self.dest}',
+    type={self.arg['type']},
+    default={self.default},
+    required={self.arg['required']},
+    help='{self.arg['help']}'
+)"""
+
+    def _extract_short_switch(self):
+        def _wrap_for_argparse_call(switch):
+            return f'"{switch}",'
+        # first unused initial of each part
+        parts = self.name.split('_')
+        initial_for_sw = next((part[0] for part in parts if part[0] not in ArgumentGen.shortSwitches), None)
+        if initial_for_sw:
+            ArgumentGen.shortSwitches.add(initial_for_sw)
+            return _wrap_for_argparse_call(f'-{initial_for_sw}')
+        cap_initial_for_sw = next((cpt for part in parts if (cpt := part[0].upper()) not in ArgumentGen.shortSwitches), None)
+        if cap_initial_for_sw:
+            ArgumentGen.shortSwitches.add(cap_initial_for_sw)
+            return _wrap_for_argparse_call(f'-{cap_initial_for_sw}')
+        # combine initials of 1st and 2nd part if applicable
+        if has_multiparts := len(parts) > 1:
+            concat_initials_for_sw = next((concat for p in range(len(parts)-1) if (concat := f'{parts[p][0]}{parts[p+1][0]}') not in ArgumentGen.shortSwitches), None)
+            if concat_initials_for_sw:
+                ArgumentGen.shortSwitches.add(concat_initials_for_sw)
+                return _wrap_for_argparse_call(f'-{concat_initials_for_sw}')
+            cap_concat_initials_for_sw = next((concat for p in range(len(parts) - 1) if (concat := f'{parts[p][0]}{parts[p + 1][0]}'.upper()) not in ArgumentGen.shortSwitches), None)
+            if cap_concat_initials_for_sw:
+                ArgumentGen.shortSwitches.add(cap_concat_initials_for_sw)
+                return _wrap_for_argparse_call(f'-{cap_concat_initials_for_sw}')
+        # give up
+        return ''
+
+
+class BoolGen(ArgumentGen):
+    """
+    parser.add_argument(
+        '-e',
+        '--enabled',
+        action='store_true',
+        dest='enabled',
+        default=False,
+        required=False,
+        help=''
+    )
+    """
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        self.action = 'store_true' if not self.arg['default'] else 'store_false'
+
+    def generate(self):
+        return f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    dest='{self.dest}',
+    default={self.arg['default']},
+    required={self.arg['required']},
+    help='{self.arg['help']}'
+)"""
+
+
+class ListGen(ArgumentGen):
+    """
+    parser.add_argument(
+        '-l',
+        '--my-int-list',
+        action='store',
+        nargs='*',
+        dest='mylist',
+        type=int,
+        default=[],
+        required=False,
+        help=''
+    )
+    """
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        if allow_empty := self.arg['range'][0] == 0:
+            self.nArgs = f"\'*\'"
+        elif fixed_count := self.arg['range'][0] == self.arg['range'][1] and isinstance(self.arg['range'][0], int):
+            assert len(self.arg['default']) == self.arg['range'][0]
+            self.nArgs = self.arg['range'][0]
+        elif not_empty := self.arg['range'][0] > 0 and (self.arg['range'][1] > 0 or self.arg['range'][1] is None):
+            assert len(self.arg['default']) > 0
+            self.nArgs = f"\'+\'"
+
+    def generate(self):
+        return f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    nargs={self.nArgs},
+    dest='{self.dest}',
+    type={self.arg['type']},
+    default={self.arg['default']},
+    required={self.arg['required']},
+    help='{self.arg['help']}'
+)"""
+
+
+class OptionGen(ArgumentGen):
+    """
+    parser.add_argument(
+        '-s',
+        '--single-option',
+        action='store',
+        choices=('en', 'zh', 'jp'),
+        dest='singleOption',
+        default='zh',
+        type=str,
+        required=False,
+        help=''
+    )
+    parser.add_argument(
+        '-m',
+        '--multiple-options',
+        action='store',
+        nargs='+',
+        choices=(1, 2, 3),
+        type=int,
+        dest='multiOptions',
+        default=[1, 3],
+        required=False,
+        help=''
+    )
+    """
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        assert self.arg['range'][1] > 0 or self.arg['range'][1] is None
+        self.nArgs = 1 if self.arg['range'][1] == 1 else f"\'+\'"
+        assert not isinstance(self.arg['default'], dict), 'expected option args to be consistent across platforms, but got platform-dependent defaults'
+        self.default = f"\'{self.arg['default']}\'" if isinstance(self.arg['default'], str) else self.arg['default']
+
+    def generate(self):
+        return f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    nargs={self.nArgs},
+    choices={self.arg['choices']},
+    dest='{self.dest}',
+    type={self.arg['type']},
+    default={self.arg['default']},
+    required={self.arg['required']},
+    help='{self.arg['help']}'
+)"""
+
+
+#
+# output
+#
+class OutputGen:
+    def __init__(self, name, arg):
+        self.name = name
+        self.arg = arg
+
+    def generate(self):
+        return []
+
+
+#
+# gui
+#
+class FormEntryGen:
+    def __init__(self, name, arg):
+        self.name = name
+        self.arg = arg
+
+    def generate(self):
+        return []
