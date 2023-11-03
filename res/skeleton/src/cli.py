@@ -35,7 +35,8 @@ def create_parser():
 
 
 def add_arguments(parser):
-    {{args}}
+    # {{args}}
+    pass
 
 
 def send(out: dict):

@@ -46,6 +46,10 @@ class Core(base.Core):
             appCfg=expected_app_cfg,
             depCfg=osp.join(app_root, 'pyproject.toml'),
         )
+        self.dstPaths.cli = osp.join(self.dstPaths.srcDir, 'cli.py')
+        self.dstPaths.implementation = osp.join(self.dstPaths.srcDir, 'imp.py')
+        self.dstPaths.output = osp.join(self.dstPaths.srcDir, 'output.py')
+        self.dstPaths.gui = osp.join(self.dstPaths.srcDir, 'gui.py')
 
     def _validate_args(self, args):
         self.args = copy.deepcopy(args)
@@ -69,22 +73,7 @@ class Core(base.Core):
             proj_config = toml.load(fp)
         proj_config['tool']['poetry']['name'] = self.args.appName
         proj_config['tool']['poetry']['authors'] = [getpass.getuser()]
-        self._init_source_files()
         return True
-
-    def _init_source_files(self):
-        src_files = [osp.abspath(f'{self.root}/src/template/{fn}') for fn in (
-            'default.app.json',
-            'cli.py',
-            'out.py',
-            'imp.py',
-            'gui.py',
-        )]
-        dst_files = (
-            osp.abspath(f'{self.paths.root}/src/app.json')
-        )
-        for src, dst in zip(src_files, dst_files):
-            util.copy_file(src, dst, isdstdir=True)
 
     def _generate_code(self):
         self.appConfig = util.load_json(self.paths.appCfg)
@@ -101,33 +90,37 @@ class Core(base.Core):
         for name, arg in self.appConfig['input'].items():
             codegen = ArgumentGen.create_codegen(name, arg)
             code_lines += codegen.generate()
-        # substitute template
         code = '\n'.join(code_lines)
+        # substitute template
+        util.substitute_keywords_in_file(self.dstPaths.cli, {
+            '{{name}}': self.appConfig['name'],
+            '{{description}}': self.appConfig['description'],
+            '{{tutorial}}': self.appConfig['tutorial'],
+            '{{remarks}}': self.appConfig['remarks'],
+            '# {{args}}': code,
+        }, useliteral=True)
 
     def _generate_out(self):
-        code_lines = []
-        for name, arg in self.appConfig['output'].items():
-            codegen = self._create_out_codegen(arg)
-            code_lines += codegen.generate()
-        # substitute template
-        code = '\n'.join(code_lines)
+        code_lines = [
+            '#',
+            '# GENERATED: DO NOT EDIT',
+            '#',
+            'output = {'
+        ]
+        indent = '    '
+        data_lines = [f'{indent}\'{name}\': {repr(arg["default"])},' for name, arg in self.appConfig['output'].items()]
+        code_lines += data_lines
+        code_lines.append('}')
+        util.save_lines(self.dstPaths.outCfg, code_lines, addlineend=True)
 
     def _generate_gui(self):
-        code_lines = []
-        for name, arg in self.appConfig['input'].items():
-            codegen = self._create_gui_codegen(name, arg)
-            code_lines += codegen.generate()
-        # substitute template
-        code = '\n'.join(code_lines)
-
-    def _create_cli_codegen(self, arg):
-        return None
-
-    def _create_out_codegen(self, arg):
-        return None
-
-    def _create_gui_codegen(self, arg):
-        return None
+        # code_lines = []
+        # for name, arg in self.appConfig['input'].items():
+        #     codegen = self._create_gui_codegen(name, arg)
+        #     code_lines += codegen.generate()
+        # # substitute template
+        # code = '\n'.join(code_lines)
+        pass
 
 
 class ArgumentGen:
