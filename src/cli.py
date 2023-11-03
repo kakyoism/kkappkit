@@ -7,7 +7,8 @@ def main():
     parser = create_parser()
     add_arguments(parser)
     core = imp.Core(parser.parse_args())
-    core.run()
+    out = core.run()
+    send(out)
 
 
 def create_parser():
@@ -63,6 +64,19 @@ def add_arguments(parser):
         required=False,
         help='App-config template for creating the new app'
     )
+
+
+def send(out: dict):
+    """
+    - extract out as json msg and send via stdout
+    - out must contain only json-serializable data
+    - downstream can receive via stdin and load as json msg
+    """
+    if not out:
+        return
+    print(f"""
+<<<{out}>>>
+""")
 
 
 if __name__ == '__main__':

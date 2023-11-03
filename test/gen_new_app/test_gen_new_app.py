@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 import shutil
 import types
@@ -49,5 +50,8 @@ def test_default():
     - must update args in tests after changing CLI
     """
     args = types.SimpleNamespace()
+    args.appName = 'hello'
+    args.appTemplate = 'offline'
+    os.chdir(_paths.caseWorkDir)
     imp.Core(args).run()
     assert True
