@@ -1,12 +1,8 @@
 import copy
-import datetime
 import getpass
-import glob
-import json
 import os
 import os.path as osp
 import shutil
-import traceback
 import types
 
 # 3rd party
@@ -78,11 +74,13 @@ class Core(base.Core):
     def _lazy_init_app_proj(self):
         if not self.args.appName:
             return
-        util.run_cmd(['poetry', 'init', '-n'], cwd=self.dstPaths.root)
-        with open(self.dstPaths.depCfg, 'rb') as fp:
-            proj_config = toml.load(fp)
-        proj_config['tool']['poetry']['name'] = self.args.appName
-        proj_config['tool']['poetry']['authors'] = [getpass.getuser()]
+        util.run_cmd(['poetry', 'init', '-n',
+                      '--name', self.args.appName,
+                      '--author', getpass.getuser(),
+                      '--python', '^3.11',
+                      '--dependency', 'kkpyutil',
+                      '--dev-dependency', 'pytest',
+        ], cwd=self.dstPaths.root)
         return True
 
     def _generate_code(self):

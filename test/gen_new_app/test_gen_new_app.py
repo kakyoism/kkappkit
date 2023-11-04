@@ -46,7 +46,7 @@ def teardown_function():
     - use the following pattern to clean up workspace after each test case:
     # util.safe_remove(_paths.caseWorkDir)
     """
-    util.safe_remove(_paths.caseWorkDir)
+    # util.safe_remove(_paths.caseWorkDir)
     pass
 
 
