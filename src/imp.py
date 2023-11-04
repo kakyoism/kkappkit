@@ -20,8 +20,6 @@ import base
 class Core(base.Core):
     def __init__(self, args, logger=None):
         super().__init__(args, logger)
-        self.root = osp.abspath(f'{osp.dirname(__file__)}/../')
-        self.dstPaths = None
         self.dstAppConfig = None
 
     def main(self):
@@ -31,8 +29,8 @@ class Core(base.Core):
 
     def _create_paths(self):
         self.paths = types.SimpleNamespace()
-        self.paths.root = self.root,
-        self.paths.resDir = osp.join(self.root, 'res')
+        self.paths.root = osp.abspath(f'{osp.dirname(__file__)}/../')
+        self.paths.resDir = osp.join(self.paths.root, 'res')
         self.paths.skeletonDir = osp.join(self.paths.resDir, 'skeleton')
         self.paths.templateDir = osp.join(self.paths.resDir, 'template')
 
@@ -40,9 +38,12 @@ class Core(base.Core):
         expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
         if is_new_app := not osp.isfile(expected_app_cfg):
             app_root = osp.join(os.getcwd(), self.args.appName)
+            expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
         self.dstPaths = types.SimpleNamespace(
             root=app_root,
             srcDir=osp.join(app_root, 'src'),
+            resDir=osp.join(app_root, 'res'),
+            testDir=osp.join(app_root, 'test'),
             appCfg=expected_app_cfg,
             depCfg=osp.join(app_root, 'pyproject.toml'),
         )
@@ -64,22 +65,32 @@ class Core(base.Core):
         src = osp.join(self.paths.resDir, 'skeleton')
         dst = self.dstPaths.root
         shutil.copytree(src, dst, dirs_exist_ok=True)
+        src = osp.abspath(f'{self.paths.templateDir}/{self.args.appTemplate}.app.json')
+        dst = osp.abspath(f'{self.dstPaths.srcDir}/app.json')
+        util.copy_file(src, dst)
+        # because pytest forbids name clashing b/w test modules
+        # skeleton test is named without test_ prefix to avoid name clashing with dst skeletion
+        # after copying, we must prepend test_ back for pytest to collect the test normally
+        src = osp.abspath(f'{self.dstPaths.testDir}/default/_default.py')
+        dst = osp.abspath(f'{self.dstPaths.testDir}/default/test_default.py')
+        os.rename(src, dst)
 
     def _lazy_init_app_proj(self):
         if not self.args.appName:
             return
-        util.run_cmd(['poetry', 'init', '-n'], cwd=self.paths.root)
-        with open(self.paths.depCfg, 'rb') as fp:
+        util.run_cmd(['poetry', 'init', '-n'], cwd=self.dstPaths.root)
+        with open(self.dstPaths.depCfg, 'rb') as fp:
             proj_config = toml.load(fp)
         proj_config['tool']['poetry']['name'] = self.args.appName
         proj_config['tool']['poetry']['authors'] = [getpass.getuser()]
         return True
 
     def _generate_code(self):
-        self.appConfig = util.load_json(self.paths.appCfg)
+        self.appConfig = util.load_json(self.dstPaths.appCfg)
         # TODO: replace with json schema
         if is_new_app := not self.appConfig['name']:
-            util.throw(ValueError, 'app.json is incomplete because its name is empty', 'complete app-config and rebuild the app')
+            self.logger.warning('app.json is incomplete because its name is empty; complete app-config and rebuild the app')
+            return
         # user has filled up app.json
         self._generate_cli()
         self._generate_out()
