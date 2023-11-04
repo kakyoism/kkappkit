@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import shutil
 import sys
+import tomllib
 import types
 
 # 3rd party
@@ -37,6 +38,7 @@ def setup_function():
     # workspace = osp.join(_paths.caseWorkDir, 'data')
     # shutil.copytree(clean_data, workspace, dirs_exist_ok=True)
     """
+    teardown_function()
     os.makedirs(_paths.caseWorkDir, exist_ok=True)
     pass
 
@@ -46,7 +48,7 @@ def teardown_function():
     - use the following pattern to clean up workspace after each test case:
     # util.safe_remove(_paths.caseWorkDir)
     """
-    # util.safe_remove(_paths.caseWorkDir)
+    util.safe_remove(_paths.caseWorkDir)
     pass
 
 
@@ -61,4 +63,7 @@ def test_new_app_generated_under_cwd():
     os.chdir(_paths.caseWorkDir)
     core = imp.Core(args)
     core.run()
-    assert True
+    proj_cfg = osp.abspath(f'{_paths.caseWorkDir}/hello/pyproject.toml')
+    with open(proj_cfg, "rb") as f:
+        data = tomllib.load(f)
+    assert data['tool']['poetry']['name'] == 'hello'
