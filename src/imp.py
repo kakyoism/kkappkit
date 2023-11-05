@@ -109,7 +109,7 @@ class Core(base.Core):
         code_lines = []
         for name, arg in self.appConfig['input'].items():
             codegen = ArgumentGen.create_codegen(name, arg)
-            code_lines += codegen.generate()
+            code_lines += codegen.generate().splitlines()
         code = '\n'.join(code_lines)
         # substitute template
         util.substitute_keywords_in_file(self.dstPaths.cli, {
@@ -119,6 +119,8 @@ class Core(base.Core):
             '{{remarks}}': '\n'.join(self.appConfig['remarks']),
             '# {{args}}': code,
         }, useliteral=True)
+
+
 
     def _generate_out(self):
         code_lines = [
@@ -167,14 +169,15 @@ class ArgumentGen:
     def create_codegen(name, arg):
         if arg['type'] == 'bool':
             return BoolGen(name, arg)
-        if 'option' in arg:
+        if 'choices' in arg:
             return OptionGen(name, arg)
         if arg['type'] in ('int', 'float', 'str', 'list'):
             return ArgumentGen(name, arg)
         util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in code-gen'])
 
     def generate(self):
-        return f"""\
+        """output code lines"""
+        return util.indent(f"""\
 parser.add_argument(
     {self.shortSwitch}
     '{self.longSwitch}',
@@ -184,7 +187,7 @@ parser.add_argument(
     default={self.default},
     required={self.arg['required']},
     help='{self.arg['help']}'
-)"""
+)""")
 
     def _extract_short_switch(self):
         def _wrap_for_argparse_call(switch):
@@ -232,7 +235,7 @@ class BoolGen(ArgumentGen):
         self.action = 'store_true' if not self.arg['default'] else 'store_false'
 
     def generate(self):
-        return f"""\
+        return util.indent(f"""\
 parser.add_argument(
     {self.shortSwitch}
     '{self.longSwitch}',
@@ -241,7 +244,7 @@ parser.add_argument(
     default={self.arg['default']},
     required={self.arg['required']},
     help='{self.arg['help']}'
-)"""
+)""")
 
 
 class ListGen(ArgumentGen):
@@ -271,7 +274,7 @@ class ListGen(ArgumentGen):
             self.nArgs = f"\'+\'"
 
     def generate(self):
-        return f"""\
+        return util.indent(f"""\
 parser.add_argument(
     {self.shortSwitch}
     '{self.longSwitch}',
@@ -282,7 +285,7 @@ parser.add_argument(
     default={self.arg['default']},
     required={self.arg['required']},
     help='{self.arg['help']}'
-)"""
+)""")
 
 
 class OptionGen(ArgumentGen):
@@ -314,13 +317,13 @@ class OptionGen(ArgumentGen):
 
     def __init__(self, name, arg):
         super().__init__(name, arg)
-        assert self.arg['range'][1] > 0 or self.arg['range'][1] is None
+        assert self.arg['range'][1] is None or self.arg['range'][1] > 0, f'invalid option range: {self.arg["range"]}'
         self.nArgs = 1 if self.arg['range'][1] == 1 else f"\'+\'"
         assert not isinstance(self.arg['default'], dict), 'expected option args to be consistent across platforms, but got platform-dependent defaults'
         self.default = f"\'{self.arg['default']}\'" if isinstance(self.arg['default'], str) else self.arg['default']
 
     def generate(self):
-        return f"""\
+        return util.indent(f"""\
 parser.add_argument(
     {self.shortSwitch}
     '{self.longSwitch}',
@@ -329,10 +332,10 @@ parser.add_argument(
     choices={self.arg['choices']},
     dest='{self.dest}',
     type={self.arg['type']},
-    default={self.arg['default']},
+    default={repr(self.arg['default'])},
     required={self.arg['required']},
     help='{self.arg['help']}'
-)"""
+)""")
 
 
 #

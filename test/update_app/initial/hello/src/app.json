@@ -4,7 +4,7 @@
   "description": "",
   "tutorial": [
     "example 1: do this",
-    "{{name}} -i input_file -o output_file"
+    "run -i input_file -o output_file"
   ],
   "remarks": [
     "- prerequisites: do that before running this",
@@ -47,10 +47,10 @@
       "choices": [
         "Male",
         "Female",
-        "[Secret]"
+        "*"
       ],
       "type": "str",
-      "default": "[Secret]",
+      "default": "*",
       "range": [
         1,
         1
@@ -99,7 +99,7 @@
     },
     "auto_save_preset": {
       "title": "Auto-save parameters as preset:",
-      "help": "boolean, global settings, always default to false in generated CLI even if it's true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change; on change, always save a fixed file; on success, save to a time-stamped file to preset folder and also the session folder",
+      "help": "boolean, global settings, always default to false in generated CLI even if it is true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change; on change, always save a fixed file; on success, save to a time-stamped file to preset folder and also the session folder",
       "type": "bool",
       "default": false,
       "required": false
