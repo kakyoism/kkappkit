@@ -265,13 +265,13 @@ class ListGen(ArgumentGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
         if allow_empty := self.arg['range'][0] == 0:
-            self.nArgs = f"\'*\'"
+            self.nArgs = repr('+')
         elif fixed_count := self.arg['range'][0] == self.arg['range'][1] and isinstance(self.arg['range'][0], int):
             assert len(self.arg['default']) == self.arg['range'][0]
             self.nArgs = self.arg['range'][0]
-        elif not_empty := self.arg['range'][0] > 0 and (self.arg['range'][1] > 0 or self.arg['range'][1] is None):
+        elif not_empty := self.arg['range'][0] > 0 and (self.arg['range'][1] is None or self.arg['range'][1] > 0):
             assert len(self.arg['default']) > 0
-            self.nArgs = f"\'+\'"
+            self.nArgs = repr('+')
 
     def generate(self):
         return util.indent(f"""\
