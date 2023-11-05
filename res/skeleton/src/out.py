@@ -1,5 +1,6 @@
 #
 # GENERATED: DO NOT EDIT
 #
-output = {
-}
+import types
+output = types.SimpleNamespace()
+# {{out}}
