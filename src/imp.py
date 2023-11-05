@@ -6,7 +6,6 @@ import shutil
 import types
 
 # 3rd party
-import tomllib as toml
 import kkpyutil as util
 
 # project
@@ -19,7 +18,10 @@ class Core(base.Core):
         self.dstAppConfig = None
 
     def main(self):
-        self._copy_skeleton()
+        if is_new_app := self.args.appName:
+            self._copy_skeleton()
+        else:
+            self._reset_interface()
         self._lazy_init_app_proj()
         self._generate_code()
 
@@ -72,7 +74,11 @@ class Core(base.Core):
         os.rename(src, dst)
 
     def _lazy_init_app_proj(self):
-        if not self.args.appName:
+        """
+        - user gives app name only when creating new app
+        """
+        if to_update_app := not self.args.appName:
+            # update toml
             return
         util.run_cmd(['poetry', 'init', '-n',
                       '--name', self.args.appName,
@@ -80,13 +86,18 @@ class Core(base.Core):
                       '--python', '^3.11',
                       '--dependency', 'kkpyutil',
                       '--dev-dependency', 'pytest',
-        ], cwd=self.dstPaths.root)
+                      ], cwd=self.dstPaths.root)
+        # update app config
+        self.appConfig = util.load_json(self.dstPaths.appCfg)
+        self.appConfig['name'] = self.args.appName
+        util.save_json(self.dstPaths.appCfg, self.appConfig)
         return True
 
     def _generate_code(self):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         # TODO: replace with json schema
         if is_new_app := not self.appConfig['name']:
+            breakpoint()
             self.logger.warning('app.json is incomplete because its name is empty; complete app-config and rebuild the app')
             return
         # user has filled up app.json
@@ -104,8 +115,8 @@ class Core(base.Core):
         util.substitute_keywords_in_file(self.dstPaths.cli, {
             '{{name}}': self.appConfig['name'],
             '{{description}}': self.appConfig['description'],
-            '{{tutorial}}': self.appConfig['tutorial'],
-            '{{remarks}}': self.appConfig['remarks'],
+            '{{tutorial}}': '\n'.join(self.appConfig['tutorial']),
+            '{{remarks}}': '\n'.join(self.appConfig['remarks']),
             '# {{args}}': code,
         }, useliteral=True)
 
@@ -120,7 +131,7 @@ class Core(base.Core):
         data_lines = [f'{indent}\'{name}\': {repr(arg["default"])},' for name, arg in self.appConfig['output'].items()]
         code_lines += data_lines
         code_lines.append('}')
-        util.save_lines(self.dstPaths.outCfg, code_lines, addlineend=True)
+        util.save_lines(self.dstPaths.output, code_lines, addlineend=True)
 
     def _generate_gui(self):
         # code_lines = []
@@ -130,6 +141,12 @@ class Core(base.Core):
         # # substitute template
         # code = '\n'.join(code_lines)
         pass
+
+    def _reset_interface(self):
+        for fn in ('cli.py', 'gui.py', 'out.py'):
+            src = osp.abspath(f'{self.paths.skeletonDir}/src/{fn}')
+            dst = osp.abspath(f'{self.dstPaths.srcDir}/{fn}')
+            util.copy_file(src, dst)
 
 
 class ArgumentGen:
@@ -152,7 +169,9 @@ class ArgumentGen:
             return BoolGen(name, arg)
         if 'option' in arg:
             return OptionGen(name, arg)
-        util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in codd gen'])
+        if arg['type'] in ('int', 'float', 'str', 'list'):
+            return ArgumentGen(name, arg)
+        util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in code-gen'])
 
     def generate(self):
         return f"""\
@@ -170,6 +189,7 @@ parser.add_argument(
     def _extract_short_switch(self):
         def _wrap_for_argparse_call(switch):
             return f'"{switch}",'
+
         # first unused initial of each part
         parts = self.name.split('_')
         initial_for_sw = next((part[0] for part in parts if part[0] not in ArgumentGen.shortSwitches), None)
@@ -182,7 +202,7 @@ parser.add_argument(
             return _wrap_for_argparse_call(f'-{cap_initial_for_sw}')
         # combine initials of 1st and 2nd part if applicable
         if has_multiparts := len(parts) > 1:
-            concat_initials_for_sw = next((concat for p in range(len(parts)-1) if (concat := f'{parts[p][0]}{parts[p+1][0]}') not in ArgumentGen.shortSwitches), None)
+            concat_initials_for_sw = next((concat for p in range(len(parts) - 1) if (concat := f'{parts[p][0]}{parts[p + 1][0]}') not in ArgumentGen.shortSwitches), None)
             if concat_initials_for_sw:
                 ArgumentGen.shortSwitches.add(concat_initials_for_sw)
                 return _wrap_for_argparse_call(f'-{concat_initials_for_sw}')
@@ -206,6 +226,7 @@ class BoolGen(ArgumentGen):
         help=''
     )
     """
+
     def __init__(self, name, arg):
         super().__init__(name, arg)
         self.action = 'store_true' if not self.arg['default'] else 'store_false'
@@ -237,6 +258,7 @@ class ListGen(ArgumentGen):
         help=''
     )
     """
+
     def __init__(self, name, arg):
         super().__init__(name, arg)
         if allow_empty := self.arg['range'][0] == 0:
@@ -289,6 +311,7 @@ class OptionGen(ArgumentGen):
         help=''
     )
     """
+
     def __init__(self, name, arg):
         super().__init__(name, arg)
         assert self.arg['range'][1] > 0 or self.arg['range'][1] is None

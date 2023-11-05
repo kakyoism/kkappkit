@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "name": "",
+  "description": "",
+  "tutorial": [
+    "example 1: do this",
+    "{{name}} -i input_file -o output_file"
+  ],
+  "remarks": [
+    "- prerequisites: do that before running this",
+    "- caution: do not do that"
+  ],
+  "input": {
+    "bio": {
+      "help": "text, with multiline support",
+      "type": "str",
+      "default": "",
+      "range": [
+        0,
+        null
+      ],
+      "required": false
+    },
+    "age": {
+      "help": "an integer",
+      "type": "int",
+      "default": 0,
+      "range": [
+        0,
+        null
+      ],
+      "required": false
+    },
+    "height": {
+      "title": "Height (m):",
+      "help": "a float number",
+      "type": "float",
+      "default": 1.73,
+      "range": [
+        0.0,
+        3.0
+      ],
+      "required": false
+    },
+    "gender": {
+      "help": "single-selection with str as default, option-menu, no user option can be added when range.max==1",
+      "choices": [
+        "Male",
+        "Female",
+        "[Secret]"
+      ],
+      "type": "str",
+      "default": "[Secret]",
+      "range": [
+        1,
+        1
+      ],
+      "required": false
+    },
+    "language": {
+      "help": "multi-selection with list as default; allow user to add new option when range.max==null",
+      "choices": [
+        "English",
+        "French",
+        "Chinese"
+      ],
+      "type": "str",
+      "default": [
+        "English"
+      ],
+      "range": [
+        1,
+        null
+      ],
+      "validate": true,
+      "required": false
+    },
+    "portfolio": {
+      "help": "file browser, with add/remove/paste, single-selection when range.max is 1, multi-selection when range.max is null",
+      "type": "File",
+      "default": {
+        "Darwin": "",
+        "Windows": ""
+      },
+      "range": [
+        0,
+        1
+      ],
+      "required": false
+    },
+    "show_hobbies": {
+      "help": "boolean, as master to a slave set",
+      "type": "bool",
+      "default": false,
+      "required": false,
+      "slaving": {
+        "enable": [
+          "music_collections",
+          "dreams"
+        ]
+      }
+    },
+    "music_collections": {
+      "title": "Music Collection Folders:",
+      "help": "folder browser, similar with file browser",
+      "type": "Folder",
+      "default": {
+        "Darwin": [],
+        "Windows": []
+      },
+      "range": [
+        0,
+        null
+      ],
+      "required": false
+    },
+    "dreams": {
+      "help": "list, ComboBox with CRUD",
+      "type": "list",
+      "default": [],
+      "range": [
+        0,
+        null
+      ],
+      "required": false
+    },
+    "auto_save_preset": {
+      "title": "Auto-save parameters as preset:",
+      "help": "boolean, global settings, always default to false in generated CLI even if it's true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change; on change, always save a fixed file; on success, save to a time-stamped file to preset folder and also the session folder",
+      "type": "bool",
+      "default": false,
+      "required": false
+    }
+  },
+  "output": {
+
+  }
+}

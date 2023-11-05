@@ -1,0 +1,11 @@
+#! /bin/sh
+
+set -e
+pushd . &> /dev/null
+
+ScriptDir="$( cd "$( dirname "$0" )" && pwd )"
+root="$( cd $ScriptDir/.. && pwd )"
+cd "$root"
+`which kkappkit` "$@"
+
+popd &> /dev/null
