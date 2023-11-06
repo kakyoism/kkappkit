@@ -1,5 +1,12 @@
 # Design
 
+## generated output
+`dataclass` vs. `class` vs. `types.SimpleNamespace` vs. `dict`
+- we prefer having type annotation for future type-matching opportunities between inputs and outputs
+- type annotation is not supported while initializing `dict` or `types.SimpleNamespace`
+- `class` and `dataclass` both support type annotation, but `dataclass` is more compact
+- since output doesn't need behaviours, `dataclass` is good enough
+
 ## build variables
 - syntax: `${<var_name>}`
 - `CLI`: app's command line interface source file path
