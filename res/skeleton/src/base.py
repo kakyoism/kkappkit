@@ -17,7 +17,7 @@ class Core:
     """
     def __init__(self, args, logger=None):
         self.args = self._validate_args(args)
-        self.out = out.output
+        self.out = out.Output()
         pkg_name = util.load_ini(osp.join(osp.dirname(__file__), 'pyproject.toml'))['tool.poetry']['name'] if self.is_dev_environment() else osp.basename(osp.dirname(__file__))
         tmp_dir = osp.join(util.get_platform_tmp_dir(), pkg_name)
         session_dir = osp.join(tmp_dir, util.format_now())

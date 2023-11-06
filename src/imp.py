@@ -47,7 +47,7 @@ class Core(base.Core):
         )
         self.dstPaths.cli = osp.join(self.dstPaths.srcDir, 'cli.py')
         self.dstPaths.implementation = osp.join(self.dstPaths.srcDir, 'imp.py')
-        self.dstPaths.output = osp.join(self.dstPaths.srcDir, 'output.py')
+        self.dstPaths.output = osp.join(self.dstPaths.srcDir, 'out.py')
         self.dstPaths.gui = osp.join(self.dstPaths.srcDir, 'gui.py')
 
     def _validate_args(self, args):
@@ -120,20 +120,16 @@ class Core(base.Core):
             '# {{args}}': code,
         }, useliteral=True)
 
-
-
     def _generate_out(self):
-        code_lines = [
-            '#',
-            '# GENERATED: DO NOT EDIT',
-            '#',
-            'output = {'
-        ]
-        indent = '    '
-        data_lines = [f'{indent}\'{name}\': {repr(arg["default"])},' for name, arg in self.appConfig['output'].items()]
-        code_lines += data_lines
-        code_lines.append('}')
-        util.save_lines(self.dstPaths.output, code_lines, addlineend=True)
+        """
+        - generate output code, e.g.:
+          - output.myProp: myType = myValue
+        - must add import by hand for custom types
+        """
+        indent = ' ' * 4
+        prop_assignment_lines = [f'{indent}{util.convert_compound_cases(name, style="camel", instyle="snake")}: {arg["type"]} = {repr(arg["default"])}' for name, arg in self.appConfig['output'].items()]
+        code = '\n'.join(prop_assignment_lines)
+        util.substitute_keywords_in_file(self.dstPaths.output, {'# {{assign}}': code}, useliteral=True)
 
     def _generate_gui(self):
         # code_lines = []
