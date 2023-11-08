@@ -105,10 +105,10 @@ def main(argv):
     if not exists(in_img):
         if(not prompt.error(
                 desc='Failed to find input image: {}'.format(in_img),
-                causes=['File path is wrong.',
+                detail=['File path is wrong.',
                         'File is renamed.',
                         'File is no longer there.'],
-                suggestions=['Make sure the image path exists.',
+                advice=['Make sure the image path exists.',
                              'Check if something is touching file on the fly.'],
                 confirm=True)):
             _progress_queue.put(progress[0])  # Reset progress at any bail!

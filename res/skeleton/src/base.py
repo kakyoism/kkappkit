@@ -51,4 +51,3 @@ class Core:
         self.args = copy.deepcopy(args)
         # IMPLEMENT VALIDATION HERE
         return self.args
-
