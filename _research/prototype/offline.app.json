@@ -75,6 +75,19 @@
       "validate": true,
       "required": false
     },
+    "portfolio": {
+      "help": "file browser, with add/remove/paste, single-selection when range.max is 1, multi-selection when range.max is null",
+      "type": "File",
+      "default": {
+        "Darwin": "",
+        "Windows": ""
+      },
+      "range": [
+        0,
+        1
+      ],
+      "required": false
+    },
     "show_hobbies": {
       "help": "boolean, as master to a slave set",
       "type": "bool",
@@ -86,6 +99,20 @@
           "dreams"
         ]
       }
+    },
+    "music_collections": {
+      "title": "Music Collection Folders:",
+      "help": "folder browser, similar with file browser",
+      "type": "Folder",
+      "default": {
+        "Darwin": [],
+        "Windows": []
+      },
+      "range": [
+        0,
+        null
+      ],
+      "required": false
     },
     "dreams": {
       "help": "list, ComboBox with CRUD",
