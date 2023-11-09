@@ -1,8 +1,14 @@
+import copy
+import os.path as osp
+import pathlib
+import platform
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfiledialog
 import tkinter.font as tkfont
 import tkinter.messagebox as tkmsgbox
+import webbrowser
+
 # 3rd party
 import kkpyutil as util
 
@@ -13,6 +19,7 @@ def create_root_window(title, size=None, resizable=(False, False), icon=None, on
     - show it at the center screen
     - caller must start mainloop afterward
     """
+
     def _unpin_root_on_focusin(event):
         """Solve the dilemma: root window hidden behind other apps on first run."""
         if type(event.widget).__name__ == 'Tk':
@@ -22,6 +29,7 @@ def create_root_window(title, size=None, resizable=(False, False), icon=None, on
         if callable(onquit):
             onquit()
         root.destroy()
+
     root = tk.Tk()
     root.title(title)
     if size is not None:
@@ -52,12 +60,15 @@ COLOR_PRIORITY_MAP = {
     'Action': 'gainsboro'
 }
 
+FULL_EXPAND = 'nsew'
+
 
 class Prompt:
     """
     - must use within tkinter mainloop
     - otherwise will hang upon confirmation
     """
+
     def __init__(self, logger=None):
         self.logger = logger or util.glogger
 
@@ -116,6 +127,7 @@ class ScrollFrame(tk.Frame):
         someWidget.grid(widgets=0, column=0, sticky='nsew')
         propPanel.pack(side="top", fill="both", expand=True)
     """
+
     def __init__(self, *args, **kwargs):
         def _configure_interior(event):
             # Update the scrollbars to match the size of the inner frame.
@@ -130,6 +142,7 @@ class ScrollFrame(tk.Frame):
             # update the inner frame's width to fill the canvas
             if self.frame.winfo_reqwidth() != self.canvas.winfo_width():
                 self.canvas.itemconfigure(frame_id, width=self.canvas.winfo_width())
+
         super().__init__(*args, **kwargs)
         self.configure(padx=5)
         # data
@@ -156,7 +169,7 @@ class ScrollFrame(tk.Frame):
         self.canvas.unbind_all("<MouseWheel>")
 
     def _on_mousewheel(self, event):
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def pack(self, *args, **kwargs):
         self.scroll.pack(side='right', fill='y', expand=False)
@@ -204,3 +217,973 @@ class ScrollFrame(tk.Frame):
             if to_hide:
                 child.grid_forget()
                 self.hiddenWgts.append(child)
+
+
+class WidgetBase(tk.Frame):
+    """Base class of all widgets."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(bd=0)
+        self.widgets = {}
+        self.gridWeights = {}  # Proportions of children along the widgets.
+        self.gridConfig = {}  # memorize grid for keyword-based widget filtering.
+
+    def get_name(self):
+        """Accessor for widget show/hide keyword search algorithm."""
+        return self._name
+
+    def get_help(self):
+        """Accessor for widget show/hide keyword search algorithm."""
+        return None
+
+    def get_title(self):
+        """Accessor for widget show/hide keyword search algorithm."""
+        return None
+
+    def configure_internal(self, config):
+        """
+        Extend to configure frame appearance.
+        :param config: {'property': value, ...} as extended properties.
+        """
+        for k, v in config.items():
+            self[k] = v
+
+    def pack(self, *args, **kwargs):
+        """Pack children left aligned and allow them to expand with parent."""
+        for k, v in self.widgets.items():
+            v.pack(side='left', fill='both', expand=True)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        """Layout child widgets within the only child frame."""
+        self.grid_rowconfigure(0, weight=1)  # layout one widget
+        # Main widgets
+        col = 0
+        for k, v in self.widgets.items():  # layout columns
+            self.grid_columnconfigure(col, weight=self.gridWeights[k])
+            v.grid(row=0, column=col, sticky=self.__class__.FULL_EXPAND)
+            col += 1
+        super().grid(*args, **kwargs)
+        self.gridConfig = kwargs  # Save for restoring grid prop during search.
+
+
+class Separator(WidgetBase):
+    """Visual separator."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(bg=COLOR_PRIORITY_MAP['Common'], padx=5, pady=10)
+        self.widgets['Separator'] = ttk.Separator(self)
+        self.gridWeights['Separator'] = 1
+
+    def __repr__(self):
+        return '{}: Visual gap, non-interactive.'.format(type(self).__name__)
+
+
+class TitleStrip(WidgetBase):
+    """Row with label and separator. It defines the purpose of rows below it."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(bg=COLOR_PRIORITY_MAP['Common'], pady=10)
+        # Widgets
+        self.widgets['Head'] = ttk.Separator(self)
+        self.widgets['Title'] = ttk.Label(self, text='Title',
+                                          font=tkfont.Font(size=14,
+                                                           weight='bold'))
+        self.widgets['Tail'] = ttk.Separator(self)
+        self.gridWeights['Head'] = 100
+        self.gridWeights['Title'] = 1
+        self.gridWeights['Tail'] = 100
+
+    def __repr__(self):
+        return '{}: not interactive.'.format(type(self).__name__)
+
+    def configure_internal(self, config):
+        """
+        Extend to configure title text properties.
+        :param config: {'property': value} about appearance, data range, etc.
+        :return:
+        """
+        self.widgets['Title']['text'] = config['Title']
+        for k, v in filter(lambda kv: kv[0] != 'Title', config.items()):
+            self.widgets['Title'][k] = v
+
+    def get_title(self):
+        return self.widgets['Title']['text']
+
+    def pack(self, *args, **kwargs):
+        for k, v in self.widgets.items():
+            v.pack(side='left', fill='both', expand=True)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        """Layout child widgets within the only child frame."""
+        self.grid_rowconfigure(0, weight=1)
+        # Main widgets
+        col = 0
+        for k, v in self.widgets.items():  # Layout each column.
+            self.grid_columnconfigure(col, weight=self.gridWeights[k])
+            v.grid(row=0, column=col, sticky=FULL_EXPAND)
+            col += 1
+        super().grid(*args, **kwargs)
+        self.gridConfig = kwargs
+
+
+class InfoStrip(WidgetBase):
+    """Show read-only descriptions. Add scrollbar only if multiline."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Widgets
+        self.widgets['Title'] = ttk.Label(self, text='Title')
+        self.widgets['Content'] = tk.Message(self, text='', justify=tk.LEFT,
+                                             anchor='w',
+                                             width=1000,
+                                             bg=COLOR_PRIORITY_MAP['Common'])
+        self.gridWeights['Title'] = 1
+        self.gridWeights['Content'] = 100
+
+    def __repr__(self):
+        return '{}: not interactive.'.format(type(self).__name__)
+
+    def configure_internal(self, config):
+        """
+        Extend to configure title text properties.
+        :param config: {'property': value} about appearance, data range, etc.
+        :return:
+        """
+        self.widgets['Title']['text'] = config['Title']
+        self.widgets['Content']['text'] = config['Value']
+
+    def get_title(self):
+        return self.widgets['Title']['text']
+
+    def pack(self, *args, **kwargs):
+        for k, v in self.widgets.items():
+            v.pack(side='left', fill='both', expand=True)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        """Layout child widgets within the only child frame."""
+        self.grid_rowconfigure(0, weight=1)
+        # Main widgets
+        col = 0
+        for k, v in self.widgets.items():  # Layout each column.
+            self.grid_columnconfigure(col, weight=self.gridWeights[k])
+            v.grid(row=0, column=col, sticky=FULL_EXPAND)
+            col += 1
+        super().grid(*args, **kwargs)
+        self.gridConfig = kwargs
+
+
+class RowStrip(WidgetBase):
+    """
+    A compound widget as a parameter config UI.
+
+    Features
+    - Preserves Tkinter's init-configure-layout-callback paradigm;
+    - Adds UI to reset data to its default value, with user hooks to
+    retrieve default values.
+    - Adds Provides UI to open help about the data, provided in config file.
+
+    Usecases
+    - Programmer defines control parameters for CLI script in a
+    JSON config file, including default values and help docs of the parameter.
+    - Programmer then generates UI for the parameter using generic factory
+    method. The factory method stack up these row-strips.
+    - Programmer ships package containing the CLI script including UI
+    generator code, and JSON config files as a standalone app.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = None  # To implement in children
+        self.widgets = {}
+        self.gridWeights = {}  # Proportions of children along the widgets.
+        self.gridConfig = {}
+        # Common widgets
+        self.reset = ttk.Button(self, text='Reset', command=self._on_reset)
+        self.help = ttk.Button(self, text='?', command=self._on_help)
+        self.handlers = {k: None for k in ['OnReset',
+                                           'OnHelp',
+                                           'OnChange']}
+
+    def __repr__(self):
+        return 'class: {}, name: {}: data: {}'.format(
+            self.__class__.__name__, self.get_name(), self.get_data())
+
+    def pack(self, *args, **kwargs):
+        """Pack child widgets in a row."""
+        for k, v in self.widgets.items():
+            v.pack(side='left', fill='both', expand=True)
+        self.help.pack(side='right', fill='both', expand=False)
+        self.reset.pack(side='right', fill='both', expand=False)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        """
+        Pack child widgets by find portions,
+        and preserve grid config for restoring upon UI filtering.
+        """
+        self.grid_rowconfigure(0, weight=1)  # Layout single widgets.
+        # Main widgets
+        col = 0
+        for k, v in self.widgets.items():  # Layout each column.
+            self.grid_columnconfigure(col, weight=self.gridWeights[k])
+            v.grid(row=0, column=col, sticky=FULL_EXPAND)
+            col += 1
+        # Common widgets
+        self.grid_columnconfigure(col, weight=1)
+        self.reset.grid(row=0, column=col, sticky='nsw')  # right-aligned.
+        # Disable button if no callback is assigned.
+        if not callable(self.handlers['OnReset']):
+            self.reset.configure(state=tk.DISABLED)
+        col += 1
+        self.grid_columnconfigure(col, weight=1)
+        self.help.grid(row=0, column=col, sticky='nsw')  # right-aligned.
+        if not callable(self.handlers['OnHelp']):
+            self.help.configure(state=tk.DISABLED)
+        col += 1
+        super().grid(*args, **kwargs)
+        self.gridConfig = kwargs
+
+    def get_data(self):
+        """Return user input data to assign to a named parameter."""
+        return self.input.get() if self.input is not None else None
+
+    def set_data(self, kvp):
+        """
+        Update widgets based on new kvp data field.
+        :param kvp: field retrieved using self._name from config.
+        """
+        self.input.set(kvp['Value'])
+
+    def get_help(self):
+        if callable(self.handlers['OnHelp']):
+            return self.handlers['OnHelp'](self)  # Get help text from app.
+        return None
+
+    def get_title(self):
+        return self.widgets['Title']['text'] \
+            if 'Title' in self.widgets.keys() else None
+
+    def bind_internal(self, evt_handler_map):
+        """
+        Register events and handlers. Support cookies.
+        :param evt_handler_map: {'on_xx": handler_func} for client logic.
+        to use.
+        :return:
+        """
+        self.handlers.update(evt_handler_map)
+        # Bind var observer: lambda to pass:
+        # - widget for accessing data
+        # - vars specified by trace.
+        if callable(self.handlers['OnChange']):
+            self.input.trace(
+                mode='w',
+                callback=lambda *args: self.handlers['OnChange'](self, *args)
+            )
+
+    def _on_reset(self):
+        # Reset widget data to default based on configuration.
+        if callable(self.handlers['OnReset']):
+            # if self.reset['state'] != tk.DISABLED:
+            self.set_data(default := self.handlers['OnReset'](self.get_name()))
+
+    def _on_help(self):
+        """Show user docs in a separate window."""
+        if callable(self.handlers['OnHelp']):
+            help_text = self.handlers['OnHelp'](self.get_name())  # Get help text
+            # from app.
+            window = tk.Toplevel(self)
+            window.title('Help: {}'.format(self.get_name()))
+            text = tk.Text(window)
+            text.insert(tk.INSERT, help_text)
+            text.pack()
+
+
+class EntryStrip(RowStrip):
+    """Get info from app on pressing action button, and show it."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = tk.StringVar(name=self.get_name(), value='...')
+        self.widgets['Title'] = ttk.Label(self, text='Title: ')
+        self.widgets['Entry'] = ttk.Entry(self, textvariable=self.input)
+        self.widgets['Action'] = ttk.Button(self, text='Action')
+        self.widgets['Action'].configure(command=self._on_action)
+        self.gridWeights['Title'] = 1
+        self.gridWeights['Entry'] = 1000
+        self.gridWeights['Action'] = 1
+        self.handlers['OnAction'] = None
+
+    def configure_internal(self, config):
+        self.input.set(config['Value'])
+        self.widgets['Title']['text'] = config['Title']
+        if 'Action' in config.keys():
+            self.widgets['Action']['text'] = config['Action']
+            # Rule: bind action based on action type field in config.
+            action_maps = {
+                'Copy': self._copy_to_clipboard
+            }
+            for k, v in action_maps.items():
+                if config['Action'].startswith(k):
+                    self.handlers['OnAction'] = v
+                    break
+        super().configure_internal({})
+
+    def _on_action(self):
+        if callable(self.handlers['OnAction']):
+            self.handlers['OnAction']()
+
+    def _copy_to_clipboard(self):
+        # Copy current path to clipboard.
+        root = self.winfo_toplevel()
+        root.clipboard_clear()
+        root.clipboard_append(self.get_data())
+
+
+class PreciseScale(ttk.Scale):
+    """ ttk.Scale sublass that limits the precision of values. """
+
+    def __init__(self, *args, **kwargs):
+        self.precision = kwargs.pop('precision')  # Remove non-std kwarg.
+        self.onChange = kwargs.pop('command', lambda *a: None)  # User callback.
+        super().__init__(*args, command=self._value_changed, **kwargs)
+
+    def _value_changed(self, new_value):
+        new_value = round(float(new_value), self.precision)
+        self.winfo_toplevel().globalsetvar(self.cget('variable'), new_value)
+        self.onChange(new_value)  # Call user specified function.
+
+
+class NumberStrip(RowStrip):
+    """Get number from user input, and show it."""
+
+    def __init__(self, *args, datatype='float', precision=3, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = tk.IntVar(name=self.get_name(), value=0) \
+            if datatype == 'int' else tk.DoubleVar(name=self.get_name(), value=0.)
+        self.widgets['Title'] = ttk.Label(self, text='Number: ')
+        self.widgets['Spin'] = tk.Spinbox(self,
+                                          textvariable=self.input,
+                                          wrap=True)
+        self.widgets['Slider'] = PreciseScale(self,
+                                              variable=self.input,
+                                              orient=tk.HORIZONTAL,
+                                              precision=precision)
+        self.gridWeights['Title'] = 1
+        self.gridWeights['Spin'] = 1
+        self.gridWeights['Slider'] = 100
+
+    def configure_internal(self, config):
+        self.input.set(config['Value'])
+        self.widgets['Title']['text'] = config['Title']
+        # CAUTION: Must assign 'to' before 'from',
+        # because 'from' might risk getting set bigger than 'to' any other way.
+        self.widgets['Spin']['to'] = config['Range'][1]
+        self.widgets['Spin']['from'] = config['Range'][0]
+        self.widgets['Spin']['increment'] = config['Steps'][0]
+        self.widgets['Slider']['to'] = config['Range'][1]
+        self.widgets['Slider']['from'] = config['Range'][0]
+        # Fit spinbox size to value range
+        char_count = len(str(self.widgets['Spin']['to']))
+        self.widgets['Spin'].configure(width=max(char_count + 1, 6))
+
+        # CAUTION: ttk.Scale has no increment or resolution
+        # Set slider increment to int to avoid float increment when data is int.
+        if isinstance(self.input, tk.IntVar):
+            self.widgets['Slider']['command'] = self._int_increment
+        elif isinstance(self.input, tk.DoubleVar):
+            self.widgets['Slider'].precision = config['Precision'] \
+                if 'Precision' in config.keys() else 3
+        else:
+            raise NotImplementedError("""
+Unsupported var type: {}, expected tk.IntVar or tk.DoubleVar.
+""".format(type(self.input)))
+
+    def _int_increment(self, evt=None):
+        """If slider generates floating point, lets round it up."""
+        data = self.widgets['Slider'].get()
+        if int(data) != data:
+            self.widgets['Slider'].set(round(data))
+
+    def _float_increment(self, evt=None):
+        data = self.widgets['Slider'].get()
+        if int(data) != data:
+            self.widgets['Slider'].set(round(data))
+
+
+class OptionStrip(RowStrip):
+    """Single selection through dropdown list."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = tk.StringVar(master=self, name=self.get_name(), value='')
+        # OptionMenu widget does not save the list. So we must.
+        self.options = []
+        self.widgets['Title'] = ttk.Label(self, text='Select: ')
+        self.widgets['Option'] = ttk.OptionMenu(self,
+                                                self.input,
+                                                '',
+                                                *self.options)
+        self.gridWeights['Title'] = 1
+        self.gridWeights['Option'] = 1000
+
+    def configure_internal(self, config):
+        self.options = copy.deepcopy(config['Options'])
+        self.input.set(config['Options'][config['Value']])
+        self.widgets['Title']['text'] = config['Title']
+        # CAUTION: must set default (Arg #3 ) before giving the option list.
+        self.widgets['Option'] = ttk.OptionMenu(self,
+                                                self.input,
+                                                self.options[0],
+                                                *self.options)
+
+    def get_data(self):
+        """
+        Return the list index of the option string to save to config.
+        """
+        return self.options.index(self.input.get())
+
+    def set_data(self, kvp):
+        text = kvp['Options'][kvp['Value']]
+        self.input.set(text)
+
+
+class PathStrip(EntryStrip):
+    """Open or save to a path, with filetype filers."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filetypes = []
+        self.defaultextension = '*.*'
+
+    def configure_internal(self, config):
+        super().configure_internal(config)
+        self.filetypes = config['FileTypes']
+        # Take head of file types; Remove * from *.jpg
+        self.defaultextension = config['FileTypes'][0][1][1:]
+        # Rule: bind action based on action type field in config.
+        action_maps = {
+            'Browse': self._browse,
+            'Copy': super()._copy_to_clipboard
+        }
+        for k, v in action_maps.items():
+            if config['Action'].startswith(k):
+                self.handlers['OnAction'] = v
+                break
+
+    def _browse(self):
+        # Update path from browsing.
+        if util.PLATFORM in ('Windows', 'Linux'):
+            data = tkfiledialog.askopenfilename(
+                title='Select {}'.format(self.widgets['Title']['text']),
+                filetypes=self.filetypes,
+                defaultextension=self.defaultextension
+            )
+        else:
+            data = tkfiledialog.askopenfilename(
+                title='Select {}'.format(self.widgets['Title']['text'])
+            )
+        # CAUTION: tkFileDialog returns empty str on cancelling
+        if data != '':
+            self.input.set(data)
+
+
+class ProgressStrip(tk.Frame):
+    """
+    Show progress with text and bar. Support determined and indefinite modes.
+    """
+
+    def __init__(self, *args, queue=None, is_numerical=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(bg=COLOR_PRIORITY_MAP['Common'], padx=20)
+        # data
+        self.queue = queue
+        self.progress = tk.DoubleVar(name='progress', value=0.)
+        self.stage = tk.StringVar(name='stage', value='')
+        # widgets
+        self.widgets = {
+            'Progress': ttk.Progressbar(self,
+                                        mode='determinate',
+                                        orient='horizontal',
+                                        length=380) if is_numerical else ttk.Progressbar(self,
+                                                                                         mode='indeterminate',
+                                                                                         orient='horizontal',
+                                                                                         length=380),
+            'Stage': ttk.Label(self,
+                               textvariable=self.stage,
+                               width=200,
+                               anchor='e')
+        }
+        self.gridWeights = {'Progress': 1, 'Stage': 1000}
+        self.gridConfig = {}
+        # Start checking queue for progress.
+        if is_numerical:
+            # Once assigned variable, progressbar turns on 'determinate' progress_mode.
+            self.widgets['Progress'].configure(variable=self.progress)
+            self._watch()
+        else:
+            self._wait()
+
+    def pack(self, *args, **kwargs):
+        """Pack child widgets in a column."""
+        self.widgets['Progress'].pack(side='left', fill='both', expand=False)
+        self.widgets['Stage'].pack(side='right', fill='both', expand=False)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        """
+        Pack child widgets by find portions,
+        and preserve grid config for restoring upon UI filtering.
+        """
+        self.grid_rowconfigure(0, weight=1)  # Layout single widgets.
+        # Main widgets
+        col = 0
+        for k, v in self.widgets.items():  # Layout each column.
+            self.grid_columnconfigure(col, weight=self.gridWeights[k])
+            v.grid(row=0, column=col, sticky=FULL_EXPAND)
+            col += 1
+        super().grid(*args, **kwargs)
+        self.gridConfig = kwargs
+
+    def _watch(self):
+        # Periodically check queue for messages from worker thread.
+        while self.queue.qsize():
+            try:
+                msg = self.queue.get(0)
+                self.stage.set(msg[0])
+                self.progress.set(msg[1])
+            except self.queue.Empty:
+                pass
+        self.after(50, self._watch)
+
+    def _wait(self):
+        # Show indeterminate progress till the external process finishes
+        # Start and stop on special queue messages.
+        while self.queue.qsize():
+            msg = self.queue.get(0)
+            if msg[0] == '/start':
+                self.widgets['Progress'].start()
+            elif msg[0] == '/stop':
+                self.widgets['Progress'].stop()
+            else:
+                raise NotImplementedError(
+                    'Unexpected progress message: {}'.format(msg[0])
+                )
+            # return
+        self.after(50, self._wait)
+
+
+class SubmitStrip(tk.Frame):
+    """
+    A group of buttons as the submit step of form-submission workflow.
+    It's stateless observer of the parameter widgets.
+        - Submit: The main action of the form.
+        - Cancel: Abort and save nothing.
+        - Save As: Save all parameters as a preset JSON.
+        - Load: Load a preset JSON and show on the parameter rack.
+        - Save Default: Save all parameters to defaults.json.
+        - Reset All: Reset all parameters to default.
+    Handlers are implemented on app side,
+    because whether to use config or args is a user decision.
+    """
+
+    def __init__(self, parent, targets, config_man, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.configure(bg=COLOR_PRIORITY_MAP['Action'], padx=10, pady=5)
+        # Data
+        self.targets = targets  # Link to source widgets that we observe.
+        self.config_man = config_man
+        self.config = config_man.load()
+        self.ext = '.json'
+        self.filetypes = [('Config Files', '*.json')]
+        self.basename = osp.splitext(util.MAIN_CFG_FILENAME)[0] + '-preset'
+        # Preset
+        self.widgets = {
+            'Self': self,
+            'PresetFrame': tk.Frame(self,
+                                    bg=COLOR_PRIORITY_MAP['Action'],
+                                    padx=10)
+        }
+        self.widgets.update({
+            'SaveAs': ttk.Button(self.widgets['PresetFrame'],
+                                 text='Save As',
+                                 command=self._on_save_as),
+            'Load': ttk.Button(self.widgets['PresetFrame'],
+                               text='Load',
+                               command=self._on_load),
+            'SaveDefault': ttk.Button(self.widgets['PresetFrame'],
+                                      text='Save Default',
+                                      command=self._on_save_default),
+            'ResetAll': ttk.Button(self.widgets['PresetFrame'],
+                                   text='Reset All',
+                                   command=self._on_reset_all),
+            'Log': ttk.Button(self.widgets['PresetFrame'],
+                              text='Open Log',
+                              command=self._on_open_log),
+            'SubmitFrame': tk.Frame(self,
+                                    bg=COLOR_PRIORITY_MAP['Action'],
+                                    padx=15),
+            'Submit': tk.Button(
+                self.widgets['SubmitFrame'],
+                text='Go!',
+                command=self._on_submit,
+                highlightbackground='#{:02X}{:02X}{:02X}'.format(10, 150, 100),
+                highlightthickness=5
+            ),
+            'Cancel': ttk.Button(self.widgets['SubmitFrame'],
+                                 text='Cancel',
+                                 command=self._on_cancel),
+        })
+        # Handlers: bind hooks to default implementation.
+        self.handlers = {k: None for k in ['OnCancel',
+                                           'OnSubmit']}
+
+    def configure_internal(self, config):
+        """
+        Configure individual widgets.
+        :param config: {wgtKey: {property: value, ...}, ...}
+                        Refers to widget by widget key, then its property.
+        :return:
+        """
+        for k, props in config.items():
+            for p, v in props.items():
+                self.widgets[k][p] = v
+
+    def pack(self, *args, **kwargs):
+        for key in ['SaveAs', 'Load', 'SaveDefault', 'ResetAll', 'Log']:
+            self.widgets[key].pack(side='left', expand=False)
+        for key in ['Submit', 'Cancel']:
+            self.widgets[key].pack(side='right', expand=False)
+        self.widgets['PresetFrame'].pack(side='left', fill='x', expand=False)
+        self.widgets['SubmitFrame'].pack(side='right', fill='x', expand=False)
+        super().pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs):
+        for key in ['SaveAs', 'Load', 'SaveDefault', 'ResetAll', 'Log']:
+            self.widgets[key].pack(side='left', expand=False)
+        for key in ['Submit', 'Cancel']:
+            self.widgets[key].pack(side='right', expand=False)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=2)
+        self.grid_columnconfigure(1, weight=1)
+        self.widgets['PresetFrame'].grid(row=0, column=0, sticky='news')
+        self.widgets['SubmitFrame'].grid(row=0, column=1, sticky='news')
+        super().grid(*args, **kwargs)
+
+    def bind_internal(self, eventmaps):
+        """
+        Register events and handlers.
+        Handlers can receive cookies from internal delegates.
+        Input can be partial of total handler collection,
+        so that 1+ handler classes can implement entire handlers collectively,
+        based on their own data.
+        :param eventmaps: {'OnXX": handlerFunc} for internal event delegate.
+        :return:
+        """
+        for k, v in eventmaps.items():
+            self.handlers[k] = v
+
+    def _on_save_as(self):
+        """
+        Read widgets' states;
+        Update config's 'Value' fields according to the states;
+        Save config file via prompt.
+        """
+        self.config_man.update_widgets(self.targets)
+        title = 'Save As Preset: '
+        path = tkfiledialog.asksaveasfilename(
+            title=title,
+            defaultextension=self.ext,
+            filetypes=self.filetypes,
+            initialfile=self.basename
+        )
+        if path == '':  # Cancelled.
+            return
+        self.config_man.save_as(path)
+
+    def _on_load(self):
+        """
+        Load config file via prompt;
+        Update widgets' states.
+        """
+        title = 'Load Preset: '
+        path = tkfiledialog.askopenfilename(
+            title=title,
+            defaultextension=self.ext,
+            filetypes=self.filetypes,
+            initialfile=self.basename
+        )
+        if path == '':  # Cancelled
+            return
+        self.config_man.load_from(path)
+        self.config_man.update_widgets(self.targets)
+
+    def _on_save_default(self):
+        """
+        Save current widgets' states to default config file after confirmation.
+        """
+        self.config_man.update_from_widgets(self.targets)
+        if not tkmsgbox.askokcancel('Data Integrity',
+                                    'Overwrite the default config file?'):
+            return
+        self.config_man.save_default()
+
+    def _on_reset_all(self):
+        """
+        Load default config file and update widgets' states after confirmation.
+        """
+        if not tkmsgbox.askokcancel('Data Integrity',
+                                    'Discard all edits and reset to default?'):
+            return
+        self.config_man.load_default()
+        self.config_man.update_widgets(self.targets)
+
+    def _on_open_log(self):
+        """
+        Open log in a webbrowser for better cross-platform behaviours.
+        Heuristics
+        - Log file is called <app_basename>.log under the app folder.
+        :return:
+        """
+        util.open_in_browser(osp.join(self.config_man.app_dir, 'app.log'))
+
+    def _on_submit(self):
+        """
+        Save widget states into main config file in place.
+        Delegate actual submit behaviour to app, e.g., which program to run.
+        The runner can be a python function that calls an external program,
+        e.g., shell script or .exeIt must use the config file.
+        """
+        self.config_man.update_from_widgets(self.targets)
+        self.config_man.save()
+        self.handlers['OnSubmit']()
+
+    def _on_cancel(self):
+        """
+        Close window by default if no app handler is registered, otherwise run
+        app handler instead, which may or may not close the window.
+        """
+        if not callable(self.handlers['OnCancel']):
+            root = self.winfo_toplevel()
+            if root is not None:
+                root.destroy()
+        else:
+            self.handlers['OnCancel']()
+
+
+class MultiOptionMenu(tk.Frame):
+    def __init__(self, *args, text='Choose Multiple', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.configure(bg='purple')
+        # Data
+        self.choices = {}
+        self.toSelectAll = tk.IntVar(name='All', value=1)
+        self.toSelectNone = tk.IntVar(name='None', value=0)
+        # widgets
+        self.menubutton = ttk.Menubutton(self, text=text)
+        self.menu = tk.Menu(self.menubutton, tearoff=False)
+        self.menubutton.configure(menu=self.menu)
+        self.menu.add_command(label='All',
+                              command=self._select_all)
+        self.menu.add_command(label='None',
+                              command=self._select_none)
+
+    def configure_internal(self, config):
+        """Config: {'Title', ..., 'MultiOptions': [opt1, ...]}"""
+        self.menubutton['text'] = config['Title']
+        for choice in config['MultiOptions']:
+            self.choices[choice] = tk.BooleanVar(name=choice, value=True)
+            self.menu.add_checkbutton(label=choice,
+                                      variable=self.choices[choice],
+                                      onvalue=True,
+                                      offvalue=False)
+
+    def get_data(self):
+        """Return the selected options."""
+        return [k for k in filter(lambda k: self.choices[k].get() == 1,
+                                  self.choices.keys())]
+
+    def pack(self, *args, **kwargs):
+        self.menubutton.pack(side='left', fill='x', expand=True)
+        super().pack(*args, **kwargs)
+
+    def _select_all(self):
+        # Select all options.
+        for k, v in self.choices.items():
+            v.set(1)
+
+    def _select_none(self):
+        # Update all option menu items on All or None.
+        for k, v in self.choices.items():
+            v.set(0)
+
+
+class SearchBar(tk.Frame):
+    """
+    Keyword-based search bar.
+    Similar to Go-To-Anything bar of Sublime.
+    Features
+    - Search while typing in keywords;
+    - Results reflect in the associated widgets, e.g., visible listbox item;
+    - Search history of specified size, showing in dropdown list;
+    - Search in specified domains, e.g., _name, tag, property.
+    Usage
+    - Configure to register 'OnChange' handler in parent class
+      for search-while-typing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        :param parent: parent widget
+        :param name: top-level key in config
+        :param args:
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.configure(bg=COLOR_PRIORITY_MAP['Common'], padx=20)
+
+        self.history = []
+        self.defaultText = ''
+        self.input = tk.StringVar(name=self._name, value=self.defaultText)
+        self.handlers = {}
+
+        self.widgets = {
+            'Scope': MultiOptionMenu(self, name='where', text='Where'),
+            'Search': ttk.Combobox(self, textvariable=self.input),
+            'Reset': ttk.Button(self,
+                                text='Clear',
+                                command=self._on_reset),
+        }
+        self.gridWeights = {}
+        self.handlers['OnSearch'] = None
+        self.widgets['Search'].bind('<Button-1>', self._on_click_in)
+        self.widgets['Search'].bind('<Leave>', self._on_leave)
+        self.widgets['Search'].bind('<Return>', self._on_key_enter)
+
+    def configure_internal(self, config):
+        key = 'Scope'
+        if key in config.keys():
+            self.widgets[key].configure_internal(config[key])
+
+    def grid(self, *args, **kwargs):
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1000)
+        self.grid_columnconfigure(2, weight=1)
+        self.widgets['Scope'].grid(row=0, column=0, sticky='e')
+        self.widgets['Search'].grid(row=0, column=1, sticky='e')
+        self.widgets['Reset'].grid(row=0, column=2, sticky='w')
+        super().grid(*args, **kwargs)
+
+    def pack(self, *args, **kwargs):
+        self.widgets['Scope'].pack(side='left', fill='x', expand=False)
+        self.widgets['Search'].pack(side='left', fill='x', expand=True)
+        self.widgets['Reset'].pack(side='left', fill='x', expand=False)
+        super().pack(*args, **kwargs)
+
+    def _on_click_in(self, evt):
+        # Clear default text to get ready for user type-in.
+        if self.widgets['Search'].get() == self.defaultText:
+            evt.widget.delete(0, 'end')
+            self.input.set('')
+
+    def _on_leave(self, evt):
+        """Restore default text to show it's a search bar."""
+        if self.input.get() == '':
+            self.widgets['Search'].set(self.defaultText)
+
+    def _on_key_enter(self, evt):
+        self.history.append(self.input.get())
+
+    def _on_reset(self):
+        self.input.set('')
+        self.widgets['Search'].set(self.defaultText)
+
+    def get_selected_domains(self):
+        return [key for key, domain in self.widgets['Scope'].choices.items()
+                if domain.get()]
+
+    def bind_internal(self, eventmaps):
+        """
+        Register events and handlers. Handlers support internal cookies.
+        :param eventmaps: {'OnXX": handlerFunc} for internal event delegate.
+        :return:
+        """
+        for key in eventmaps.keys():
+            self.handlers[key] = eventmaps[key]
+
+        # Bind var observer: lambda to pass the var value to client.
+        # CAUTION: passing widget as self to app.
+        if callable(self.handlers['OnChange']):
+            self.input.trace(
+                mode='w',
+                callback=lambda *args: self.handlers['OnChange'](self, *args)
+            )
+
+
+class SingleExplorer(tk.Frame):
+    def __init__(self, parent, name, projdir, *args, **kwargs):
+        super().__init__(parent, *args, name=name, **kwargs)
+        self.widgets = {
+            'Search': SearchBar(self, name='search'),
+            'Tree': ttk.Button(self, name='tree'),
+        }
+
+    def grid(self, *args, **kwargs):
+        self.grid_rowconfigure(0, weight=1)
+        self.widgets['Search'].grid(row=0, column=0, sticky=FULL_EXPAND)
+        self.grid_rowconfigure(1, weight=1)
+        self.widgets['Tree'].grid(row=1, column=0, sticky=FULL_EXPAND)
+        super().grid(*args, **kwargs)
+
+    def pack(self, *args, **kwargs):
+        self.widgets['Search'].pack(side='top', fill='x', expand=True)
+        self.widgets['Tree'].pack(side='top', fill='both', expand=True)
+        super().pack(*args, **kwargs)
+
+
+class Explorer(tk.Frame):
+    """
+    Tabbed-treeview with separate hierarchy trees under each tab.
+    Features
+    - Construct tabbed-view based on project folder structure, folder => tab.
+    - Each 2nd-level physical folder is a root node within a tree.
+    - Search by keywords to narrow down;
+    - Node = checkbox + icon + colour + name, expandable representation;
+    - Multi-Edit;
+    - Excluding nodes;
+    - Color-coding through icon;
+    - Side-by-side split view.
+    """
+
+    def __init__(self, parent, tabnames, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.configure(padx=5, pady=5)
+        # Widgets
+        self.widgets = {
+            'Search': SearchBar(self, name='search'),
+            'Tabs': ttk.Notebook(self, name='tabs'),
+        }
+        for name in tabnames:
+            tab = ttk.Frame(self.widgets['Tabs'])
+            self.widgets['Tabs'].add(tab, text=name)
+            monty = ttk.LabelFrame(tab, text=' Monty Python ')
+            monty.grid(column=0, row=0, padx=8, pady=4)
+        self.widgets['Tabs'].enable_traversal()
+
+    def grid(self, *args, **kwargs):
+        self.grid_rowconfigure(0, weight=1)
+        self.widgets['Search'].grid(row=0, column=0, sticky=FULL_EXPAND)
+        self.grid_rowconfigure(1, weight=1)
+        self.widgets['Tabs'].grid(row=1, column=0, sticky=FULL_EXPAND)
+        super().grid(*args, **kwargs)
+
+    def pack(self, *args, **kwargs):
+        self.widgets['Search'].pack(side='top', fill='x', expand=False)
+        self.widgets['Tabs'].pack(side='top', fill='both', expand=True)
+        super().pack(*args, **kwargs)
