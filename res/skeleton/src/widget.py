@@ -1278,11 +1278,11 @@ class ConfigMan:
 def test1():
     root = create_root_window('kkGUI', (768, 768))
 
-    explorer = Explorer(root, name='explorer',
-                        tabnames=[d for d in
-                                  os.listdir(osp.join(osp.dirname(__file__), 'test_explorer'))
-                                  if not d.startswith('.')])
-    explorer.pack(side='left', fill='both', expand=True)
+    # explorer = Explorer(root, name='explorer',
+    #                     tabnames=[d for d in
+    #                               os.listdir(osp.join(osp.dirname(__file__), 'test_explorer'))
+    #                               if not d.startswith('.')])
+    # explorer.pack(side='left', fill='both', expand=True)
     right_frm = tk.Frame(root, bg='green')
     search_bar = SearchBar(right_frm, name='searchprop')
     search_bar.configure_internal(
@@ -1358,5 +1358,5 @@ def test2():
 
 
 if __name__ == '__main__':
-    # test1()
-    test2()
+    test1()
+    # test2()
