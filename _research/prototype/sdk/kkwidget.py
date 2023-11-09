@@ -4,49 +4,49 @@ from tkinter import messagebox
 
 
 class LabeledWidget(ttk.Frame):
-    def __init__(self, master, label, widget_constructor, help_text, **widget_kwargs):
+    def __init__(self, master, label, widget_constructor, doc, **widget_kwargs):
         super().__init__(master)
 
         self.columnconfigure(0, weight=1)
 
         self.label = ttk.Label(self, text=label)
         self.label.grid(row=0, column=0, sticky='w')
-        self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", help_text))
+        self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
 
         self.widget = widget_constructor(self, **widget_kwargs)
         self.widget.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
 
 
 class IntegerWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, help_text, **kwargs):
-        super().__init__(master, label, ttk.Entry, help_text, **kwargs)
+    def __init__(self, master, label, default_value, doc, **kwargs):
+        super().__init__(master, label, ttk.Entry, doc, **kwargs)
         self.widget.insert(0, str(default_value))
 
 
 class FloatWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, help_text, **kwargs):
-        super().__init__(master, label, ttk.Entry, help_text, **kwargs)
+    def __init__(self, master, label, default_value, doc, **kwargs):
+        super().__init__(master, label, ttk.Entry, doc, **kwargs)
         self.widget.insert(0, str(default_value))
 
 
 class OptionWidget(LabeledWidget):
-    def __init__(self, master, label, options, default_value, help_text, **kwargs):
-        super().__init__(master, label, ttk.Combobox, help_text, values=options, **kwargs)
+    def __init__(self, master, label, options, default_value, doc, **kwargs):
+        super().__init__(master, label, ttk.Combobox, doc, values=options, **kwargs)
         self.widget.set(default_value)
 
 
 class CheckboxWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, help_text, **kwargs):
-        super().__init__(master, label, ttk.Checkbutton, help_text, variable=tk.BooleanVar(value=default_value), **kwargs)
+    def __init__(self, master, label, default_value, doc, **kwargs):
+        super().__init__(master, label, ttk.Checkbutton, doc, variable=tk.BooleanVar(value=default_value), **kwargs)
 
 
 class TextWidget(LabeledWidget):
-    def __init__(self, master, label, default_text, help_text, **kwargs):
-        super().__init__(master, label, tk.Text, help_text, height=4, **kwargs)
+    def __init__(self, master, label, default_text, doc, **kwargs):
+        super().__init__(master, label, tk.Text, doc, height=4, **kwargs)
         self.widget.insert("1.0", default_text)
 
 
-class FoldableGroup(ttk.LabelFrame):
+class GroupWidget(ttk.LabelFrame):
     def __init__(self, master, title, **kwargs):
         super().__init__(master, text=title, **kwargs)
         self.grid_columnconfigure(0, weight=1)
@@ -55,8 +55,37 @@ class FoldableGroup(ttk.LabelFrame):
         widget.pack(fill="x", padx=5, pady=5, anchor="w")
 
 
+def update_right_panel(event):
+    global current_group
+
+    selected_item = tree.focus()
+    selected_title = tree.item(selected_item, "text")
+
+    if current_group:
+        current_group.pack_forget()
+
+    if selected_title == group1.cget("text"):
+        current_group = group1
+    elif selected_title == group2.cget("text"):
+        current_group = group2
+    elif selected_title == group3.cget("text"):
+        current_group = group3
+
+    if current_group:
+        current_group.pack(fill="x", pady=5)
+
+
+current_group = None
 root = tk.Tk()
 root.title("Group Example")
+screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
+size = (800, 600)
+root.geometry('{}x{}+{}+{}'.format(
+    size[0],
+    size[1],
+    int(screen_size[0] / 2 - size[0] / 2),
+    int(screen_size[1] / 2 - size[1] / 2))
+)
 
 # Main layout with PanedWindow
 paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
@@ -77,13 +106,13 @@ tree = ttk.Treeview(left_frame)
 tree.pack(side="left", fill="y", expand=True)
 
 # Creating groups
-group1 = FoldableGroup(right_frame, "Group 1")
+group1 = GroupWidget(right_frame, "Group 1")
 group1.pack(fill="x", pady=5)
 
-group2 = FoldableGroup(right_frame, "Group 2")
+group2 = GroupWidget(right_frame, "Group 2")
 group2.pack(fill="x", pady=5)
 
-group3 = FoldableGroup(right_frame, "Group 3")
+group3 = GroupWidget(right_frame, "Group 3")
 group3.pack(fill="x", pady=5)
 
 # Adding widgets to groups
@@ -106,22 +135,8 @@ group3.add_widget(text_widget)
 for group in [group1, group2, group3]:
     tree.insert("", "end", text=group.cget("text"))
 
-
-def update_right_panel(event):
-    selected_item = tree.focus()
-    selected_title = tree.item(selected_item, "text")
-
-    for group in [group1, group2, group3]:
-        group.pack_forget()
-
-    if selected_title == group1.cget("text"):
-        group1.pack(fill="x", pady=5)
-    elif selected_title == group2.cget("text"):
-        group2.pack(fill="x", pady=5)
-    elif selected_title == group3.cget("text"):
-        group3.pack(fill="x", pady=5)
-
-
 tree.bind("<<TreeviewSelect>>", update_right_panel)
+tree.selection_set(tree.get_children()[0])
+update_right_panel(None)
 
 root.mainloop()
