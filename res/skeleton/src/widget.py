@@ -1,13 +1,11 @@
 import copy
+import os
 import os.path as osp
-import pathlib
-import platform
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfiledialog
 import tkinter.font as tkfont
 import tkinter.messagebox as tkmsgbox
-import webbrowser
 
 # 3rd party
 import kkpyutil as util
@@ -262,7 +260,7 @@ class WidgetBase(tk.Frame):
         col = 0
         for k, v in self.widgets.items():  # layout columns
             self.grid_columnconfigure(col, weight=self.gridWeights[k])
-            v.grid(row=0, column=col, sticky=self.__class__.FULL_EXPAND)
+            v.grid(row=0, column=col, sticky=FULL_EXPAND)
             col += 1
         super().grid(*args, **kwargs)
         self.gridConfig = kwargs  # Save for restoring grid prop during search.
@@ -616,6 +614,23 @@ Unsupported var type: {}, expected tk.IntVar or tk.DoubleVar.
             self.widgets['Slider'].set(round(data))
 
 
+class CheckStrip(RowStrip):
+    """Checkbox with description."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input = tk.BooleanVar(name=self.get_name(), value=True)
+        self.widgets['Check'] = ttk.Checkbutton(self, text='',
+                                                variable=self.input)
+        self.widgets['Title'] = ttk.Label(self, text='To enable that Thingy!')
+        self.gridWeights['Check'] = 1
+        self.gridWeights['Title'] = 1000
+
+    def configure_internal(self, config):
+        self.input.set(config['Value'])  # Both True/False and 1/0 work.
+        self.widgets['Title']['text'] = config['Title']
+
+
 class OptionStrip(RowStrip):
     """Single selection through dropdown list."""
 
@@ -828,6 +843,8 @@ class SubmitStrip(tk.Frame):
             'SubmitFrame': tk.Frame(self,
                                     bg=COLOR_PRIORITY_MAP['Action'],
                                     padx=15),
+        })
+        self.widgets.update({
             'Submit': tk.Button(
                 self.widgets['SubmitFrame'],
                 text='Go!',
@@ -1187,3 +1204,159 @@ class Explorer(tk.Frame):
         self.widgets['Search'].pack(side='top', fill='x', expand=False)
         self.widgets['Tabs'].pack(side='top', fill='both', expand=True)
         super().pack(*args, **kwargs)
+
+
+class ConfigMan:
+    """
+    Load/Save app parameters from/to config files: main and default.
+    """
+    def __init__(self, app_dir, *args, **kwargs):
+        self.app_dir = app_dir
+        cfg_file = osp.join(app_dir, util.MAIN_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if osp.exists(cfg_file) else {}
+
+    def load(self):
+        cfg_file = osp.join(self.app_dir, util.MAIN_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if osp.exists(cfg_file) else {}
+        return self.config
+
+    def load_default(self):
+        cfg_file = osp.join(self.app_dir, util.DEFAULT_CFG_FILENAME)
+        self.config = util.load_json(cfg_file) if osp.exists(cfg_file) else {}
+        return self.config
+
+    def load_from(self, path):
+        self.config = util.load_json(path) if osp.exists(path) else {}
+        return self.config
+
+    def save(self):
+        util.save_json(osp.join(self.app_dir, util.MAIN_CFG_FILENAME), self.config)
+
+    def save_as(self, path):
+        util.save_json(path, self.config)
+
+    def save_default(self):
+        util.save_json(osp.join(self.app_dir, util.DEFAULT_CFG_FILENAME),
+                       self.config)
+
+    def update_from_widgets(self, widgets):
+        """
+        Update config fields with widget data.
+        No key-error guard, assuming widget names are keys read from config,
+        and config files don't change via external editor while running.
+        """
+        for w, wgt in enumerate(widgets):
+            if hasattr(wgt, 'input'):
+                self.config[wgt.get_name()]['Value'] = wgt.get_data()
+
+    def update_widgets(self, widgets):
+        """
+        Update widget data with config fields. Prompt upon key errors.
+        """
+        for w, wgt in enumerate(widgets):
+            if hasattr(wgt, 'input'):
+                if wgt.get_name() not in self.config.keys():
+                    tkmsgbox.showerror(
+                        title='KeyError',
+                        message="""
+    Widget name 
+
+        {}
+
+    is an invalid config key. So widget won't be updated.
+
+    Cause: 
+        Someone renamed the top-level key in one of the config files. 
+
+    Solution: 
+        - Contact programmer to sync up code with the new key, or ...
+        - Rename the top-level key in all config files using widget name: {}.
+    """.format(wgt.get_name(), wgt.get_name()), icon=tkmsgbox.ERROR)
+                wgt.set_data(self.config[wgt.get_name()])
+
+
+def test1():
+    root = create_root_window('kkGUI', (768, 768))
+
+    explorer = Explorer(root, name='explorer',
+                        tabnames=[d for d in
+                                  os.listdir(osp.join(osp.dirname(__file__), 'test_explorer'))
+                                  if not d.startswith('.')])
+    explorer.pack(side='left', fill='both', expand=True)
+    right_frm = tk.Frame(root, bg='green')
+    search_bar = SearchBar(right_frm, name='searchprop')
+    search_bar.configure_internal(
+        {
+            'Scope': {'Title': 'Where',
+                      'MultiOptions': ['Name', 'Title', 'Help']
+                      }
+        }
+    )
+    search_bar.pack(side='top', fill='x', expand=False)
+    prop_panel = ScrollFrame(right_frm)
+    # If expand == False, you'll need to scroll no matter what;
+    # fill='x' will make you scroll even more.
+    prop_panel.pack(side='top', fill='both', expand=True)
+    search_bar.bind_internal(
+        {'OnChange': lambda w, *args: prop_panel.filter_widgets(
+            w.input.get(), search_bar.get_selected_domains())
+         }
+    )
+    right_frm.pack(side='right', fill='both', expand=True)
+
+    i_row, delta = 0, 3
+    for r in range(delta):
+        row = EntryStrip(prop_panel.frame, name='interpreter')
+        prop_panel.frame.grid_rowconfigure(i_row + r, weight=1)
+        prop_panel.frame.grid_columnconfigure(0, weight=1)
+        row.grid(row=i_row + r, column=0, sticky=FULL_EXPAND)
+    i_row += delta
+
+    for r in range(delta):
+        row = NumberStrip(prop_panel.frame, name='age', datatype='int')
+        prop_panel.frame.grid_rowconfigure(i_row + r, weight=1)
+        prop_panel.frame.grid_columnconfigure(0, weight=1)
+        row.grid(row=i_row + r, column=0, sticky=FULL_EXPAND)
+    i_row += delta
+
+    for r in range(delta):
+        row = CheckStrip(prop_panel.frame, name='enablecheat')
+        prop_panel.frame.grid_rowconfigure(i_row + r, weight=1)
+        prop_panel.frame.grid_columnconfigure(0, weight=1)
+        row.grid(row=i_row + r, column=0, sticky=FULL_EXPAND)
+    i_row += delta
+
+    for r in range(delta):
+        row = OptionStrip(prop_panel.frame, name='fruits')
+        options = ('Apple', 'Orange', 'Watermelon')
+        row.configure_internal({'Value': 1,
+                                'Title': 'Options: ',
+                                'Options': options})
+        prop_panel.frame.grid_rowconfigure(i_row + r, weight=1)
+        prop_panel.frame.grid_columnconfigure(0, weight=1)
+        row.grid(row=i_row + r, column=0, sticky=FULL_EXPAND)
+
+    action_strip = SubmitStrip(
+        root,
+        prop_panel.frame.winfo_children(),
+        config_man=util.SingletonDecorator(ConfigMan)(osp.dirname(__file__))
+    )
+    action_strip.pack(side='top', fill='both', expand=False)
+    root.mainloop()
+
+
+def test2():
+    root = create_root_window('kkGUI', (768, 768))
+
+    explorer = Explorer(root, name='explorer',
+                        tabnames=[d for d in os.listdir(osp.join(osp.dirname(__file__),
+                                                                 'test_explorer'))
+                                  if not d.startswith('.')])
+    explorer.pack(side='left', fill='both', expand=True)
+
+    root.mainloop()
+
+
+if __name__ == '__main__':
+    # test1()
+    test2()
