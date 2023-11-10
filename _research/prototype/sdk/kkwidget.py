@@ -2,6 +2,8 @@ import json
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+# 3rd party
+import kkpyutil as util
 
 
 class Page(ttk.LabelFrame):
@@ -18,7 +20,7 @@ class Page(ttk.LabelFrame):
         return self.cget('text')
 
 
-class DataWidget(ttk.Frame):
+class Entry(ttk.Frame):
     """
     - used as user input, similar to CLI arguments
     - widget must belong to a group
@@ -48,7 +50,7 @@ class DataWidget(ttk.Frame):
         return self.data.get()
 
 
-class IntegerWidget(DataWidget):
+class IntEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         def _update_int_var(value):
             try:
@@ -66,7 +68,7 @@ class IntegerWidget(DataWidget):
         self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
 
 
-class FloatWidget(DataWidget):
+class FloatEntry(Entry):
     def __init__(self, master: Page, text, default, precision, doc, **kwargs):
         def _update_float_var(value):
             try:
@@ -87,7 +89,7 @@ class FloatWidget(DataWidget):
         self.slider.grid(row=0, column=1, sticky="ew")
 
 
-class OptionWidget(DataWidget):
+class OptionEntry(Entry):
     def __init__(self, master: Page, text, options, default, doc, **kwargs):
         super().__init__(master, text, ttk.Combobox, default, doc, values=options, **kwargs)
         # model-binding
@@ -96,14 +98,14 @@ class OptionWidget(DataWidget):
         self.widget.set(default)
 
 
-class CheckboxWidget(DataWidget):
+class Checkbox(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         super().__init__(master, text, ttk.Checkbutton, default, doc, **kwargs)
         self.data = self._init_data(tk.BooleanVar)
         self.widget.configure(variable=self.data)
 
 
-class TextWidget(DataWidget):
+class TextEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         """there is no ttk.Text"""
 
@@ -118,25 +120,14 @@ class TextWidget(DataWidget):
 
 class Form(ttk.PanedWindow):
     """
+    - accepts and creates navbar for input pages
     - layout: page-based navigation
     - filter: locate form entries by searching for title keywords
     """
 
     def __init__(self, master, pages: list[Page], *args, **kwargs):
-        def _filter_widgets(event):
-            keyword = kw_entry.get().strip().lower()
-
-            for group in [group1, group2, group3]:
-                for widget in group.winfo_children():
-                    if isinstance(widget, DataWidget):
-                        label_text = widget.label.cget("text").lower()
-                        if keyword in label_text:
-                            widget.pack(fill="x", padx=5, pady=5, anchor="w")
-                        else:
-                            widget.pack_forget()
-            entry_frame.update()
-
         super().__init__(master)
+        assert pages
         self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         # Left panel: navigation bar with filtering support
         nav_bar = ttk.Frame(self, width=200)
@@ -144,9 +135,9 @@ class Form(ttk.PanedWindow):
         # Create a new frame for the search box and treeview
         search_box = ttk.Frame(nav_bar)
         search_box.pack(side="top", fill="x")
-        kw_entry = ttk.Entry(search_box)
-        kw_entry.pack(side="left", fill="x", expand=True)
-        kw_entry.bind("<KeyRelease>", _filter_widgets)
+        self.kw_entry = ttk.Entry(search_box)
+        self.kw_entry.pack(side="left", fill="x", expand=True)
+        self.kw_entry.bind("<KeyRelease>", self.filter_entries)
         # Place the treeview below the search box
         tree = ttk.Treeview(nav_bar, show="tree")
         tree.heading("#0", text="", anchor="w")  # Hide the column header
@@ -158,35 +149,37 @@ class Form(ttk.PanedWindow):
         self.add(nav_bar, weight=0)
         self.add(entry_frame, weight=1)
         # imp
-        self.pages = pages
-        self.iCurPage = 0
+        pg_titles = [pg.get_title() for pg in pages]
+        self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
         # Populate tree
-        for pg in self.pages:
-            tree.insert("", "end", text=pg.get_title())
+        for title, pg in self.pages.items():
+            tree.insert("", "end", text=title)
+        # select first page
+        self.pages[0].pack(fill="x", pady=5)
         tree.selection_set(tree.get_children()[0])
 
     def update_entries(self, event):
         selected_item = tree.focus()
         selected_title = tree.item(selected_item, "text")
-
         # Hide all groups
-        for grp in (group1, group2, group3):
-            grp.pack_forget()
-
-        # Determine which group to show based on the selected title
-        if selected_title == group1.cget("text"):
-            self.iCurPage = 0
-        elif selected_title == group2.cget("text"):
-            current_group = group2
-        elif selected_title == group3.cget("text"):
-            current_group = group3
-
+        for pg in self.pages:
+            pg.pack_forget()
+        self.pages[selected_title].pack(fill="x", pady=5)
         # After hiding, update the right pane to ensure correct display
-        right_frame.update()
+        entry_frame = self.panes()[1]
+        entry_frame.update()
 
-        # Show the selected group, if any
-        if current_group:
-            current_group.pack(fill="x", pady=5)
+    def filter_entries(self, event):
+        keyword = search_entry.get().strip().lower()
+        for title, pg in self.pages.items():
+            for entry in pg.winfo_children():
+                assert isinstance(entry, Entry)
+                if keyword not in entry.text.lower():
+                    entry.pack_forget()
+                    continue
+                entry.pack(fill="x", padx=5, pady=5, anchor="w")
+        entry_frame = self.panes()[1]
+        entry_frame.update()
 
 
 def update_right_panel(event):
@@ -220,12 +213,12 @@ def filter_widgets(event):
 
     for group in [group1, group2, group3]:
         for widget in group.winfo_children():
-            if isinstance(widget, DataWidget):
-                label_text = widget.label.cget("text").lower()
-                if keyword in label_text:
-                    widget.pack(fill="x", padx=5, pady=5, anchor="w")
-                else:
-                    widget.pack_forget()
+            assert isinstance(widget, Entry)
+            label_text = widget.label.cget("text").lower()
+            if keyword in label_text:
+                widget.pack(fill="x", padx=5, pady=5, anchor="w")
+            else:
+                widget.pack_forget()
     right_frame.update()
 
 
@@ -234,7 +227,7 @@ def submit_data():
     data = {}
     for group in [group1, group2, group3]:
         for widget in group.winfo_children():
-            if isinstance(widget, DataWidget):
+            if isinstance(widget, Entry):
                 label = widget.label["text"]
                 if isinstance(widget.widget, ttk.Checkbutton):
                     value = widget.widget.instate(["selected"])
@@ -315,11 +308,11 @@ group3.pack(fill="x", pady=5)
 
 current_group = group1
 # Adding widgets to groups
-integer_widget = IntegerWidget(group1, "Integer Value", 10, "This is an integer value.")
-float_widget = FloatWidget(group1, "Float Value", 0.5, 4, "This is a float value.")
-option_widget = OptionWidget(group2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
-checkbox_widget = CheckboxWidget(group2, "Checkbox", True, "This is a checkbox widget.")
-text_widget = TextWidget(group3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
+integer_widget = IntEntry(group1, "Integer Value", 10, "This is an integer value.")
+float_widget = FloatEntry(group1, "Float Value", 0.5, 4, "This is a float value.")
+option_widget = OptionEntry(group2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
+checkbox_widget = Checkbox(group2, "Checkbox", True, "This is a checkbox widget.")
+text_widget = TextEntry(group3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
 group1.add([integer_widget, float_widget])
 group2.add([option_widget, checkbox_widget])
 group3.add([text_widget])
