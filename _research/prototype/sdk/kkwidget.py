@@ -195,13 +195,13 @@ def update_right_panel(event):
     # Hide all groups
     for grp in (group1, group2, group3):
         grp.pack_forget()
-
+    
     # Determine which group to show based on the selected title
-    if selected_title == group1.cget("text"):
+    if selected_title == group1.get_title():
         current_group = group1
-    elif selected_title == group2.cget("text"):
+    elif selected_title == group2.get_title():
         current_group = group2
-    elif selected_title == group3.cget("text"):
+    elif selected_title == group3.get_title():
         current_group = group3
 
     # After hiding, update the right pane to ensure correct display
