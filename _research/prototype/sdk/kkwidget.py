@@ -130,33 +130,33 @@ class Form(ttk.PanedWindow):
         assert pages
         self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         # Left panel: navigation bar with filtering support
-        nav_bar = ttk.Frame(self, width=200)
-        nav_bar.pack_propagate(False)  # Prevent the widget from resizing to its contents
+        self.navPane = ttk.Frame(self, width=200)
+        self.navPane.pack_propagate(False)  # Prevent the widget from resizing to its contents
         # Create a new frame for the search box and treeview
-        search_box = ttk.Frame(nav_bar)
+        search_box = ttk.Frame(self.navPane)
         search_box.pack(side="top", fill="x")
-        self.kw_entry = ttk.Entry(search_box)
-        self.kw_entry.pack(side="left", fill="x", expand=True)
-        self.kw_entry.bind("<KeyRelease>", self.filter_entries)
+        self.searchEntry = ttk.Entry(search_box)
+        self.searchEntry.pack(side="left", fill="x", expand=True)
+        self.searchEntry.bind("<KeyRelease>", self.filter_entries)
         # Place the treeview below the search box
-        tree = ttk.Treeview(nav_bar, show="tree")
-        tree.heading("#0", text="", anchor="w")  # Hide the column header
-        tree.pack(side="left", fill="both", expand=True)
-        tree.bind("<<TreeviewSelect>>", self.update_entries)
+        self.tree = ttk.Treeview(self.navPane, show="tree")
+        self.tree.heading("#0", text="", anchor="w")  # Hide the column header
+        self.tree.pack(side="left", fill="both", expand=True)
+        self.tree.bind("<<TreeviewSelect>>", self.update_entries)
         # Right panel: entries in page
-        entry_frame = ttk.Frame(self)
+        self.entry_frame = ttk.Frame(self)
         # build form with navbar and page frame
-        self.add(nav_bar, weight=0)
-        self.add(entry_frame, weight=1)
+        self.add(self.navPane, weight=0)
+        self.add(self.entry_frame, weight=1)
         # imp
         pg_titles = [pg.get_title() for pg in pages]
         self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
         # Populate tree
         for title, pg in self.pages.items():
-            tree.insert("", "end", text=title)
+            self.tree.insert("", "end", text=title)
         # select first page
         self.pages[0].pack(fill="x", pady=5)
-        tree.selection_set(tree.get_children()[0])
+        self.tree.selection_set(tree.get_children()[0])
 
     def update_entries(self, event):
         selected_item = tree.focus()
@@ -166,8 +166,7 @@ class Form(ttk.PanedWindow):
             pg.pack_forget()
         self.pages[selected_title].pack(fill="x", pady=5)
         # After hiding, update the right pane to ensure correct display
-        entry_frame = self.panes()[1]
-        entry_frame.update()
+        self.entry_frame.update()
 
     def filter_entries(self, event):
         keyword = search_entry.get().strip().lower()
@@ -178,8 +177,7 @@ class Form(ttk.PanedWindow):
                     entry.pack_forget()
                     continue
                 entry.pack(fill="x", padx=5, pady=5, anchor="w")
-        entry_frame = self.panes()[1]
-        entry_frame.update()
+        self.entry_frame.update()
 
 
 def update_right_panel(event):
