@@ -61,9 +61,11 @@ def update_right_panel(event):
     selected_item = tree.focus()
     selected_title = tree.item(selected_item, "text")
 
-    if current_group:
-        current_group.pack_forget()
+    # Hide all groups
+    for grp in (group1, group2, group3):
+        grp.pack_forget()
 
+    # Determine which group to show based on the selected title
     if selected_title == group1.cget("text"):
         current_group = group1
     elif selected_title == group2.cget("text"):
@@ -71,11 +73,14 @@ def update_right_panel(event):
     elif selected_title == group3.cget("text"):
         current_group = group3
 
+    # After hiding, update the right pane to ensure correct display
+    right_frame.update()
+
+    # Show the selected group, if any
     if current_group:
         current_group.pack(fill="x", pady=5)
 
 
-current_group = None
 root = tk.Tk()
 root.title("Group Example")
 screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
@@ -115,6 +120,7 @@ group2.pack(fill="x", pady=5)
 group3 = GroupWidget(right_frame, "Group 3")
 group3.pack(fill="x", pady=5)
 
+current_group = group1
 # Adding widgets to groups
 integer_widget = IntegerWidget(group1, "Integer Value", 10, "This is an integer value.")
 group1.add_widget(integer_widget)
