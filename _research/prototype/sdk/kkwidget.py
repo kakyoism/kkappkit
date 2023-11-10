@@ -170,7 +170,7 @@ class Form(ttk.PanedWindow):
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
-        self.pages[selected_title].pack()
+        self.pages[selected_title].layout()
         # After hiding, update the right pane to ensure correct display
         self.entryPane.update()
 
@@ -302,13 +302,13 @@ paned_window.add(right_frame, weight=1)
 
 # Creating groups
 group1 = Page(right_frame, "Group 1")
-group1.pack()
+group1.layout()
 
 group2 = Page(right_frame, "Group 2")
-group2.pack()
+group2.layout()
 
 group3 = Page(right_frame, "Group 3")
-group3.pack()
+group3.layout()
 
 current_group = group1
 # Adding widgets to groups
