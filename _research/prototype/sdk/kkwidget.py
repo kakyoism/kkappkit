@@ -123,8 +123,10 @@ search_entry.pack(side="left", fill="x", expand=True)
 search_entry.bind("<KeyRelease>", filter_widgets)
 
 # Place the treeview below the search box
-tree = ttk.Treeview(left_frame)
-tree.pack(side="top", fill="y", expand=True)
+tree = ttk.Treeview(left_frame, show="tree")
+tree.heading("#0", text="", anchor="w")  # Hide the column header
+
+tree.pack(side="left", fill="both", expand=True)
 
 # Right panel for displaying groups
 right_frame = ttk.Frame(paned_window)
