@@ -26,8 +26,8 @@ class IntegerWidget(LabeledWidget):
         self.int_var = tk.IntVar()
         self.int_var.set(default_value)
 
-        self.spinbox = tk.Spinbox(self.widget, textvariable=self.int_var, from_=0, to=100, increment=1)
-        self.spinbox.grid(row=0, column=0, padx=(0, 10))  # Add padding between spinbox and slider
+        self.spinbox = tk.Spinbox(self.widget, textvariable=self.int_var, from_=0, to=100, increment=1, relief="solid", bd=2)  # Adjust relief and border width
+        self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
 
         def update_int_var(value):
             try:
@@ -40,30 +40,26 @@ class IntegerWidget(LabeledWidget):
 
 
 class FloatWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, doc, precision=2, step=0.1, **kwargs):
+    def __init__(self, master, label, default_value, precision, doc, **kwargs):
         super().__init__(master, label, ttk.Frame, doc, **kwargs)
 
+        self.precision = precision
         self.float_var = tk.DoubleVar()
         self.float_var.set(default_value)
 
-        self.precision = precision
-        self.step = step
+        format_string = f"%.{precision}f"  # Adjust precision dynamically
+        self.spinbox = tk.Spinbox(self.widget, textvariable=self.float_var, from_=0, to=1, increment=0.01, format=format_string, relief="solid", bd=2)
+        self.spinbox.grid(row=0, column=0, padx=(0, 5))
 
-        # Calculate values based on precision and step
-        from_value = 0.0
-        to_value = int(10 ** precision)
-        scale_step = step * to_value
+        def update_float_var(value):
+            try:
+                formatted_value = "{:.{}f}".format(float(value), self.precision)  # Format entered value
+                self.float_var.set(float(formatted_value))
+            except ValueError:
+                pass
 
-        self.spinbox = tk.Spinbox(self.widget, textvariable=self.float_var, format=f'%.{precision}f', increment=step)
-        self.spinbox.grid(row=0, column=0, padx=(0, 10))  # Add padding between spinbox and slider
-
-        self.slider = ttk.Scale(self.widget, from_=from_value, to=to_value, orient="horizontal", variable=self.float_var,
-                                command=lambda value: self.update_spinbox_value(value, precision))
-        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
-
-    def update_spinbox_value(self, value, precision):
-        scaled_value = float(value)
-        self.float_var.set(round(scaled_value, precision))
+        self.slider = ttk.Scale(self.widget, from_=0, to=1, orient="horizontal", variable=self.float_var, command=update_float_var)
+        self.slider.grid(row=0, column=1, sticky="ew")
 
 
 class OptionWidget(LabeledWidget):
@@ -210,7 +206,7 @@ current_group = group1
 integer_widget = IntegerWidget(group1, "Integer Value", 10, "This is an integer value.")
 group1.add_widget(integer_widget)
 
-float_widget = FloatWidget(group1, "Float Value", 0.5, "This is a float value.")
+float_widget = FloatWidget(group1, "Float Value", 0.5, 4, "This is a float value.")
 group1.add_widget(float_widget)
 
 option_widget = OptionWidget(group2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
