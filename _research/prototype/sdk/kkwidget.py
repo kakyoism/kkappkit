@@ -1,6 +1,8 @@
+import json
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import tkinter.font as tkFont
 
 
 class LabeledWidget(ttk.Frame):
@@ -95,6 +97,29 @@ def filter_widgets(event):
     right_frame.update()
 
 
+def submit_data():
+    # Collect data from all the widgets in the groups
+    data = {}
+    for group in [group1, group2, group3]:
+        for widget in group.winfo_children():
+            if isinstance(widget, LabeledWidget):
+                label = widget.label["text"]
+                if isinstance(widget.widget, ttk.Checkbutton):
+                    value = widget.widget.instate(["selected"])
+                elif isinstance(widget.widget, tk.Text):
+                    value = widget.widget.get("1.0", "end-1c")  # Get text content
+                else:
+                    value = widget.widget.get()
+                data[label] = value
+
+    # Show the data as formatted JSON in a message box
+    formatted_data = json.dumps(data, indent=4)
+    if formatted_data.strip() == "{}":
+        messagebox.showinfo("Submitted Data", "No data to submit.")
+    else:
+        messagebox.showinfo("Submitted Data", formatted_data)
+
+
 root = tk.Tk()
 root.title("Group Example")
 screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
@@ -169,5 +194,21 @@ for group in [group1, group2, group3]:
 tree.bind("<<TreeviewSelect>>", update_right_panel)
 tree.selection_set(tree.get_children()[0])
 update_right_panel(None)
+
+# Create a frame for the bottom bar
+bottom_bar_frame = ttk.Frame(root)
+bottom_bar_frame.pack(side="bottom", fill="x")
+
+# Create a separator line with a background color
+separator = ttk.Separator(bottom_bar_frame, orient="horizontal")
+separator.pack(fill="x")
+
+# Create Cancel and Submit buttons
+cancel_button = ttk.Button(bottom_bar_frame, text="Cancel", command=root.quit)
+submit_button = ttk.Button(bottom_bar_frame, text="Submit", command=submit_data, cursor='hand2')
+
+# Pack buttons with some padding
+submit_button.pack(side="right", padx=10, pady=10)
+cancel_button.pack(side="right", padx=10, pady=10)
 
 root.mainloop()
