@@ -97,7 +97,7 @@ def filter_widgets(event):
     right_frame.update()
 
 
-def submit_data():
+def submit_data(event=None):
     # Collect data from all the widgets in the groups
     data = {}
     for group in [group1, group2, group3]:
@@ -210,5 +210,11 @@ submit_button = ttk.Button(bottom_bar_frame, text="Submit", command=submit_data,
 # Pack buttons with some padding
 submit_button.pack(side="right", padx=10, pady=10)
 cancel_button.pack(side="right", padx=10, pady=10)
+
+# Bind the ENTER key to trigger the Submit button
+root.bind("<Return>", submit_data)
+
+# Bind the ESC key to quit the program
+root.bind("<Escape>", lambda event: root.quit())
 
 root.mainloop()
