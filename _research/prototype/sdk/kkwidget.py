@@ -187,34 +187,26 @@ class Form(ttk.PanedWindow):
 
 
 def update_right_panel(event):
-    global current_group
-
+    """
+    - the first call is triggered at binding time? where nothing is selected yet
+    - app must always create a group
+    """
     selected_item = tree.focus()
     selected_title = tree.item(selected_item, "text")
 
     # Hide all groups
-    for grp in (group1, group2, group3):
-        grp.pack_forget()
-    
-    # Determine which group to show based on the selected title
-    if selected_title == group1.get_title():
-        current_group = group1
-    elif selected_title == group2.get_title():
-        current_group = group2
-    elif selected_title == group3.get_title():
-        current_group = group3
-    # Show the selected group, if any
-    if current_group:
-        current_group.layout()
+    for pg in pages.values():
+        pg.pack_forget()
+    current_group = pages[selected_title] if selected_title else list(pages.values())[0]
+    current_group.layout()
     # After hiding, update the right pane to ensure correct display
     right_frame.update()
 
 
 def filter_widgets(event):
     keyword = search_entry.get().strip().lower()
-
-    for group in [group1, group2, group3]:
-        for widget in group.winfo_children():
+    for pg in pages:
+        for widget in pg.winfo_children():
             assert isinstance(widget, Entry)
             label_text = widget.label.cget("text").lower()
             if keyword in label_text:
@@ -227,7 +219,7 @@ def filter_widgets(event):
 def submit_data():
     # Collect data from all the widgets in the groups
     data = {}
-    for group in [group1, group2, group3]:
+    for group in [pg1, pg2, pg3]:
         for widget in group.winfo_children():
             if isinstance(widget, Entry):
                 label = widget.label["text"]
@@ -299,29 +291,30 @@ paned_window.add(left_frame, weight=0)
 paned_window.add(right_frame, weight=1)
 
 # Creating groups
-group1 = Page(right_frame, "Group 1")
-group1.layout()
+pg1 = Page(right_frame, "Group 1")
+pg1.layout()
 
-group2 = Page(right_frame, "Group 2")
-group2.layout()
+pg2 = Page(right_frame, "Group 2")
+pg2.layout()
 
-group3 = Page(right_frame, "Group 3")
-group3.layout()
+pg3 = Page(right_frame, "Group 3")
+pg3.layout()
 
-current_group = group1
 # Adding widgets to groups
-integer_widget = IntEntry(group1, "Integer Value", 10, "This is an integer value.")
-float_widget = FloatEntry(group1, "Float Value", 0.5, 4, "This is a float value.")
-option_widget = OptionEntry(group2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
-checkbox_widget = Checkbox(group2, "Checkbox", True, "This is a checkbox widget.")
-text_widget = TextEntry(group3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
-group1.add([integer_widget, float_widget])
-group2.add([option_widget, checkbox_widget])
-group3.add([text_widget])
+integer_widget = IntEntry(pg1, "Integer Value", 10, "This is an integer value.")
+float_widget = FloatEntry(pg1, "Float Value", 0.5, 4, "This is a float value.")
+option_widget = OptionEntry(pg2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
+checkbox_widget = Checkbox(pg2, "Checkbox", True, "This is a checkbox widget.")
+text_widget = TextEntry(pg3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
+pg1.add([integer_widget, float_widget])
+pg2.add([option_widget, checkbox_widget])
+pg3.add([text_widget])
+
+pages = {title: pg for title, pg in zip([pg1.get_title(), pg2.get_title(), pg3.get_title()], [pg1, pg2, pg3])}
 
 # Populate tree
-for group in [group1, group2, group3]:
-    tree.insert("", "end", text=group.get_title())
+for title, pg in pages.items():
+    tree.insert("", "end", text=title)
 
 tree.bind("<<TreeviewSelect>>", update_right_panel)
 tree.selection_set(tree.get_children()[0])
