@@ -19,8 +19,8 @@ class Page(ttk.LabelFrame):
     def get_title(self):
         return self.cget('text')
 
-    def pack(self):
-        super().pack(fill="x", pady=5)
+    def layout(self):
+        self.pack(fill="x", pady=5)
 
 
 class Entry(ttk.Frame):
@@ -128,9 +128,8 @@ class Form(ttk.PanedWindow):
     - filter: locate form entries by searching for title keywords
     """
 
-    def __init__(self, master, pages: list[Page], *args, **kwargs):
-        super().__init__(master)
-        assert pages
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, orient=tk.HORIZONTAL)
         self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         # Left panel: navigation bar with filtering support
         self.navPane = ttk.Frame(self, width=200)
@@ -151,19 +150,23 @@ class Form(ttk.PanedWindow):
         # build form with navbar and page frame
         self.add(self.navPane, weight=0)
         self.add(self.entryPane, weight=1)
-        # imp
-        pg_titles = [pg.get_title() for pg in pages]
-        self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
-        # Populate tree
-        for title, pg in self.pages.items():
-            self.tree.insert("", "end", text=title)
-        # select first page
-        self.pages[0].pack()
-        self.tree.selection_set(tree.get_children()[0])
+        self.pages = {}
+        # # imp
+        # pg_titles = [pg.get_title() for pg in pages]
+        # self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
+        # # Populate tree
+        # for title, pg in self.pages.items():
+        #     self.tree.insert("", "end", text=title)
+        # # select first page
+        # self.pages[0].layout()
+        # self.tree.selection_set(tree.get_children()[0])
+    
+    def layout(self):
+        self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def update_entries(self, event):
-        selected_item = tree.focus()
-        selected_title = tree.item(selected_item, "text")
+        selected_item = self.tree.focus()
+        selected_title = self.tree.item(selected_item, "text")
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
@@ -206,7 +209,7 @@ def update_right_panel(event):
 
     # Show the selected group, if any
     if current_group:
-        current_group.pack()
+        current_group.layout()
 
 
 def filter_widgets(event):
@@ -320,7 +323,7 @@ group3.add([text_widget])
 
 # Populate tree
 for group in [group1, group2, group3]:
-    tree.insert("", "end", text=group.cget("text"))
+    tree.insert("", "end", text=group.get_title())
 
 tree.bind("<<TreeviewSelect>>", update_right_panel)
 tree.selection_set(tree.get_children()[0])
