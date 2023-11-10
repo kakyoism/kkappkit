@@ -19,6 +19,9 @@ class Page(ttk.LabelFrame):
     def get_title(self):
         return self.cget('text')
 
+    def pack(self):
+        super().pack(fill="x", pady=5)
+
 
 class Entry(ttk.Frame):
     """
@@ -155,7 +158,7 @@ class Form(ttk.PanedWindow):
         for title, pg in self.pages.items():
             self.tree.insert("", "end", text=title)
         # select first page
-        self.pages[0].pack(fill="x", pady=5)
+        self.pages[0].pack()
         self.tree.selection_set(tree.get_children()[0])
 
     def update_entries(self, event):
@@ -164,7 +167,7 @@ class Form(ttk.PanedWindow):
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
-        self.pages[selected_title].pack(fill="x", pady=5)
+        self.pages[selected_title].pack()
         # After hiding, update the right pane to ensure correct display
         self.entryPane.update()
 
@@ -203,7 +206,7 @@ def update_right_panel(event):
 
     # Show the selected group, if any
     if current_group:
-        current_group.pack(fill="x", pady=5)
+        current_group.pack()
 
 
 def filter_widgets(event):
@@ -296,13 +299,13 @@ paned_window.add(right_frame, weight=1)
 
 # Creating groups
 group1 = Page(right_frame, "Group 1")
-group1.pack(fill="x", pady=5)
+group1.pack()
 
 group2 = Page(right_frame, "Group 2")
-group2.pack(fill="x", pady=5)
+group2.pack()
 
 group3 = Page(right_frame, "Group 3")
-group3.pack(fill="x", pady=5)
+group3.pack()
 
 current_group = group1
 # Adding widgets to groups
