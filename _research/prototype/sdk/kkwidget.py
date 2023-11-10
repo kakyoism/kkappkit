@@ -170,9 +170,9 @@ class Form(ttk.PanedWindow):
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
-        self.pages[selected_title].layout()
         # After hiding, update the right pane to ensure correct display
         self.entryPane.update()
+        self.pages[selected_title].layout()
 
     def filter_entries(self, event):
         keyword = search_entry.get().strip().lower()
@@ -203,13 +203,11 @@ def update_right_panel(event):
         current_group = group2
     elif selected_title == group3.get_title():
         current_group = group3
-
-    # After hiding, update the right pane to ensure correct display
-    right_frame.update()
-
     # Show the selected group, if any
     if current_group:
         current_group.layout()
+    # After hiding, update the right pane to ensure correct display
+    right_frame.update()
 
 
 def filter_widgets(event):
