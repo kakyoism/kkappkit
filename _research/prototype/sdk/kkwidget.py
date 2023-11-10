@@ -28,7 +28,6 @@ class DataWidget(ttk.Frame):
 
     def __init__(self, master: Page, text, widget_constructor, default, doc, **widget_kwargs):
         super().__init__(master)
-        self.columnconfigure(0, weight=1)
         self.text = text
         self.default = default
         # model-binding
@@ -39,6 +38,7 @@ class DataWidget(ttk.Frame):
         self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
         # view
         self.widget = widget_constructor(self, **widget_kwargs)
+        self.columnconfigure(0, weight=1)
         self.widget.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
 
     def _init_data(self, var_cls):
