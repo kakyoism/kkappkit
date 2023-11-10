@@ -2,7 +2,6 @@ import json
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import tkinter.font as tkFont
 
 
 class LabeledWidget(ttk.Frame):
@@ -128,7 +127,7 @@ def filter_widgets(event):
     right_frame.update()
 
 
-def submit_data(event=None):
+def submit_data():
     # Collect data from all the widgets in the groups
     data = {}
     for group in [group1, group2, group3]:
@@ -139,9 +138,20 @@ def submit_data(event=None):
                     value = widget.widget.instate(["selected"])
                 elif isinstance(widget.widget, tk.Text):
                     value = widget.widget.get("1.0", "end-1c")  # Get text content
-                else:
+                elif isinstance(widget.widget, (ttk.Spinbox, ttk.Scale)):
                     value = widget.widget.get()
-                data[label] = value
+                    try:
+                        value = int(value)  # Try to convert to integer
+                    except ValueError:
+                        try:
+                            value = float(value)  # Try to convert to float
+                        except ValueError:
+                            pass  # Cannot convert, leave as is
+                else:
+                    value = None
+
+                if value is not None:
+                    data[label] = value
 
     # Show the data as formatted JSON in a message box
     formatted_data = json.dumps(data, indent=4)
