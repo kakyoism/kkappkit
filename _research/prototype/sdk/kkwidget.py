@@ -21,14 +21,49 @@ class LabeledWidget(ttk.Frame):
 
 class IntegerWidget(LabeledWidget):
     def __init__(self, master, label, default_value, doc, **kwargs):
-        super().__init__(master, label, ttk.Entry, doc, **kwargs)
-        self.widget.insert(0, str(default_value))
+        super().__init__(master, label, ttk.Frame, doc, **kwargs)
+
+        self.int_var = tk.IntVar()
+        self.int_var.set(default_value)
+
+        self.spinbox = tk.Spinbox(self.widget, textvariable=self.int_var, from_=0, to=100, increment=1)
+        self.spinbox.grid(row=0, column=0, padx=(0, 10))  # Add padding between spinbox and slider
+
+        def update_int_var(value):
+            try:
+                self.int_var.set(int(float(value)))  # Convert to integer
+            except ValueError:
+                pass  # Ignore non-integer values
+
+        self.slider = ttk.Scale(self.widget, from_=0, to=100, orient="horizontal", variable=self.int_var, command=update_int_var)
+        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
 
 
 class FloatWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, doc, **kwargs):
-        super().__init__(master, label, ttk.Entry, doc, **kwargs)
-        self.widget.insert(0, str(default_value))
+    def __init__(self, master, label, default_value, doc, precision=2, step=0.1, **kwargs):
+        super().__init__(master, label, ttk.Frame, doc, **kwargs)
+
+        self.float_var = tk.DoubleVar()
+        self.float_var.set(default_value)
+
+        self.precision = precision
+        self.step = step
+
+        # Calculate values based on precision and step
+        from_value = 0.0
+        to_value = int(10 ** precision)
+        scale_step = step * to_value
+
+        self.spinbox = tk.Spinbox(self.widget, textvariable=self.float_var, format=f'%.{precision}f', increment=step)
+        self.spinbox.grid(row=0, column=0, padx=(0, 10))  # Add padding between spinbox and slider
+
+        self.slider = ttk.Scale(self.widget, from_=from_value, to=to_value, orient="horizontal", variable=self.float_var,
+                                command=lambda value: self.update_spinbox_value(value, precision))
+        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
+
+    def update_spinbox_value(self, value, precision):
+        scaled_value = float(value)
+        self.float_var.set(round(scaled_value, precision))
 
 
 class OptionWidget(LabeledWidget):
