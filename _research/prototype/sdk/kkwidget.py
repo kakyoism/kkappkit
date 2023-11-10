@@ -4,87 +4,114 @@ from tkinter import ttk
 from tkinter import messagebox
 
 
-class LabeledWidget(ttk.Frame):
-    def __init__(self, master, label, widget_constructor, doc, **widget_kwargs):
-        super().__init__(master)
-
-        self.columnconfigure(0, weight=1)
-
-        self.label = ttk.Label(self, text=label)
-        self.label.grid(row=0, column=0, sticky='w')
-        self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
-
-        self.widget = widget_constructor(self, **widget_kwargs)
-        self.widget.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
-
-
-class IntegerWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, doc, **kwargs):
-        super().__init__(master, label, ttk.Frame, doc, **kwargs)
-
-        self.int_var = tk.IntVar()
-        self.int_var.set(default_value)
-
-        self.spinbox = tk.Spinbox(self.widget, textvariable=self.int_var, from_=0, to=100, increment=1, relief="solid", bd=2)  # Adjust relief and border width
-        self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
-
-        def update_int_var(value):
-            try:
-                self.int_var.set(int(float(value)))  # Convert to integer
-            except ValueError:
-                pass  # Ignore non-integer values
-
-        self.slider = ttk.Scale(self.widget, from_=0, to=100, orient="horizontal", variable=self.int_var, command=update_int_var)
-        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
-
-
-class FloatWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, precision, doc, **kwargs):
-        super().__init__(master, label, ttk.Frame, doc, **kwargs)
-
-        self.precision = precision
-        self.float_var = tk.DoubleVar()
-        self.float_var.set(default_value)
-
-        format_string = f"%.{precision}f"  # Adjust precision dynamically
-        self.spinbox = tk.Spinbox(self.widget, textvariable=self.float_var, from_=0, to=1, increment=0.01, format=format_string, relief="solid", bd=2)
-        self.spinbox.grid(row=0, column=0, padx=(0, 5))
-
-        def update_float_var(value):
-            try:
-                formatted_value = "{:.{}f}".format(float(value), self.precision)  # Format entered value
-                self.float_var.set(float(formatted_value))
-            except ValueError:
-                pass
-
-        self.slider = ttk.Scale(self.widget, from_=0, to=1, orient="horizontal", variable=self.float_var, command=update_float_var)
-        self.slider.grid(row=0, column=1, sticky="ew")
-
-
-class OptionWidget(LabeledWidget):
-    def __init__(self, master, label, options, default_value, doc, **kwargs):
-        super().__init__(master, label, ttk.Combobox, doc, values=options, **kwargs)
-        self.widget.set(default_value)
-
-
-class CheckboxWidget(LabeledWidget):
-    def __init__(self, master, label, default_value, doc, **kwargs):
-        super().__init__(master, label, ttk.Checkbutton, doc, variable=tk.BooleanVar(value=default_value), **kwargs)
-
-
-class TextWidget(LabeledWidget):
-    def __init__(self, master, label, default_text, doc, **kwargs):
-        super().__init__(master, label, tk.Text, doc, height=4, **kwargs)
-        self.widget.insert("1.0", default_text)
-
-
 class GroupWidget(ttk.LabelFrame):
     def __init__(self, master, title, **kwargs):
         super().__init__(master, text=title, **kwargs)
         self.grid_columnconfigure(0, weight=1)
 
-    def add_widget(self, widget):
-        widget.pack(fill="x", padx=5, pady=5, anchor="w")
+    @staticmethod
+    def add(widgets):
+        for wgt in widgets:
+            wgt.pack(fill="x", padx=5, pady=5, anchor="w")
+
+    def get_title(self):
+        return self.cget('text')
+
+
+class DataWidget(ttk.Frame):
+    """
+    - widget must belong to a group
+    - groups form a tree to avoid overloading parameter panes
+    - groups also improves SNR by prioritizing frequently-tweaked parameters
+    """
+    def __init__(self, master: GroupWidget, text, widget_constructor, default, doc, **widget_kwargs):
+        super().__init__(master)
+        self.columnconfigure(0, weight=1)
+        self.text = text
+        self.default = default
+        # model-binding
+        self.data = None
+        # label
+        self.label = ttk.Label(self, text=self.text)
+        self.label.grid(row=0, column=0, sticky='w')
+        self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
+        # view
+        self.widget = widget_constructor(self, **widget_kwargs)
+        self.widget.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+
+    def _init_data(self, var_cls):
+        return var_cls(master=self, name=self.text, value=self.default)
+
+    def get_data(self):
+        return self.data.get()
+
+
+class IntegerWidget(DataWidget):
+    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+        def _update_int_var(value):
+            try:
+                self.data.set(int(float(value)))  # Convert to integer
+            except ValueError:
+                pass  # Ignore non-integer values
+
+        super().__init__(master, text, ttk.Frame, default, doc, **kwargs)
+        # model-binding
+        self.data = self._init_data(tk.IntVar)
+        # view
+        self.spinbox = ttk.Spinbox(self.widget, textvariable=self.data, from_=0, to=100, increment=1)
+        self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
+        self.slider = ttk.Scale(self.widget, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
+        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
+
+
+class FloatWidget(DataWidget):
+    def __init__(self, master: GroupWidget, text, default, precision, doc, **kwargs):
+        def _update_float_var(value):
+            try:
+                formatted_value = "{:.{}f}".format(float(value), self.precision)  # Format entered value
+                self.data.set(float(formatted_value))
+            except ValueError:
+                pass
+
+        super().__init__(master, text, ttk.Frame, default, doc, **kwargs)
+        # model-binding
+        self.precision = precision
+        self.data = self._init_data(tk.DoubleVar)
+        # view
+        format_string = f"%.{precision}f"  # Adjust precision dynamically
+        self.spinbox = ttk.Spinbox(self.widget, textvariable=self.data, from_=0, to=1, increment=0.01, format=format_string)
+        self.spinbox.grid(row=0, column=0, padx=(0, 5))
+        self.slider = ttk.Scale(self.widget, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
+        self.slider.grid(row=0, column=1, sticky="ew")
+
+
+class OptionWidget(DataWidget):
+    def __init__(self, master: GroupWidget, text, options, default, doc, **kwargs):
+        super().__init__(master, text, ttk.Combobox, default, doc, values=options, **kwargs)
+        # model-binding
+        self.options = []
+        self.data = self._init_data(tk.StringVar)
+        self.widget.set(default)
+
+
+class CheckboxWidget(DataWidget):
+    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+        super().__init__(master, text, ttk.Checkbutton, default, doc, **kwargs)
+        self.data = self._init_data(tk.BooleanVar)
+        self.widget.configure(variable=self.data)
+
+
+class TextWidget(DataWidget):
+    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+        """there is no ttk.Text"""
+
+        def _update_text(*args):
+            self.data.set(self.widget.get("1.0", "end-1c"))
+
+        super().__init__(master, text, tk.Text, default, doc, height=4, **kwargs)
+        self.data = self._init_data(tk.StringVar)
+        self.widget.bind("<<Modified>>", _update_text)
+        self.widget.insert("1.0", default)
 
 
 def update_right_panel(event):
@@ -118,7 +145,7 @@ def filter_widgets(event):
 
     for group in [group1, group2, group3]:
         for widget in group.winfo_children():
-            if isinstance(widget, LabeledWidget):
+            if isinstance(widget, DataWidget):
                 label_text = widget.label.cget("text").lower()
                 if keyword in label_text:
                     widget.pack(fill="x", padx=5, pady=5, anchor="w")
@@ -132,7 +159,7 @@ def submit_data():
     data = {}
     for group in [group1, group2, group3]:
         for widget in group.winfo_children():
-            if isinstance(widget, LabeledWidget):
+            if isinstance(widget, DataWidget):
                 label = widget.label["text"]
                 if isinstance(widget.widget, ttk.Checkbutton):
                     value = widget.widget.instate(["selected"])
@@ -214,19 +241,13 @@ group3.pack(fill="x", pady=5)
 current_group = group1
 # Adding widgets to groups
 integer_widget = IntegerWidget(group1, "Integer Value", 10, "This is an integer value.")
-group1.add_widget(integer_widget)
-
 float_widget = FloatWidget(group1, "Float Value", 0.5, 4, "This is a float value.")
-group1.add_widget(float_widget)
-
 option_widget = OptionWidget(group2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
-group2.add_widget(option_widget)
-
 checkbox_widget = CheckboxWidget(group2, "Checkbox", True, "This is a checkbox widget.")
-group2.add_widget(checkbox_widget)
-
 text_widget = TextWidget(group3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
-group3.add_widget(text_widget)
+group1.add([integer_widget, float_widget])
+group2.add([option_widget, checkbox_widget])
+group3.add([text_widget])
 
 # Populate tree
 for group in [group1, group2, group3]:
