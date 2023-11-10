@@ -165,17 +165,23 @@ class Form(ttk.PanedWindow):
         self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def update_entries(self, event):
+        """
+        - the first call is triggered at binding time? where nothing is selected yet
+        - app must always create a group
+        """
         selected_item = self.tree.focus()
+        # will be blank on startup
         selected_title = self.tree.item(selected_item, "text")
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
         # After hiding, update the right pane to ensure correct display
+        # the first call is triggered at binding time? where nothing is selected yet
+        self.pages[selected_title].layout() if selected_title else list(self.pages.values())[0].layout()
         self.entryPane.update()
-        self.pages[selected_title].layout()
 
     def filter_entries(self, event):
-        keyword = search_entry.get().strip().lower()
+        keyword = self.searchEntry.get().strip().lower()
         for title, pg in self.pages.items():
             for entry in pg.winfo_children():
                 assert isinstance(entry, Entry)
@@ -205,7 +211,7 @@ def update_right_panel(event):
 
 def filter_widgets(event):
     keyword = search_entry.get().strip().lower()
-    for pg in pages:
+    for title, pg in pages.items():
         for widget in pg.winfo_children():
             assert isinstance(widget, Entry)
             label_text = widget.label.cget("text").lower()
