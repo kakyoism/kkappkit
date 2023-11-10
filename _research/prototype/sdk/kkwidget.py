@@ -81,6 +81,20 @@ def update_right_panel(event):
         current_group.pack(fill="x", pady=5)
 
 
+def filter_widgets(event):
+    keyword = search_entry.get().strip().lower()
+
+    for group in [group1, group2, group3]:
+        for widget in group.winfo_children():
+            if isinstance(widget, LabeledWidget):
+                label_text = widget.label.cget("text").lower()
+                if keyword in label_text:
+                    widget.pack(fill="x", padx=5, pady=5, anchor="w")
+                else:
+                    widget.pack_forget()
+    right_frame.update()
+
+
 root = tk.Tk()
 root.title("Group Example")
 screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
@@ -96,9 +110,23 @@ root.geometry('{}x{}+{}+{}'.format(
 paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
 paned_window.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# Left panel for the tree view
+# Left panel for the tree view and search box
 left_frame = ttk.Frame(paned_window, width=200)
 left_frame.pack_propagate(False)  # Prevent the widget from resizing to its contents
+
+# Create a new frame for the search box and treeview
+search_frame = ttk.Frame(left_frame)
+search_frame.pack(side="top", fill="x")
+
+search_label = ttk.Label(search_frame, text="Search:")
+search_label.pack(side="left", padx=5)
+search_entry = ttk.Entry(search_frame)
+search_entry.pack(side="left", fill="x", expand=True)
+search_entry.bind("<KeyRelease>", filter_widgets)
+
+# Place the treeview below the search box
+tree = ttk.Treeview(left_frame)
+tree.pack(side="top", fill="y", expand=True)
 
 # Right panel for displaying groups
 right_frame = ttk.Frame(paned_window)
@@ -106,9 +134,6 @@ right_frame = ttk.Frame(paned_window)
 # Add frames to PanedWindow
 paned_window.add(left_frame, weight=0)
 paned_window.add(right_frame, weight=1)
-
-tree = ttk.Treeview(left_frame)
-tree.pack(side="left", fill="y", expand=True)
 
 # Creating groups
 group1 = GroupWidget(right_frame, "Group 1")
