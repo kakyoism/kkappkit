@@ -118,8 +118,6 @@ left_frame.pack_propagate(False)  # Prevent the widget from resizing to its cont
 search_frame = ttk.Frame(left_frame)
 search_frame.pack(side="top", fill="x")
 
-search_label = ttk.Label(search_frame, text="Search:")
-search_label.pack(side="left", padx=5)
 search_entry = ttk.Entry(search_frame)
 search_entry.pack(side="left", fill="x", expand=True)
 search_entry.bind("<KeyRelease>", filter_widgets)
