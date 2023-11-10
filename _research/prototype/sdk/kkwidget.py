@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter import messagebox
 
 
-class GroupWidget(ttk.LabelFrame):
+class Page(ttk.LabelFrame):
     def __init__(self, master, title, **kwargs):
         super().__init__(master, text=title, **kwargs)
         self.grid_columnconfigure(0, weight=1)
@@ -20,11 +20,13 @@ class GroupWidget(ttk.LabelFrame):
 
 class DataWidget(ttk.Frame):
     """
+    - used as user input, similar to CLI arguments
     - widget must belong to a group
     - groups form a tree to avoid overloading parameter panes
     - groups also improves SNR by prioritizing frequently-tweaked parameters
     """
-    def __init__(self, master: GroupWidget, text, widget_constructor, default, doc, **widget_kwargs):
+
+    def __init__(self, master: Page, text, widget_constructor, default, doc, **widget_kwargs):
         super().__init__(master)
         self.columnconfigure(0, weight=1)
         self.text = text
@@ -47,7 +49,7 @@ class DataWidget(ttk.Frame):
 
 
 class IntegerWidget(DataWidget):
-    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+    def __init__(self, master: Page, text, default, doc, **kwargs):
         def _update_int_var(value):
             try:
                 self.data.set(int(float(value)))  # Convert to integer
@@ -65,7 +67,7 @@ class IntegerWidget(DataWidget):
 
 
 class FloatWidget(DataWidget):
-    def __init__(self, master: GroupWidget, text, default, precision, doc, **kwargs):
+    def __init__(self, master: Page, text, default, precision, doc, **kwargs):
         def _update_float_var(value):
             try:
                 formatted_value = "{:.{}f}".format(float(value), self.precision)  # Format entered value
@@ -86,7 +88,7 @@ class FloatWidget(DataWidget):
 
 
 class OptionWidget(DataWidget):
-    def __init__(self, master: GroupWidget, text, options, default, doc, **kwargs):
+    def __init__(self, master: Page, text, options, default, doc, **kwargs):
         super().__init__(master, text, ttk.Combobox, default, doc, values=options, **kwargs)
         # model-binding
         self.options = []
@@ -95,14 +97,14 @@ class OptionWidget(DataWidget):
 
 
 class CheckboxWidget(DataWidget):
-    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+    def __init__(self, master: Page, text, default, doc, **kwargs):
         super().__init__(master, text, ttk.Checkbutton, default, doc, **kwargs)
         self.data = self._init_data(tk.BooleanVar)
         self.widget.configure(variable=self.data)
 
 
 class TextWidget(DataWidget):
-    def __init__(self, master: GroupWidget, text, default, doc, **kwargs):
+    def __init__(self, master: Page, text, default, doc, **kwargs):
         """there is no ttk.Text"""
 
         def _update_text(*args):
@@ -112,6 +114,79 @@ class TextWidget(DataWidget):
         self.data = self._init_data(tk.StringVar)
         self.widget.bind("<<Modified>>", _update_text)
         self.widget.insert("1.0", default)
+
+
+class Form(ttk.PanedWindow):
+    """
+    - layout: page-based navigation
+    - filter: locate form entries by searching for title keywords
+    """
+
+    def __init__(self, master, pages: list[Page], *args, **kwargs):
+        def _filter_widgets(event):
+            keyword = kw_entry.get().strip().lower()
+
+            for group in [group1, group2, group3]:
+                for widget in group.winfo_children():
+                    if isinstance(widget, DataWidget):
+                        label_text = widget.label.cget("text").lower()
+                        if keyword in label_text:
+                            widget.pack(fill="x", padx=5, pady=5, anchor="w")
+                        else:
+                            widget.pack_forget()
+            entry_frame.update()
+
+        super().__init__(master)
+        self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Left panel: navigation bar with filtering support
+        nav_bar = ttk.Frame(self, width=200)
+        nav_bar.pack_propagate(False)  # Prevent the widget from resizing to its contents
+        # Create a new frame for the search box and treeview
+        search_box = ttk.Frame(nav_bar)
+        search_box.pack(side="top", fill="x")
+        kw_entry = ttk.Entry(search_box)
+        kw_entry.pack(side="left", fill="x", expand=True)
+        kw_entry.bind("<KeyRelease>", _filter_widgets)
+        # Place the treeview below the search box
+        tree = ttk.Treeview(nav_bar, show="tree")
+        tree.heading("#0", text="", anchor="w")  # Hide the column header
+        tree.pack(side="left", fill="both", expand=True)
+        tree.bind("<<TreeviewSelect>>", self.update_entries)
+        # Right panel: entries in page
+        entry_frame = ttk.Frame(self)
+        # build form with navbar and page frame
+        self.add(nav_bar, weight=0)
+        self.add(entry_frame, weight=1)
+        # imp
+        self.pages = pages
+        self.iCurPage = 0
+        # Populate tree
+        for pg in self.pages:
+            tree.insert("", "end", text=pg.get_title())
+        tree.selection_set(tree.get_children()[0])
+
+    def update_entries(self, event):
+        selected_item = tree.focus()
+        selected_title = tree.item(selected_item, "text")
+
+        # Hide all groups
+        for grp in (group1, group2, group3):
+            grp.pack_forget()
+
+        # Determine which group to show based on the selected title
+        if selected_title == group1.cget("text"):
+            self.iCurPage = 0
+        elif selected_title == group2.cget("text"):
+            current_group = group2
+        elif selected_title == group3.cget("text"):
+            current_group = group3
+
+        # After hiding, update the right pane to ensure correct display
+        right_frame.update()
+
+        # Show the selected group, if any
+        if current_group:
+            current_group.pack(fill="x", pady=5)
 
 
 def update_right_panel(event):
@@ -229,13 +304,13 @@ paned_window.add(left_frame, weight=0)
 paned_window.add(right_frame, weight=1)
 
 # Creating groups
-group1 = GroupWidget(right_frame, "Group 1")
+group1 = Page(right_frame, "Group 1")
 group1.pack(fill="x", pady=5)
 
-group2 = GroupWidget(right_frame, "Group 2")
+group2 = Page(right_frame, "Group 2")
 group2.pack(fill="x", pady=5)
 
-group3 = GroupWidget(right_frame, "Group 3")
+group3 = Page(right_frame, "Group 3")
 group3.pack(fill="x", pady=5)
 
 current_group = group1
