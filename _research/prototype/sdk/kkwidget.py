@@ -144,10 +144,10 @@ class Form(ttk.PanedWindow):
         self.tree.pack(side="left", fill="both", expand=True)
         self.tree.bind("<<TreeviewSelect>>", self.update_entries)
         # Right panel: entries in page
-        self.entry_frame = ttk.Frame(self)
+        self.entryPane = ttk.Frame(self)
         # build form with navbar and page frame
         self.add(self.navPane, weight=0)
-        self.add(self.entry_frame, weight=1)
+        self.add(self.entryPane, weight=1)
         # imp
         pg_titles = [pg.get_title() for pg in pages]
         self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
@@ -166,7 +166,7 @@ class Form(ttk.PanedWindow):
             pg.pack_forget()
         self.pages[selected_title].pack(fill="x", pady=5)
         # After hiding, update the right pane to ensure correct display
-        self.entry_frame.update()
+        self.entryPane.update()
 
     def filter_entries(self, event):
         keyword = search_entry.get().strip().lower()
@@ -177,7 +177,7 @@ class Form(ttk.PanedWindow):
                     entry.pack_forget()
                     continue
                 entry.pack(fill="x", padx=5, pady=5, anchor="w")
-        self.entry_frame.update()
+        self.entryPane.update()
 
 
 def update_right_panel(event):
