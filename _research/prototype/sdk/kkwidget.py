@@ -171,6 +171,83 @@ class FormMenu(tk.Menu):
         self.master.quit()
 
 
+class FormController:
+    """
+    - observe all entries and update model
+    """
+    def __init__(self, fm=None, model=None):
+        self.form = fm
+        self.model = model
+
+    def update(self):
+        self.model = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for pg in self.form.pages.values()}
+
+    def load(self, preset):
+        """
+        - model includes input and config
+        - input is runtime data that changes with each run
+        - only config will be saved/loaded as preset
+        """
+        config = util.load_json(preset)
+        for title, page in self.form.pages.items():
+            for entry in page.winfo_children():
+                try:
+                    entry.set_data(config[title][entry.text])
+                except KeyError:
+                    pass
+
+    def save(self, preset):
+        """
+        - only config is saved
+        - input always belongs to group "input"
+        """
+        self.update()
+        config = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for title, pg in self.form.pages.items() if title != "input"}
+        util.save_json(preset, config)
+
+    def reset(self):
+        for pg in self.form.pages.values():
+            for entry in pg.winfo_children():
+                entry.set_data(entry.default)
+
+
+class ActionBar(ttk.Frame):
+    def __init__(self, master, controller, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        # action logic
+        self.controller = controller
+        # Bind the ENTER key to trigger the Submit button
+        root_win = self.controller.form.master
+        root_win.bind("<Return>", self.submit)
+        # Bind the ESC key to quit the program
+        root_win.bind("<Escape>", lambda event: root_win.quit())
+
+        # occupy the entire width
+        # new buttons will be added to the right
+        self.resetBtn = ttk.Button(self, text="Reset", command=self.reset_entries)
+        self.separator = ttk.Separator(self, orient="horizontal")
+        # Create Cancel and Submit buttons
+        self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
+        self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
+        # layout: keep the order
+        self.separator.pack(fill="x")
+        # left-most must pack after separator to avoid occluding the border
+        self.resetBtn.pack(side="left", padx=10, pady=5)
+        self.submitBtn.pack(side="right", padx=10, pady=10)
+        self.cancelBtn.pack(side="right", padx=10, pady=10)
+
+    def layout(self):
+        self.pack(side="bottom", fill="x")
+
+    def submit(self, event=None):
+        self.controller.update()
+        formatted_data = json.dumps(self.controller.model, indent=4)
+        messagebox.showinfo("Submitted Data", formatted_data)
+
+    def reset_entries(self, event=None):
+        self.controller.reset()
+
+
 class IntEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         def _update_int_var(value):
@@ -240,80 +317,7 @@ class TextEntry(Entry):
         self.field.insert("1.0", default)
 
 
-class FormController:
-    """
-    - observe all entries and update model
-    """
-    def __init__(self, fm=None, model=None):
-        self.form = fm
-        self.model = model
 
-    def update(self):
-        self.model = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for pg in self.form.pages.values()}
-
-    def load(self, preset):
-        """
-        - model includes input and config
-        - input is runtime data that changes with each run
-        - only config will be saved/loaded as preset
-        """
-        config = util.load_json(preset)
-        for title, page in self.form.pages.items():
-            for entry in page.winfo_children():
-                try:
-                    entry.set_data(config[title][entry.text])
-                except KeyError:
-                    pass
-
-    def save(self, preset):
-        """
-        - only config is saved
-        - input always belongs to group "input"
-        """
-        self.update()
-        config = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for title, pg in self.form.pages.items() if title != "input"}
-        util.save_json(preset, config)
-
-    def reset(self):
-        for pg in self.form.pages.values():
-            for entry in pg.winfo_children():
-                entry.set_data(entry.default)
-
-
-class ActionBar(ttk.Frame):
-    def __init__(self, master, controller, *args, **kwargs):
-        super().__init__(master, *args, **kwargs)
-        # action logic
-        self.controller = controller
-        # Bind the ENTER key to trigger the Submit button
-        root_win = self.controller.form.master
-        root_win.bind("<Return>", self.submit)
-        # Bind the ESC key to quit the program
-        root_win.bind("<Escape>", lambda event: root_win.quit())
-
-        # occupy the entire width
-        # new buttons will be added to the right
-        self.resetBtn = ttk.Button(self, text="Reset", command=self.reset_entries)
-        self.separator = ttk.Separator(self, orient="horizontal")
-        # Create Cancel and Submit buttons
-        self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
-        self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
-        # layout: keep the order
-        self.resetBtn.pack(side="left", padx=10, pady=10)
-        self.separator.pack(fill="x")
-        self.submitBtn.pack(side="right", padx=10, pady=10)
-        self.cancelBtn.pack(side="right", padx=10, pady=10)
-
-    def layout(self):
-        self.pack(side="bottom", fill="x")
-
-    def submit(self, event=None):
-        self.controller.update()
-        formatted_data = json.dumps(self.controller.model, indent=4)
-        messagebox.showinfo("Submitted Data", formatted_data)
-
-    def reset_entries(self, event=None):
-        self.controller.reset()
 
 
 root = tk.Tk()
