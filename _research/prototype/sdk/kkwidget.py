@@ -41,20 +41,23 @@ class Entry(ttk.Frame):
         self.default = default
         # model-binding
         self.data = None
-        # label
+        # title
         self.label = ttk.Label(self, text=self.text)
         self.label.grid(row=0, column=0, sticky='w')
         self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
-        # view
-        self.widget = widget_constructor(self, **widget_kwargs)
+        # field
+        self.field = widget_constructor(self, **widget_kwargs)
         self.columnconfigure(0, weight=1)
-        self.widget.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+        self.field.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
 
     def _init_data(self, var_cls):
         return var_cls(master=self, name=self.text, value=self.default)
 
     def get_data(self):
         return self.data.get()
+
+    def set_data(self):
+        self.data.set()
 
     def layout(self):
         self.pack(fill="x", padx=5, pady=5, anchor="w")
@@ -72,9 +75,9 @@ class IntEntry(Entry):
         # model-binding
         self.data = self._init_data(tk.IntVar)
         # view
-        self.spinbox = ttk.Spinbox(self.widget, textvariable=self.data, from_=0, to=100, increment=1)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
-        self.slider = ttk.Scale(self.widget, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
+        self.slider = ttk.Scale(self.field, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
         self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
 
 
@@ -93,9 +96,9 @@ class FloatEntry(Entry):
         self.data = self._init_data(tk.DoubleVar)
         # view
         format_string = f"%.{precision}f"  # Adjust precision dynamically
-        self.spinbox = ttk.Spinbox(self.widget, textvariable=self.data, from_=0, to=1, increment=0.01, format=format_string)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=1, increment=0.01, format=format_string)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))
-        self.slider = ttk.Scale(self.widget, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
+        self.slider = ttk.Scale(self.field, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
         self.slider.grid(row=0, column=1, sticky="ew")
 
 
@@ -105,14 +108,14 @@ class OptionEntry(Entry):
         # model-binding
         self.options = []
         self.data = self._init_data(tk.StringVar)
-        self.widget.set(default)
+        self.field.set(default)
 
 
 class Checkbox(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         super().__init__(master, text, ttk.Checkbutton, default, doc, **kwargs)
         self.data = self._init_data(tk.BooleanVar)
-        self.widget.configure(variable=self.data)
+        self.field.configure(variable=self.data)
 
 
 class TextEntry(Entry):
@@ -120,12 +123,12 @@ class TextEntry(Entry):
         """there is no ttk.Text"""
 
         def _update_text(*args):
-            self.data.set(self.widget.get("1.0", "end-1c"))
+            self.data.set(self.field.get("1.0", "end-1c"))
 
         super().__init__(master, text, tk.Text, default, doc, height=4, **kwargs)
         self.data = self._init_data(tk.StringVar)
-        self.widget.bind("<<Modified>>", _update_text)
-        self.widget.insert("1.0", default)
+        self.field.bind("<<Modified>>", _update_text)
+        self.field.insert("1.0", default)
 
 
 class Form(ttk.PanedWindow):
@@ -213,6 +216,10 @@ class FormController:
 
     def update(self):
         self.model = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for pg in self.form.pages.values()}
+
+    def load(self, cfgfile):
+        self.model = util.load_json(cfgfile)
+
 
 
 class ActionBar(ttk.Frame):
