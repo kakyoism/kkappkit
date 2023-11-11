@@ -78,7 +78,8 @@ class IntEntry(Entry):
         self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
         self.slider = ttk.Scale(self.field, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
-        self.slider.grid(row=0, column=1, sticky="ew")  # Allow slider to expand horizontally
+        # Allow slider to expand horizontally
+        self.slider.grid(row=0, column=1, sticky="ew")
 
 
 class FloatEntry(Entry):
@@ -202,7 +203,7 @@ class Form(ttk.PanedWindow):
                 if keyword not in entry.text.lower():
                     entry.pack_forget()
                     continue
-                entry.pack(fill="x", padx=5, pady=5, anchor="w")
+                entry.layout()
         self.entryPane.update()
 
 
