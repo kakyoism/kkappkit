@@ -136,7 +136,6 @@ class Form(ttk.PanedWindow):
 
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, orient=tk.HORIZONTAL)
-        self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         # Left panel: navigation bar with filtering support
         self.navPane = ttk.Frame(self, width=200)
         self.navPane.pack_propagate(False)  # Prevent the widget from resizing to its contents
@@ -216,28 +215,29 @@ class FormController:
 class ActionBar(ttk.Frame):
     def __init__(self, master, controller, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-        # Create a frame for the bottom bar
-        self.pack(side="bottom", fill="x")
         # action logic
         self.controller = controller
         # Bind the ENTER key to trigger the Submit button
-        root = self.controller.form.master
-        root.bind("<Return>", self.submit)
+        root_win = self.controller.form.master
+        root_win.bind("<Return>", self.submit)
         # Bind the ESC key to quit the program
-        root.bind("<Escape>", lambda event: root.quit())
+        root_win.bind("<Escape>", lambda event: root_win.quit())
 
         # occupy the entire width
         # new buttons will be added to the right
         self.separator = ttk.Separator(self, orient="horizontal")
         self.separator.pack(fill="x")
         # Create Cancel and Submit buttons
-        self.cancelBtn = ttk.Button(self, text="Cancel", command=root.quit)
+        self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
         self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
         # keep this order
         self.submitBtn.pack(side="right", padx=10, pady=10)
         self.cancelBtn.pack(side="right", padx=10, pady=10)
 
-    def submit(self):
+    def layout(self):
+        self.pack(side="bottom", fill="x")
+
+    def submit(self, event=None):
         self.controller.update()
         formatted_data = json.dumps(self.controller.model, indent=4)
         messagebox.showinfo("Submitted Data", formatted_data)
@@ -278,7 +278,8 @@ pg2.add([option_widget, checkbox_widget])
 pg3.add([text_widget])
 
 form.init([pg1, pg2, pg3])
-ctrlr = FormController(form)
-action_bar = ActionBar(root, ctrlr)
+form.layout()
+action_bar = ActionBar(root, FormController(form))
+action_bar.layout()
 
 root.mainloop()
