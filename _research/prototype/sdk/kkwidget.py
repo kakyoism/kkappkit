@@ -126,6 +126,8 @@ class Form(ttk.PanedWindow):
     - accepts and creates navbar for input pages
     - layout: page-based navigation
     - filter: locate form entries by searching for title keywords
+    - structure: Form > Page > Entry
+    - instantiation: Form > Page (slave to form pane) > Entry (slave to page)
     """
 
     def __init__(self, master, *args, **kwargs):
@@ -151,18 +153,23 @@ class Form(ttk.PanedWindow):
         self.add(self.navPane, weight=0)
         self.add(self.entryPane, weight=1)
         self.pages = {}
-        # # imp
-        # pg_titles = [pg.get_title() for pg in pages]
-        # self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
-        # # Populate tree
-        # for title, pg in self.pages.items():
-        #     self.tree.insert("", "end", text=title)
-        # # select first page
-        # self.pages[0].layout()
-        # self.tree.selection_set(tree.get_children()[0])
     
     def layout(self):
         self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def init(self, pages):
+        """
+        - pages must be created using entryPane as master
+        """
+        pg_titles = [pg.get_title() for pg in pages]
+        self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
+        # Populate tree
+        for title, pg in self.pages.items():
+            self.tree.insert("", "end", text=title)
+        # # select first page
+        # self.pages[pg_titles[0]].layout()
+        # self.tree.selection_set(tree.get_children()[0])
+        self.update_entries(None)
 
     def update_entries(self, event):
         """
@@ -170,13 +177,12 @@ class Form(ttk.PanedWindow):
         - app must always create a group
         """
         selected_item = self.tree.focus()
-        # will be blank on startup
+        # selection will be blank on startup because no item is selected
         selected_title = self.tree.item(selected_item, "text")
         # Hide all groups
         for pg in self.pages:
             pg.pack_forget()
         # After hiding, update the right pane to ensure correct display
-        # the first call is triggered at binding time? where nothing is selected yet
         self.pages[selected_title].layout() if selected_title else list(self.pages.values())[0].layout()
         self.entryPane.update()
 
