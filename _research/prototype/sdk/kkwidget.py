@@ -1,7 +1,7 @@
 import json
 import tkinter as tk
 from tkinter import ttk, filedialog
-from tkinter import messagebox
+from tkinter import messagebox as tkmsgbox
 # 3rd party
 import kkpyutil as util
 
@@ -26,6 +26,58 @@ def _validate_number(user_input, new_value, widget_name, data_type):
         root.bell()
         return False
     return True
+
+
+class Prompt:
+    """
+    - must use within tkinter mainloop
+    - otherwise will hang upon confirmation
+    """
+
+    def __init__(self, logger=None):
+        self.logger = logger or util.glogger
+
+    def info(self, msg, confirm=True):
+        """Prompt with info."""
+        self.logger.info(msg)
+        if confirm:
+            tkmsgbox.showinfo('Info', msg, icon='info')
+
+    def warning(self, detail, advice, question='Continue?', confirm=True):
+        """
+        - for problems with minimum or no consequences
+        - user can still abort, but usually no special handling is needed
+        """
+        msg = f"""\
+Detail:
+{detail}
+
+Advice:
+{advice}
+
+{question if confirm else 'Will continue anyways'}"""
+        self.logger.warning(msg)
+        if not confirm:
+            return True
+        return tkmsgbox.askyesno('Warning', msg, icon='warning')
+
+    def error(self, errclass, detail, advice, confirm=True):
+        """
+        - for problems with significant impact
+        - program will crash immediately
+        """
+        msg = f"""\
+Detail:
+{detail}
+
+Advice:
+{advice}
+
+Will crash"""
+        self.logger.error(msg)
+        if confirm:
+            tkmsgbox.showerror('Error', msg, icon='error')
+        raise errclass(msg)
 
 
 class Page(ttk.LabelFrame):
@@ -141,7 +193,7 @@ class Entry(ttk.Frame):
         # title
         self.label = ttk.Label(self, text=self.text)
         self.label.grid(row=0, column=0, sticky='w')
-        self.label.bind("<Double-Button-1>", lambda e: messagebox.showinfo("Help", doc))
+        self.label.bind("<Double-Button-1>", lambda e: tkmsgbox.showinfo("Help", doc))
         # field
         self.field = widget_constructor(self, **widget_kwargs)
         self.columnconfigure(0, weight=1)
@@ -232,6 +284,14 @@ class FormController:
             for entry in pg.winfo_children():
                 entry.set_data(entry.default)
 
+    def submit(self, event=None):
+        """
+        - subclass this to implement custom logic
+        """
+        self.update()
+        prompt = Prompt()
+        prompt.warning('You are calling base class', 'Subclass this!')
+
 
 class ActionBar(ttk.Frame):
     def __init__(self, master, controller, *args, **kwargs):
@@ -240,7 +300,7 @@ class ActionBar(ttk.Frame):
         self.controller = controller
         # Bind the ENTER key to trigger the Submit button
         root_win = self.controller.form.master
-        root_win.bind("<Return>", self.submit)
+        root_win.bind("<Return>", self.controller.submit)
         # Bind the ESC key to quit the program
         root_win.bind("<Escape>", lambda event: root_win.quit())
 
@@ -250,7 +310,7 @@ class ActionBar(ttk.Frame):
         self.separator = ttk.Separator(self, orient="horizontal")
         # Create Cancel and Submit buttons
         self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
-        self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
+        self.submitBtn = ttk.Button(self, text="Submit", command=self.controller.submit, cursor='hand2')
         # layout: keep the order
         self.separator.pack(fill="x")
         # left-most must pack after separator to avoid occluding the border
@@ -262,9 +322,10 @@ class ActionBar(ttk.Frame):
         self.pack(side="bottom", fill="x")
 
     def submit(self, event=None):
+        """for debugging only"""
         self.controller.update()
         formatted_data = json.dumps(self.controller.model, indent=4)
-        messagebox.showinfo("Submitted Data", formatted_data)
+        tkmsgbox.showinfo("Submitted Data", formatted_data)
 
     def reset_entries(self, event=None):
         self.controller.reset()
