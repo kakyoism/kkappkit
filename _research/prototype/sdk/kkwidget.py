@@ -6,6 +6,28 @@ from tkinter import messagebox
 import kkpyutil as util
 
 
+def validate_int(user_input, new_value, widget_name):
+    return validate_number(user_input, new_value, widget_name, int)
+
+
+def validate_float(user_input, new_value, widget_name):
+    return validate_number(user_input, new_value, widget_name, float)
+
+
+def validate_number(user_input, new_value, widget_name, data_type):
+    # disallow anything but numbers in the input
+    is_digit = new_value == '' or new_value.isdigit()
+    if not is_digit:
+        root.bell()
+        return False
+    minval = data_type(root.nametowidget(widget_name).config('from')[4])
+    maxval = data_type(root.nametowidget(widget_name).config('to')[4])
+    if not (minval <= data_type(user_input) <= maxval):
+        root.bell()
+        return False
+    return True
+
+
 class Page(ttk.LabelFrame):
     def __init__(self, master, title, **kwargs):
         super().__init__(master, text=title, **kwargs)
@@ -260,7 +282,7 @@ class IntEntry(Entry):
         # model-binding
         self.data = self._init_data(tk.IntVar)
         # view
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1, validate='all', validatecommand=validate_int_cmd)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
         self.slider = ttk.Scale(self.field, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
         # Allow slider to expand horizontally
@@ -282,7 +304,7 @@ class FloatEntry(Entry):
         self.data = self._init_data(tk.DoubleVar)
         # view
         format_string = f"%.{precision}f"  # Adjust precision dynamically
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=1, increment=0.01, format=format_string)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0.0, to=1.0, increment=0.01, format=format_string, validate='all', validatecommand=validate_float_cmd)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))
         self.slider = ttk.Scale(self.field, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
         self.slider.grid(row=0, column=1, sticky="ew")
@@ -317,9 +339,6 @@ class TextEntry(Entry):
         self.field.insert("1.0", default)
 
 
-
-
-
 root = tk.Tk()
 root.title("Group Example")
 screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
@@ -330,6 +349,8 @@ root.geometry('{}x{}+{}+{}'.format(
     int(screen_size[0] / 2 - size[0] / 2),
     int(screen_size[1] / 2 - size[1] / 2))
 )
+validate_int_cmd = (root.register(validate_int), '%P', '%S', '%W')
+validate_float_cmd = (root.register(validate_float), '%P', '%S', '%W')
 
 form = Form(root)
 form.layout()
