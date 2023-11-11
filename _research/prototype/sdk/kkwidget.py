@@ -1,4 +1,6 @@
 import json
+import queue
+import threading
 import tkinter as tk
 from tkinter import ttk, filedialog
 from tkinter import messagebox as tkmsgbox
@@ -10,6 +12,7 @@ class _Globals:
     root = None
     validateIntCmd = None
     validateFloatCmd = None
+    progressQueue = queue.Queue()
 
 
 def _validate_int(user_input, new_value, widget_name):
@@ -215,7 +218,7 @@ class Entry(ttk.Frame):
         self.data.set(value)
 
     def layout(self):
-        self.pack(fill="x", padx=5, pady=5, anchor="w")
+        self.pack(fill="both", expand=True, padx=5, pady=5, anchor="w")
 
 
 class FormMenu(tk.Menu):
@@ -294,9 +297,11 @@ class FormController:
         """
         - subclass this to implement custom logic
         """
+        _Globals.progressQueue.put(('/start', 0))
         self.update()
         prompt = Prompt()
         prompt.warning('You are calling base class', 'Subclass this!')
+        _Globals.progressQueue.put(('/stop', 100))
 
 
 class FormActionBar(ttk.Frame):
@@ -341,19 +346,23 @@ class WaitBar(ttk.Frame):
     """
     - app must run in worker thread to avoid blocking UI
     - when using subprocess to run a blackbox task, use indeterminate mode cuz there is no way to pass progress back
+    - protocol: tuple(stage, progress)
     - TODO: use IPC for cross-language open-source tasks
     """
     def __init__(self, master, progress_queue, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.queue = progress_queue
         self.stage = tk.StringVar(name='stage', value='')
-        self.label = ttk.Label(self, textvariable=self.stage, width=200, anchor='e')
-        self.bar = ttk.Progressbar(self, orient="horizontal", length=380, mode="indeterminate")
+        self.bar = ttk.Progressbar(self, orient="horizontal", mode="indeterminate")
+        self.label = ttk.Label(self.bar, textvariable=self.stage, text='processing ...', foreground='white', background='black')
 
     def layout(self):
-        self.bar.pack(side="right", fill="both", expand=False)
-        self.label.pack(side="left", fill="both", expand=False)
-        self.pack(side='top', fill='both', expand=False)
+        """
+        - overlay label on top of bar
+        """
+        self.bar.pack(side="right", fill="x", expand=True)
+        self.label.place(relx=0.5, rely=0.5, anchor='center')
+        self.pack(side='bottom', fill='both', expand=False)
 
     def poll(self, wait_ms=50):
         """
@@ -375,9 +384,6 @@ class ProgressBar(WaitBar):
         super().__init__(master, progress_queue, *args, **kwargs)
         self.progress = tk.DoubleVar(name='progress', value=0.)
         self.bar.configure(variable=self.progress, mode='determinate')
-
-    def layout(self):
-        self.pack(side='top', fill='both', expand=False)
 
     def poll(self, wait_ms=50):
         """
@@ -500,7 +506,9 @@ def _test():
     form.layout()
     action_bar = FormActionBar(_Globals.root, ctrlr)
     action_bar.layout()
-    # progress_queue = util.Queue()
+    progress_bar = ProgressBar(_Globals.root, _Globals.progressQueue)
+    progress_bar.layout()
+    progress_bar.poll()
     _Globals.root.mainloop()
 
 
