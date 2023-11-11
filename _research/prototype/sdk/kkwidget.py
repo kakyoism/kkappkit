@@ -1,6 +1,6 @@
 import json
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from tkinter import messagebox
 # 3rd party
 import kkpyutil as util
@@ -138,6 +138,39 @@ class Entry(ttk.Frame):
         self.pack(fill="x", padx=5, pady=5, anchor="w")
 
 
+class FormMenu(tk.Menu):
+    def __init__(self, master, controller, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.fileMenu = tk.Menu(self, tearoff=False)
+        self.fileMenu.add_command(label="Load Preset ...", command=self.load_preset)
+        self.fileMenu.add_command(label="Save Preset ...", command=self.save_preset)
+        self.fileMenu.add_command(label="Exit", command=self.quit)
+        self.add_cascade(label="File", menu=self.fileMenu)
+        self.controller = controller
+
+    def init(self, window):
+        window.configure(menu=self)
+
+    def load_preset(self):
+        preset = filedialog.askopenfilename(title="Load Preset", filetypes=[
+            ("Preset Files", "*.preset.json"),
+            ("All Files", "*.*"),
+        ])
+        if preset:
+            self.controller.load(preset)
+
+    def save_preset(self):
+        preset = filedialog.asksaveasfilename(title="Save Preset", filetypes=[
+            ("Preset Files", "*.preset.json"),
+            ("All Files", "*.*"),
+        ])
+        if preset:
+            self.controller.save(preset)
+
+    def quit(self):
+        self.master.quit()
+
+
 class IntEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         def _update_int_var(value):
@@ -211,7 +244,7 @@ class FormController:
     """
     - observe all entries and update model
     """
-    def __init__(self, fm, model=None):
+    def __init__(self, fm=None, model=None):
         self.form = fm
         self.model = model
 
@@ -225,7 +258,7 @@ class FormController:
         - only config will be saved/loaded as preset
         """
         config = util.load_json(preset)
-        for title, page in self.form.pages:
+        for title, page in self.form.pages.items():
             for entry in page.winfo_children():
                 try:
                     entry.set_data(config[title][entry.text])
@@ -296,6 +329,9 @@ root.geometry('{}x{}+{}+{}'.format(
 
 form = Form(root)
 form.layout()
+ctrlr = FormController(form)
+menu = FormMenu(root, ctrlr)
+menu.init(root)
 
 # Creating groups
 pg1 = Page(form.entryPane, "Group 1")
@@ -319,7 +355,7 @@ pg3.add([text_widget])
 
 form.init([pg1, pg2, pg3])
 form.layout()
-action_bar = ActionBar(root, FormController(form))
+action_bar = ActionBar(root, ctrlr)
 action_bar.layout()
 
 root.mainloop()
