@@ -13,6 +13,9 @@ class Page(ttk.LabelFrame):
 
     @staticmethod
     def add(widgets):
+        """
+        - vertical layout
+        """
         for wgt in widgets:
             wgt.pack(fill="x", padx=5, pady=5, anchor="w")
 
@@ -29,6 +32,7 @@ class Entry(ttk.Frame):
     - widget must belong to a group
     - groups form a tree to avoid overloading parameter panes
     - groups also improves SNR by prioritizing frequently-tweaked parameters
+    - page is responsible for lay out entries
     """
 
     def __init__(self, master: Page, text, widget_constructor, default, doc, **widget_kwargs):
@@ -197,67 +201,45 @@ class Form(ttk.PanedWindow):
         self.entryPane.update()
 
 
-def update_right_panel(event):
+class FormController:
     """
-    - the first call is triggered at binding time? where nothing is selected yet
-    - app must always create a group
+    - observe all entries and update model
     """
-    selected_item = tree.focus()
-    selected_title = tree.item(selected_item, "text")
+    def __init__(self, fm, model=None):
+        self.form = fm
+        self.model = model
 
-    # Hide all groups
-    for pg in pages.values():
-        pg.pack_forget()
-    current_group = pages[selected_title] if selected_title else list(pages.values())[0]
-    current_group.layout()
-    # After hiding, update the right pane to ensure correct display
-    right_frame.update()
+    def update(self):
+        self.model = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for pg in self.form.pages.values()}
 
 
-def filter_widgets(event):
-    keyword = search_entry.get().strip().lower()
-    for title, pg in pages.items():
-        for widget in pg.winfo_children():
-            assert isinstance(widget, Entry)
-            label_text = widget.label.cget("text").lower()
-            if keyword in label_text:
-                widget.pack(fill="x", padx=5, pady=5, anchor="w")
-            else:
-                widget.pack_forget()
-    right_frame.update()
+class ActionBar(ttk.Frame):
+    def __init__(self, master, controller, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        # Create a frame for the bottom bar
+        self.pack(side="bottom", fill="x")
+        # action logic
+        self.controller = controller
+        # Bind the ENTER key to trigger the Submit button
+        root = self.controller.form.master
+        root.bind("<Return>", self.submit)
+        # Bind the ESC key to quit the program
+        root.bind("<Escape>", lambda event: root.quit())
 
+        # occupy the entire width
+        # new buttons will be added to the right
+        self.separator = ttk.Separator(self, orient="horizontal")
+        self.separator.pack(fill="x")
+        # Create Cancel and Submit buttons
+        self.cancelBtn = ttk.Button(self, text="Cancel", command=root.quit)
+        self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
+        # keep this order
+        self.submitBtn.pack(side="right", padx=10, pady=10)
+        self.cancelBtn.pack(side="right", padx=10, pady=10)
 
-def submit_data():
-    # Collect data from all the widgets in the groups
-    data = {}
-    for group in [pg1, pg2, pg3]:
-        for widget in group.winfo_children():
-            if isinstance(widget, Entry):
-                label = widget.label["text"]
-                if isinstance(widget.widget, ttk.Checkbutton):
-                    value = widget.widget.instate(["selected"])
-                elif isinstance(widget.widget, tk.Text):
-                    value = widget.widget.get("1.0", "end-1c")  # Get text content
-                elif isinstance(widget.widget, (ttk.Spinbox, ttk.Scale)):
-                    value = widget.widget.get()
-                    try:
-                        value = int(value)  # Try to convert to integer
-                    except ValueError:
-                        try:
-                            value = float(value)  # Try to convert to float
-                        except ValueError:
-                            pass  # Cannot convert, leave as is
-                else:
-                    value = None
-
-                if value is not None:
-                    data[label] = value
-
-    # Show the data as formatted JSON in a message box
-    formatted_data = json.dumps(data, indent=4)
-    if formatted_data.strip() == "{}":
-        messagebox.showinfo("Submitted Data", "No data to submit.")
-    else:
+    def submit(self):
+        self.controller.update()
+        formatted_data = json.dumps(self.controller.model, indent=4)
         messagebox.showinfo("Submitted Data", formatted_data)
 
 
@@ -274,7 +256,6 @@ root.geometry('{}x{}+{}+{}'.format(
 
 form = Form(root)
 form.layout()
-
 
 # Creating groups
 pg1 = Page(form.entryPane, "Group 1")
@@ -296,68 +277,8 @@ pg1.add([integer_widget, float_widget])
 pg2.add([option_widget, checkbox_widget])
 pg3.add([text_widget])
 
-pages = {title: pg for title, pg in zip([pg1.get_title(), pg2.get_title(), pg3.get_title()], [pg1, pg2, pg3])}
-
 form.init([pg1, pg2, pg3])
-
-# # Main layout with PanedWindow
-# paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
-# paned_window.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-#
-# # Left panel for the tree view and search box
-# left_frame = ttk.Frame(paned_window, width=200)
-# left_frame.pack_propagate(False)  # Prevent the widget from resizing to its contents
-#
-# # Create a new frame for the search box and treeview
-# search_frame = ttk.Frame(left_frame)
-# search_frame.pack(side="top", fill="x")
-#
-# search_entry = ttk.Entry(search_frame)
-# search_entry.pack(side="left", fill="x", expand=True)
-# search_entry.bind("<KeyRelease>", filter_widgets)
-#
-# # Place the treeview below the search box
-# tree = ttk.Treeview(left_frame, show="tree")
-# tree.heading("#0", text="", anchor="w")  # Hide the column header
-#
-# tree.pack(side="left", fill="both", expand=True)
-#
-# # Right panel for displaying groups
-# right_frame = ttk.Frame(paned_window)
-#
-# # Add frames to PanedWindow
-# paned_window.add(left_frame, weight=0)
-# paned_window.add(right_frame, weight=1)
-#
-#
-# # Populate tree
-# for title, pg in pages.items():
-#     tree.insert("", "end", text=title)
-#
-# tree.bind("<<TreeviewSelect>>", update_right_panel)
-# tree.selection_set(tree.get_children()[0])
-# update_right_panel(None)
-
-# Create a frame for the bottom bar
-bottom_bar_frame = ttk.Frame(root)
-bottom_bar_frame.pack(side="bottom", fill="x")
-
-# Create a separator line with a background color
-separator = ttk.Separator(bottom_bar_frame, orient="horizontal")
-separator.pack(fill="x")
-
-# Create Cancel and Submit buttons
-cancel_button = ttk.Button(bottom_bar_frame, text="Cancel", command=root.quit)
-submit_button = ttk.Button(bottom_bar_frame, text="Submit", command=submit_data, cursor='hand2')
-
-# Pack buttons with some padding
-submit_button.pack(side="right", padx=10, pady=10)
-cancel_button.pack(side="right", padx=10, pady=10)
-
-# Bind the ENTER key to trigger the Submit button
-root.bind("<Return>", submit_data)
-
-# Bind the ESC key to quit the program
-root.bind("<Escape>", lambda event: root.quit())
+ctrlr = FormController(form)
+action_bar = ActionBar(root, ctrlr)
 
 root.mainloop()
