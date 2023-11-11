@@ -6,15 +6,15 @@ from tkinter import messagebox
 import kkpyutil as util
 
 
-def validate_int(user_input, new_value, widget_name):
-    return validate_number(user_input, new_value, widget_name, int)
+def _validate_int(user_input, new_value, widget_name):
+    return _validate_number(user_input, new_value, widget_name, int)
 
 
-def validate_float(user_input, new_value, widget_name):
-    return validate_number(user_input, new_value, widget_name, float)
+def _validate_float(user_input, new_value, widget_name):
+    return _validate_number(user_input, new_value, widget_name, float)
 
 
-def validate_number(user_input, new_value, widget_name, data_type):
+def _validate_number(user_input, new_value, widget_name, data_type):
     # disallow anything but numbers in the input
     is_digit = new_value == '' or new_value.isdigit()
     if not is_digit:
@@ -349,8 +349,8 @@ root.geometry('{}x{}+{}+{}'.format(
     int(screen_size[0] / 2 - size[0] / 2),
     int(screen_size[1] / 2 - size[1] / 2))
 )
-validate_int_cmd = (root.register(validate_int), '%P', '%S', '%W')
-validate_float_cmd = (root.register(validate_float), '%P', '%S', '%W')
+validate_int_cmd = (root.register(_validate_int), '%P', '%S', '%W')
+validate_float_cmd = (root.register(_validate_float), '%P', '%S', '%W')
 
 form = Form(root)
 form.layout()
