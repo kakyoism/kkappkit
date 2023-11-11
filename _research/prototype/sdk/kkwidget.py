@@ -218,16 +218,28 @@ class FormController:
     def update(self):
         self.model = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for pg in self.form.pages.values()}
 
-    def load(self, cfgfile):
-        self.model = util.load_json(cfgfile)
+    def load(self, preset):
+        """
+        - model includes input and config
+        - input is runtime data that changes with each run
+        - only config will be saved/loaded as preset
+        """
+        config = util.load_json(preset)
         for title, page in self.form.pages:
             for entry in page.winfo_children():
-                assert isinstance(entry, Entry)
-                entry.set_data(self.model[title][entry.text])
+                try:
+                    entry.set_data(config[title][entry.text])
+                except KeyError:
+                    pass
 
-    def save(self, cfgfile):
+    def save(self, preset):
+        """
+        - only config is saved
+        - input always belongs to group "input"
+        """
         self.update()
-        util.save_json(cfgfile, self.model)
+        config = {pg.get_title(): {entry.text: entry.get_data() for entry in pg.winfo_children()} for title, pg in self.form.pages.items() if title != "input"}
+        util.save_json(preset, config)
 
     def reset(self):
         for pg in self.form.pages.values():
