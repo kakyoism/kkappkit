@@ -229,6 +229,11 @@ class FormController:
         self.update()
         util.save_json(cfgfile, self.model)
 
+    def reset(self):
+        for pg in self.form.pages.values():
+            for entry in pg.winfo_children():
+                entry.set_data(entry.default)
+
 
 class ActionBar(ttk.Frame):
     def __init__(self, master, controller, *args, **kwargs):
@@ -243,12 +248,14 @@ class ActionBar(ttk.Frame):
 
         # occupy the entire width
         # new buttons will be added to the right
+        self.resetBtn = ttk.Button(self, text="Reset", command=self.reset_entries)
         self.separator = ttk.Separator(self, orient="horizontal")
-        self.separator.pack(fill="x")
         # Create Cancel and Submit buttons
         self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
         self.submitBtn = ttk.Button(self, text="Submit", command=self.submit, cursor='hand2')
-        # keep this order
+        # layout: keep the order
+        self.resetBtn.pack(side="left", padx=10, pady=10)
+        self.separator.pack(fill="x")
         self.submitBtn.pack(side="right", padx=10, pady=10)
         self.cancelBtn.pack(side="right", padx=10, pady=10)
 
@@ -259,6 +266,9 @@ class ActionBar(ttk.Frame):
         self.controller.update()
         formatted_data = json.dumps(self.controller.model, indent=4)
         messagebox.showinfo("Submitted Data", formatted_data)
+
+    def reset_entries(self, event=None):
+        self.controller.reset()
 
 
 root = tk.Tk()
