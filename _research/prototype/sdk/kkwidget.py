@@ -166,9 +166,8 @@ class Form(ttk.PanedWindow):
         # Populate tree
         for title, pg in self.pages.items():
             self.tree.insert("", "end", text=title)
-        # # select first page
-        # self.pages[pg_titles[0]].layout()
-        # self.tree.selection_set(tree.get_children()[0])
+        # select first page
+        self.tree.selection_set(self.tree.get_children()[0])
         self.update_entries(None)
 
     def update_entries(self, event):
@@ -180,7 +179,7 @@ class Form(ttk.PanedWindow):
         # selection will be blank on startup because no item is selected
         selected_title = self.tree.item(selected_item, "text")
         # Hide all groups
-        for pg in self.pages:
+        for pg in self.pages.values():
             pg.pack_forget()
         # After hiding, update the right pane to ensure correct display
         self.pages[selected_title].layout() if selected_title else list(self.pages.values())[0].layout()
@@ -273,43 +272,18 @@ root.geometry('{}x{}+{}+{}'.format(
     int(screen_size[1] / 2 - size[1] / 2))
 )
 
-# Main layout with PanedWindow
-paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
-paned_window.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+form = Form(root)
+form.layout()
 
-# Left panel for the tree view and search box
-left_frame = ttk.Frame(paned_window, width=200)
-left_frame.pack_propagate(False)  # Prevent the widget from resizing to its contents
-
-# Create a new frame for the search box and treeview
-search_frame = ttk.Frame(left_frame)
-search_frame.pack(side="top", fill="x")
-
-search_entry = ttk.Entry(search_frame)
-search_entry.pack(side="left", fill="x", expand=True)
-search_entry.bind("<KeyRelease>", filter_widgets)
-
-# Place the treeview below the search box
-tree = ttk.Treeview(left_frame, show="tree")
-tree.heading("#0", text="", anchor="w")  # Hide the column header
-
-tree.pack(side="left", fill="both", expand=True)
-
-# Right panel for displaying groups
-right_frame = ttk.Frame(paned_window)
-
-# Add frames to PanedWindow
-paned_window.add(left_frame, weight=0)
-paned_window.add(right_frame, weight=1)
 
 # Creating groups
-pg1 = Page(right_frame, "Group 1")
+pg1 = Page(form.entryPane, "Group 1")
 pg1.layout()
 
-pg2 = Page(right_frame, "Group 2")
+pg2 = Page(form.entryPane, "Group 2")
 pg2.layout()
 
-pg3 = Page(right_frame, "Group 3")
+pg3 = Page(form.entryPane, "Group 3")
 pg3.layout()
 
 # Adding widgets to groups
@@ -324,13 +298,45 @@ pg3.add([text_widget])
 
 pages = {title: pg for title, pg in zip([pg1.get_title(), pg2.get_title(), pg3.get_title()], [pg1, pg2, pg3])}
 
-# Populate tree
-for title, pg in pages.items():
-    tree.insert("", "end", text=title)
+form.init([pg1, pg2, pg3])
 
-tree.bind("<<TreeviewSelect>>", update_right_panel)
-tree.selection_set(tree.get_children()[0])
-update_right_panel(None)
+# # Main layout with PanedWindow
+# paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
+# paned_window.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+#
+# # Left panel for the tree view and search box
+# left_frame = ttk.Frame(paned_window, width=200)
+# left_frame.pack_propagate(False)  # Prevent the widget from resizing to its contents
+#
+# # Create a new frame for the search box and treeview
+# search_frame = ttk.Frame(left_frame)
+# search_frame.pack(side="top", fill="x")
+#
+# search_entry = ttk.Entry(search_frame)
+# search_entry.pack(side="left", fill="x", expand=True)
+# search_entry.bind("<KeyRelease>", filter_widgets)
+#
+# # Place the treeview below the search box
+# tree = ttk.Treeview(left_frame, show="tree")
+# tree.heading("#0", text="", anchor="w")  # Hide the column header
+#
+# tree.pack(side="left", fill="both", expand=True)
+#
+# # Right panel for displaying groups
+# right_frame = ttk.Frame(paned_window)
+#
+# # Add frames to PanedWindow
+# paned_window.add(left_frame, weight=0)
+# paned_window.add(right_frame, weight=1)
+#
+#
+# # Populate tree
+# for title, pg in pages.items():
+#     tree.insert("", "end", text=title)
+#
+# tree.bind("<<TreeviewSelect>>", update_right_panel)
+# tree.selection_set(tree.get_children()[0])
+# update_right_panel(None)
 
 # Create a frame for the bottom bar
 bottom_bar_frame = ttk.Frame(root)
