@@ -153,8 +153,9 @@ class FormMenu(tk.Menu):
 
     def load_preset(self):
         preset = filedialog.askopenfilename(title="Load Preset", filetypes=[
-            ("Preset Files", "*.preset.json"),
-            ("All Files", "*.*"),
+            # tkinter openfile dialog filter does not accept middlename,
+            # so *.preset.json won't work here
+            ("Preset Files", "*.json"),
         ])
         if preset:
             self.controller.load(preset)
@@ -162,7 +163,6 @@ class FormMenu(tk.Menu):
     def save_preset(self):
         preset = filedialog.asksaveasfilename(title="Save Preset", filetypes=[
             ("Preset Files", "*.preset.json"),
-            ("All Files", "*.*"),
         ])
         if preset:
             self.controller.save(preset)
