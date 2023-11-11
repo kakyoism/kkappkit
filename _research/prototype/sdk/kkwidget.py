@@ -26,6 +26,81 @@ class Page(ttk.LabelFrame):
         self.pack(fill="x", pady=5)
 
 
+class Form(ttk.PanedWindow):
+    """
+    - accepts and creates navbar for input pages
+    - layout: page-based navigation
+    - filter: locate form entries by searching for title keywords
+    - structure: Form > Page > Entry
+    - instantiation: Form > Page (slave to form pane) > Entry (slave to page)
+    """
+
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, orient=tk.HORIZONTAL)
+        # Left panel: navigation bar with filtering support
+        self.navPane = ttk.Frame(self, width=200)
+        self.navPane.pack_propagate(False)  # Prevent the widget from resizing to its contents
+        # Create a new frame for the search box and treeview
+        search_box = ttk.Frame(self.navPane)
+        search_box.pack(side="top", fill="x")
+        self.searchEntry = ttk.Entry(search_box)
+        self.searchEntry.pack(side="left", fill="x", expand=True)
+        self.searchEntry.bind("<KeyRelease>", self.filter_entries)
+        # Place the treeview below the search box
+        self.tree = ttk.Treeview(self.navPane, show="tree")
+        self.tree.heading("#0", text="", anchor="w")  # Hide the column header
+        self.tree.pack(side="left", fill="both", expand=True)
+        self.tree.bind("<<TreeviewSelect>>", self.update_entries)
+        # Right panel: entries in page
+        self.entryPane = ttk.Frame(self)
+        # build form with navbar and page frame
+        self.add(self.navPane, weight=0)
+        self.add(self.entryPane, weight=1)
+        self.pages = {}
+
+    def layout(self):
+        self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def init(self, pages):
+        """
+        - pages must be created using entryPane as master
+        """
+        pg_titles = [pg.get_title() for pg in pages]
+        self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
+        # Populate tree
+        for title, pg in self.pages.items():
+            self.tree.insert("", "end", text=title)
+        # select first page
+        self.tree.selection_set(self.tree.get_children()[0])
+        self.update_entries(None)
+
+    def update_entries(self, event):
+        """
+        - the first call is triggered at binding time? where nothing is selected yet
+        - app must always create a group
+        """
+        selected_item = self.tree.focus()
+        # selection will be blank on startup because no item is selected
+        selected_title = self.tree.item(selected_item, "text")
+        # Hide all groups
+        for pg in self.pages.values():
+            pg.pack_forget()
+        # After hiding, update the right pane to ensure correct display
+        self.pages[selected_title].layout() if selected_title else list(self.pages.values())[0].layout()
+        self.entryPane.update()
+
+    def filter_entries(self, event):
+        keyword = self.searchEntry.get().strip().lower()
+        for title, pg in self.pages.items():
+            for entry in pg.winfo_children():
+                assert isinstance(entry, Entry)
+                if keyword not in entry.text.lower():
+                    entry.pack_forget()
+                    continue
+                entry.layout()
+        self.entryPane.update()
+
+
 class Entry(ttk.Frame):
     """
     - used as user input, similar to CLI arguments
@@ -56,8 +131,8 @@ class Entry(ttk.Frame):
     def get_data(self):
         return self.data.get()
 
-    def set_data(self):
-        self.data.set()
+    def set_data(self, value):
+        self.data.set(value)
 
     def layout(self):
         self.pack(fill="x", padx=5, pady=5, anchor="w")
@@ -132,81 +207,6 @@ class TextEntry(Entry):
         self.field.insert("1.0", default)
 
 
-class Form(ttk.PanedWindow):
-    """
-    - accepts and creates navbar for input pages
-    - layout: page-based navigation
-    - filter: locate form entries by searching for title keywords
-    - structure: Form > Page > Entry
-    - instantiation: Form > Page (slave to form pane) > Entry (slave to page)
-    """
-
-    def __init__(self, master, *args, **kwargs):
-        super().__init__(master, orient=tk.HORIZONTAL)
-        # Left panel: navigation bar with filtering support
-        self.navPane = ttk.Frame(self, width=200)
-        self.navPane.pack_propagate(False)  # Prevent the widget from resizing to its contents
-        # Create a new frame for the search box and treeview
-        search_box = ttk.Frame(self.navPane)
-        search_box.pack(side="top", fill="x")
-        self.searchEntry = ttk.Entry(search_box)
-        self.searchEntry.pack(side="left", fill="x", expand=True)
-        self.searchEntry.bind("<KeyRelease>", self.filter_entries)
-        # Place the treeview below the search box
-        self.tree = ttk.Treeview(self.navPane, show="tree")
-        self.tree.heading("#0", text="", anchor="w")  # Hide the column header
-        self.tree.pack(side="left", fill="both", expand=True)
-        self.tree.bind("<<TreeviewSelect>>", self.update_entries)
-        # Right panel: entries in page
-        self.entryPane = ttk.Frame(self)
-        # build form with navbar and page frame
-        self.add(self.navPane, weight=0)
-        self.add(self.entryPane, weight=1)
-        self.pages = {}
-    
-    def layout(self):
-        self.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-    def init(self, pages):
-        """
-        - pages must be created using entryPane as master
-        """
-        pg_titles = [pg.get_title() for pg in pages]
-        self.pages = {title: pg for title, pg in zip(pg_titles, pages)}
-        # Populate tree
-        for title, pg in self.pages.items():
-            self.tree.insert("", "end", text=title)
-        # select first page
-        self.tree.selection_set(self.tree.get_children()[0])
-        self.update_entries(None)
-
-    def update_entries(self, event):
-        """
-        - the first call is triggered at binding time? where nothing is selected yet
-        - app must always create a group
-        """
-        selected_item = self.tree.focus()
-        # selection will be blank on startup because no item is selected
-        selected_title = self.tree.item(selected_item, "text")
-        # Hide all groups
-        for pg in self.pages.values():
-            pg.pack_forget()
-        # After hiding, update the right pane to ensure correct display
-        self.pages[selected_title].layout() if selected_title else list(self.pages.values())[0].layout()
-        self.entryPane.update()
-
-    def filter_entries(self, event):
-        keyword = self.searchEntry.get().strip().lower()
-        for title, pg in self.pages.items():
-            for entry in pg.winfo_children():
-                assert isinstance(entry, Entry)
-                if keyword not in entry.text.lower():
-                    entry.pack_forget()
-                    continue
-                entry.layout()
-        self.entryPane.update()
-
-
 class FormController:
     """
     - observe all entries and update model
@@ -220,7 +220,14 @@ class FormController:
 
     def load(self, cfgfile):
         self.model = util.load_json(cfgfile)
+        for title, page in self.form.pages:
+            for entry in page.winfo_children():
+                assert isinstance(entry, Entry)
+                entry.set_data(self.model[title][entry.text])
 
+    def save(self, cfgfile):
+        self.update()
+        util.save_json(cfgfile, self.model)
 
 
 class ActionBar(ttk.Frame):
