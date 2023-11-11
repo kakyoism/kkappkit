@@ -12,12 +12,12 @@ class Page(ttk.LabelFrame):
         self.grid_columnconfigure(0, weight=1)
 
     @staticmethod
-    def add(widgets):
+    def add(entries):
         """
         - vertical layout
         """
-        for wgt in widgets:
-            wgt.pack(fill="x", padx=5, pady=5, anchor="w")
+        for entry in entries:
+            entry.layout()
 
     def get_title(self):
         return self.cget('text')
@@ -55,6 +55,9 @@ class Entry(ttk.Frame):
 
     def get_data(self):
         return self.data.get()
+
+    def layout(self):
+        self.pack(fill="x", padx=5, pady=5, anchor="w")
 
 
 class IntEntry(Entry):
