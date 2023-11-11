@@ -6,6 +6,12 @@ from tkinter import messagebox as tkmsgbox
 import kkpyutil as util
 
 
+class _Globals:
+    root = None
+    validateIntCmd = None
+    validateFloatCmd = None
+
+
 def _validate_int(user_input, new_value, widget_name):
     return _validate_number(user_input, new_value, widget_name, int)
 
@@ -18,12 +24,12 @@ def _validate_number(user_input, new_value, widget_name, data_type):
     # disallow anything but numbers in the input
     is_digit = new_value == '' or new_value.isdigit()
     if not is_digit:
-        root.bell()
+        _Globals.root.bell()
         return False
-    minval = data_type(root.nametowidget(widget_name).config('from')[4])
-    maxval = data_type(root.nametowidget(widget_name).config('to')[4])
+    minval = data_type(_Globals.root.nametowidget(widget_name).config('from')[4])
+    maxval = data_type(_Globals.root.nametowidget(widget_name).config('to')[4])
     if not (minval <= data_type(user_input) <= maxval):
-        root.bell()
+        _Globals.root.bell()
         return False
     return True
 
@@ -293,7 +299,7 @@ class FormController:
         prompt.warning('You are calling base class', 'Subclass this!')
 
 
-class ActionBar(ttk.Frame):
+class FormActionBar(ttk.Frame):
     def __init__(self, master, controller, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         # action logic
@@ -331,6 +337,62 @@ class ActionBar(ttk.Frame):
         self.controller.reset()
 
 
+class WaitBar(ttk.Frame):
+    """
+    - app must run in worker thread to avoid blocking UI
+    - when using subprocess to run a blackbox task, use indeterminate mode cuz there is no way to pass progress back
+    - TODO: use IPC for cross-language open-source tasks
+    """
+    def __init__(self, master, progress_queue, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        self.queue = progress_queue
+        self.stage = tk.StringVar(name='stage', value='')
+        self.label = ttk.Label(self, textvariable=self.stage, width=200, anchor='e')
+        self.bar = ttk.Progressbar(self, orient="horizontal", length=380, mode="indeterminate")
+
+    def layout(self):
+        self.bar.pack(side="right", fill="both", expand=False)
+        self.label.pack(side="left", fill="both", expand=False)
+        self.pack(side='top', fill='both', expand=False)
+
+    def poll(self, wait_ms=50):
+        """
+        - app pushes special messages to mark progress start/stop
+        """
+        while self.queue.qsize():
+            head_msg = self.queue.get(0)[0]
+            if head_msg == '/start':
+                self.bar.start()
+            elif head_msg == '/stop':
+                self.bar.stop()
+            else:
+                raise NotImplementedError(f'Unexpected progress message: {head_msg}')
+        self.after(wait_ms, self.poll)
+
+
+class ProgressBar(WaitBar):
+    def __init__(self, master, progress_queue, *args, **kwargs):
+        super().__init__(master, progress_queue, *args, **kwargs)
+        self.progress = tk.DoubleVar(name='progress', value=0.)
+        self.bar.configure(variable=self.progress, mode='determinate')
+
+    def layout(self):
+        self.pack(side='top', fill='both', expand=False)
+
+    def poll(self, wait_ms=50):
+        """
+        - Periodically check for messages from worker thread.
+        """
+        while self.queue.qsize():
+            try:
+                msg = self.queue.get(0)
+                self.stage.set(msg[0])
+                self.progress.set(msg[1])
+            except self.queue.Empty:
+                pass
+        self.after(wait_ms, self.poll)
+
+
 class IntEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         def _update_int_var(value):
@@ -343,7 +405,7 @@ class IntEntry(Entry):
         # model-binding
         self.data = self._init_data(tk.IntVar)
         # view
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1, validate='all', validatecommand=validate_int_cmd)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1, validate='all', validatecommand=_Globals.validateIntCmd)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
         self.slider = ttk.Scale(self.field, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
         # Allow slider to expand horizontally
@@ -365,7 +427,7 @@ class FloatEntry(Entry):
         self.data = self._init_data(tk.DoubleVar)
         # view
         format_string = f"%.{precision}f"  # Adjust precision dynamically
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0.0, to=1.0, increment=0.01, format=format_string, validate='all', validatecommand=validate_float_cmd)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0.0, to=1.0, increment=0.01, format=format_string, validate='all', validatecommand=_Globals.validateFloatCmd)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))
         self.slider = ttk.Scale(self.field, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
         self.slider.grid(row=0, column=1, sticky="ew")
@@ -400,48 +462,47 @@ class TextEntry(Entry):
         self.field.insert("1.0", default)
 
 
-root = tk.Tk()
-root.title("Group Example")
-screen_size = (root.winfo_screenwidth(), root.winfo_screenheight())
-size = (800, 600)
-root.geometry('{}x{}+{}+{}'.format(
-    size[0],
-    size[1],
-    int(screen_size[0] / 2 - size[0] / 2),
-    int(screen_size[1] / 2 - size[1] / 2))
-)
-validate_int_cmd = (root.register(_validate_int), '%P', '%S', '%W')
-validate_float_cmd = (root.register(_validate_float), '%P', '%S', '%W')
+def _test():
+    _Globals.root = tk.Tk()
+    _Globals.root.title("Group Example")
+    screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
+    size = (800, 600)
+    _Globals.root.geometry('{}x{}+{}+{}'.format(
+        size[0],
+        size[1],
+        int(screen_size[0] / 2 - size[0] / 2),
+        int(screen_size[1] / 2 - size[1] / 2))
+    )
+    _Globals.validateIntCmd = (_Globals.root.register(_validate_int), '%P', '%S', '%W')
+    _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
+    form = Form(_Globals.root)
+    form.layout()
+    ctrlr = FormController(form)
+    menu = FormMenu(_Globals.root, ctrlr)
+    menu.init(_Globals.root)
+    # Creating groups
+    pg1 = Page(form.entryPane, "Group 1")
+    pg1.layout()
+    pg2 = Page(form.entryPane, "Group 2")
+    pg2.layout()
+    pg3 = Page(form.entryPane, "Group 3")
+    pg3.layout()
+    # Adding widgets to groups
+    integer_widget = IntEntry(pg1, "Integer Value", 10, "This is an integer value.")
+    float_widget = FloatEntry(pg1, "Float Value", 0.5, 4, "This is a float value.")
+    option_widget = OptionEntry(pg2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
+    checkbox_widget = Checkbox(pg2, "Checkbox", True, "This is a checkbox widget.")
+    text_widget = TextEntry(pg3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
+    pg1.add([integer_widget, float_widget])
+    pg2.add([option_widget, checkbox_widget])
+    pg3.add([text_widget])
+    form.init([pg1, pg2, pg3])
+    form.layout()
+    action_bar = FormActionBar(_Globals.root, ctrlr)
+    action_bar.layout()
+    # progress_queue = util.Queue()
+    _Globals.root.mainloop()
 
-form = Form(root)
-form.layout()
-ctrlr = FormController(form)
-menu = FormMenu(root, ctrlr)
-menu.init(root)
 
-# Creating groups
-pg1 = Page(form.entryPane, "Group 1")
-pg1.layout()
-
-pg2 = Page(form.entryPane, "Group 2")
-pg2.layout()
-
-pg3 = Page(form.entryPane, "Group 3")
-pg3.layout()
-
-# Adding widgets to groups
-integer_widget = IntEntry(pg1, "Integer Value", 10, "This is an integer value.")
-float_widget = FloatEntry(pg1, "Float Value", 0.5, 4, "This is a float value.")
-option_widget = OptionEntry(pg2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
-checkbox_widget = Checkbox(pg2, "Checkbox", True, "This is a checkbox widget.")
-text_widget = TextEntry(pg3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
-pg1.add([integer_widget, float_widget])
-pg2.add([option_widget, checkbox_widget])
-pg3.add([text_widget])
-
-form.init([pg1, pg2, pg3])
-form.layout()
-action_bar = ActionBar(root, ctrlr)
-action_bar.layout()
-
-root.mainloop()
+if __name__ == "__main__":
+    _test()
