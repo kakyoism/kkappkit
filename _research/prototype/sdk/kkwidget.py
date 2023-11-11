@@ -297,11 +297,11 @@ class FormController:
         """
         - subclass this to implement custom logic
         """
-        _Globals.progressQueue.put(('/start', 0))
+        _Globals.progressQueue.put(('/start', 0, 'Processing ...'))
         self.update()
         prompt = Prompt()
         prompt.warning('You are calling base class', 'Subclass this!')
-        _Globals.progressQueue.put(('/stop', 100))
+        _Globals.progressQueue.put(('/stop', 100, 'SUCCESS!'))
 
 
 class FormActionBar(ttk.Frame):
@@ -346,7 +346,7 @@ class WaitBar(ttk.Frame):
     """
     - app must run in worker thread to avoid blocking UI
     - when using subprocess to run a blackbox task, use indeterminate mode cuz there is no way to pass progress back
-    - protocol: tuple(stage, progress)
+    - protocol: tuple(stage, progress, description), where stage is program instruction, description is for display
     - TODO: use IPC for cross-language open-source tasks
     """
     def __init__(self, master, progress_queue, *args, **kwargs):
@@ -354,7 +354,7 @@ class WaitBar(ttk.Frame):
         self.queue = progress_queue
         self.stage = tk.StringVar(name='stage', value='')
         self.bar = ttk.Progressbar(self, orient="horizontal", mode="indeterminate")
-        self.label = ttk.Label(self.bar, textvariable=self.stage, text='processing ...', foreground='white', background='black')
+        self.label = ttk.Label(self.bar, textvariable=self.stage, text='...', foreground='white', background='black')
 
     def layout(self):
         """
@@ -369,13 +369,14 @@ class WaitBar(ttk.Frame):
         - app pushes special messages to mark progress start/stop
         """
         while self.queue.qsize():
-            head_msg = self.queue.get(0)[0]
-            if head_msg == '/start':
+            msg = self.queue.get(0)
+            cmd = msg[0]
+            if cmd == '/start':
                 self.bar.start()
-            elif head_msg == '/stop':
+            elif cmd == '/stop':
                 self.bar.stop()
             else:
-                raise NotImplementedError(f'Unexpected progress message: {head_msg}')
+                raise NotImplementedError(f'Unexpected progress instruction: {cmd}')
         self.after(wait_ms, self.poll)
 
 
@@ -392,8 +393,8 @@ class ProgressBar(WaitBar):
         while self.queue.qsize():
             try:
                 msg = self.queue.get(0)
-                self.stage.set(msg[0])
                 self.progress.set(msg[1])
+                self.stage.set(msg[2])
             except self.queue.Empty:
                 pass
         self.after(wait_ms, self.poll)
