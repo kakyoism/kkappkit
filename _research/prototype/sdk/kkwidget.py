@@ -314,23 +314,24 @@ class FormController:
         """
         - subclass this to implement custom logic
         """
-        _Globals.progressQueue.put(('/start', 0, 'Processing ...'))
         self.update()
         # lambda wrapper ensures "self" is captured by threading as a context
         # otherwise ui thread still blocks
         threading.Thread(target=lambda: self.run_background(), daemon=True).start()
-        # prompt = Prompt()
-        # prompt.warning('You are calling base class', 'Subclass this!')
 
     def run_background(self):
         """
+        - override this in app
         - run in background thread to avoid blocking UI
         """
+        _Globals.progressQueue.put(('/start', 0, 'Processing ...'))
         for p in range(101):
             # Simulate a task
             time.sleep(0.1)
             _Globals.progressQueue.put(('/processing', p, f'Processing {p}%...'))
         _Globals.progressQueue.put(('/stop', 100, 'Completed!'))
+        prompt = Prompt()
+        prompt.warning('You are calling base class', 'Subclass this!')
 
 
 class FormActionBar(ttk.Frame):
