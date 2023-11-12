@@ -1,4 +1,5 @@
 import json
+import os.path as osp
 import queue
 import threading
 import time
@@ -236,6 +237,9 @@ class Entry(ttk.Frame):
         finally:
             self.context_menu.grab_release()
 
+    def set_tracer(self, handler):
+        self.data.trace(mode='w', callback=lambda *args: handler(*args))
+
 
 class FormMenu(tk.Menu):
     def __init__(self, master, controller, *args, **kwargs):
@@ -437,7 +441,7 @@ class ProgressBar(WaitBar):
 
 
 class IntEntry(Entry):
-    def __init__(self, master: Page, text, default, doc, **kwargs):
+    def __init__(self, master: Page, text, default, doc, minmax, **kwargs):
         def _update_int_var(value):
             try:
                 self.data.set(int(float(value)))  # Convert to integer
@@ -448,15 +452,15 @@ class IntEntry(Entry):
         # model-binding
         self.data = self._init_data(tk.IntVar)
         # view
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0, to=100, increment=1, validate='all', validatecommand=_Globals.validateIntCmd)
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=minmax[0], to=minmax[1], increment=1, validate='all', validatecommand=_Globals.validateIntCmd)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))  # Adjust padx value
-        self.slider = ttk.Scale(self.field, from_=0, to=100, orient="horizontal", variable=self.data, command=_update_int_var)
+        self.slider = ttk.Scale(self.field, from_=minmax[0], to=minmax[1], orient="horizontal", variable=self.data, command=_update_int_var)
         # Allow slider to expand horizontally
         self.slider.grid(row=0, column=1, sticky="ew")
 
 
 class FloatEntry(Entry):
-    def __init__(self, master: Page, text, default, precision, doc, **kwargs):
+    def __init__(self, master: Page, text, default, doc, minmax, precision, step, **kwargs):
         def _update_float_var(value):
             try:
                 formatted_value = "{:.{}f}".format(float(value), self.precision)  # Format entered value
@@ -469,10 +473,9 @@ class FloatEntry(Entry):
         self.precision = precision
         self.data = self._init_data(tk.DoubleVar)
         # view
-        format_string = f"%.{precision}f"  # Adjust precision dynamically
-        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=0.0, to=1.0, increment=0.01, format=format_string, validate='all', validatecommand=_Globals.validateFloatCmd)
-        self.spinbox.grid(row=0, column=0, padx=(0, 5))
+        self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=minmax[0], to=minmax[1], increment=step, format=f"%.{precision}f", validate='all', validatecommand=_Globals.validateFloatCmd)
         self.slider = ttk.Scale(self.field, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
+        self.spinbox.grid(row=0, column=0, padx=(0, 5))
         self.slider.grid(row=0, column=1, sticky="ew")
 
 
@@ -533,9 +536,9 @@ class TextEntry(Entry):
         self.field.edit_modified(False)
 
 
-def _test():
+def _test_form():
     _Globals.root = tk.Tk()
-    _Globals.root.title("Group Example")
+    _Globals.root.title("Form Example")
     screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
     size = (800, 600)
     _Globals.root.geometry('{}x{}+{}+{}'.format(
@@ -559,8 +562,8 @@ def _test():
     pg3 = Page(form.entryPane, "Group 3")
     pg3.layout()
     # Adding widgets to groups
-    integer_widget = IntEntry(pg1, "Integer Value", 10, "This is an integer value.")
-    float_widget = FloatEntry(pg1, "Float Value", 0.5, 4, "This is a float value.")
+    integer_widget = IntEntry(pg1, "Integer Value", 10, "This is an integer value.", (0, 100))
+    float_widget = FloatEntry(pg1, "Float Value", 0.5,  "This is a float value.", (0.0, 1.0), 4, 0.01)
     option_widget = OptionEntry(pg2, "Options", ["Option 1", "Option 2", "Option 3"], "Option 2", "This is an options widget.")
     checkbox_widget = Checkbox(pg2, "Checkbox", True, "This is a checkbox widget.")
     text_widget = TextEntry(pg3, "Text", "Lorem ipsum dolor sit amet", "This is a text widget.")
@@ -577,5 +580,47 @@ def _test():
     _Globals.root.mainloop()
 
 
+def _test_rtctrl():
+    _Globals.root = tk.Tk()
+    _Globals.root.title("RTPC Example")
+    screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
+    size = (800, 600)
+    _Globals.root.geometry('{}x{}+{}+{}'.format(
+        size[0],
+        size[1],
+        int(screen_size[0] / 2 - size[0] / 2),
+        int(screen_size[1] / 2 - size[1] / 2))
+    )
+    _Globals.validateIntCmd = (_Globals.root.register(_validate_int), '%P', '%S', '%W')
+    _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
+    form = Form(_Globals.root)
+    form.layout()
+    ctrlr = FormController(form)
+    menu = FormMenu(_Globals.root, ctrlr)
+    menu.init(_Globals.root)
+    # Creating groups
+    page = Page(form.entryPane, "Group 1")
+    page.layout()
+    # Adding widgets to groups
+    scpt_entry = TextEntry(page, 'Csound Script', osp.join(osp.dirname(__file__), 'tonegen.csd'), 'Path to Csound script')
+    oscillator_entry = OptionEntry(page, "Oscillator", ['Sine',
+                                                        'Triangular',
+                                                        'Square',
+                                                        'Sawtooth',
+                                                        'White Noise',
+                                                        'Pink Noise'], 'Sine', 'Oscillator types of the output signal')
+    freq_entry = IntEntry(page, "Frequency (Hz)", 440, "Frequency of the output signal in Herz")
+    float_widget = FloatEntry(page, "Gain (dB)", -48.0, 4, "Gain of the output signal in dB")
+    page.add([freq_entry, float_widget])
+    form.init([page])
+    form.layout()
+    action_bar = FormActionBar(_Globals.root, ctrlr)
+    action_bar.layout()
+    progress_bar = ProgressBar(_Globals.root, _Globals.progressQueue)
+    progress_bar.layout()
+    progress_bar.poll()
+    _Globals.root.mainloop()
+
+
 if __name__ == "__main__":
-    _test()
+    _test_form()
