@@ -481,6 +481,7 @@ class OptionEntry(Entry):
         # model-binding
         self.options = []
         self.data = self._init_data(tk.StringVar)
+        self.field.configure(textvariable=self.data, state='readonly')
         self.field.set(default)
 
 
