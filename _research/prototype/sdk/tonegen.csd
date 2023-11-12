@@ -30,12 +30,28 @@ instr 1
     kPlayChanged OSClisten giHandle, "/play", "i", gkPlay
     kStopChanged OSClisten giHandle, "/stop", "i", gkStop
 
-    if changed(gkPlay) == 1 then
-        event "i", 10 + gkWaveType, 0, -1  ; Infinite duration
+	; Check for waveform change
+    if changed(gkWaveType) == 1 && gkPlay == 1 then
+        ; Stop current waveform
+        turnoff2 gkCurrentWave, 0, 0
+
+        ; Update current waveform
+        gkCurrentWave = 10 + gkWaveType
+
+        ; Start new waveform
+        event "i", gkCurrentWave, 0, -1
     endif
 
-    if changed(gkStop) == 1 then
-        turnoff2 10 + gkWaveType, 0, 1
+    ; Play
+    if changed(gkPlay) == 1 && gkPlay == 1 then
+        gkCurrentWave = 10 + gkWaveType
+        event "i", gkCurrentWave, 0, -1
+    endif
+
+    ; Stop
+    if changed(gkStop) == 1 && gkStop == 1 then
+        turnoff2 gkCurrentWave, 0, 0
+        gkStop = 0
     endif
 endin
 
