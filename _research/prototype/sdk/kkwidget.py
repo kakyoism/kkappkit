@@ -238,7 +238,7 @@ class Entry(ttk.Frame):
             self.context_menu.grab_release()
 
     def set_tracer(self, handler):
-        self.data.trace(mode='w', callback=lambda *args: handler(*args))
+        self.data.trace_add('write', callback=lambda name, index, mode, var=self.data: handler(name, var, index, mode))
 
 
 class FormMenu(tk.Menu):
@@ -271,7 +271,7 @@ class FormMenu(tk.Menu):
             self.controller.save(preset)
 
     def quit(self):
-        self.controller.quit(None)
+        self.controller.cancel(None)
 
 
 class FormController:
@@ -337,11 +337,61 @@ class FormController:
         prompt = Prompt()
         prompt.warning('You are calling base class', 'Subclass this!')
 
-    def quit(self, event):
+    def cancel(self, event):
         """
         - override this in app
         """
         self.form.master.quit()
+
+
+class OscillatorController(FormController):
+    """
+    kk OSClisten gilisten, "/frequency", "f", gkfreq
+    kk OSClisten gilisten, "/gain", "f", gkgaindb
+    kk OSClisten gilisten, "/oscillator", "i", gkwavetype
+    kk OSClisten gilisten, "/duration", "f", gkdur
+    kk OSClisten gilisten, "/play", "i", gkplay
+    kk OSClisten gilisten, "/stop", "i", gkstop
+    kk OSClisten gilisten, "/quit", "i", gkquit
+    """
+    def __init__(self, fm=None, model=None):
+        super().__init__(fm, model)
+        import pythonosc.udp_client as osc_client
+        self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
+        self.playing = False
+
+    def submit(self, event=None):
+        if self.playing:
+            return False
+        self.update()
+        cmd = ['csound', self.model['General']['Csound Script'], '-odac']
+        util.run_daemon(cmd)
+        # wait for csound to start
+        time.sleep(1)
+        self.sender.send_message('/play', 1)
+        _Globals.progressQueue.put(('/start', 0, 'Playing ...'))
+        self.playing = True
+        return True
+
+    def cancel(self, event=None):
+        self.sender.send_message('/stop', 1)
+        _Globals.progressQueue.put(('/stop', 100, 'Stopped'))
+        time.sleep(1)
+        util.kill_process_by_name('csound')
+        self.playing = False
+        super().cancel(event)
+
+    def on_freq(self, name, var, index, mode):
+        print(f'{name=}={var.get()}, {index=}, {mode=}')
+        self.sender.send_message('/frequency', var.get())
+
+    def on_gain(self, name, var, index, mode):
+        print(f'{name=}={var.get()}, {index=}, {mode=}')
+        self.sender.send_message('/gain', var.get())
+
+    def on_oscillator(self, name, var, index, mode):
+        print(f'{name=}={var.get()}, {index=}, {mode=}')
+        self.sender.send_message('/oscillator', 1)
 
 
 class FormActionBar(ttk.Frame):
@@ -349,18 +399,20 @@ class FormActionBar(ttk.Frame):
         super().__init__(master, *args, **kwargs)
         # action logic
         self.controller = controller
-        # Bind the ENTER key to trigger the Submit button
+        # bind the ENTER key to trigger the Submit button
         root_win = self.controller.form.master
         root_win.bind("<Return>", self.controller.submit)
-        # Bind the ESC key to quit the program
-        root_win.bind("<Escape>", lambda event: self.controller.quit(event))
+        # bind X button to quit the program
+        root_win.protocol('WM_DELETE_WINDOW', self.controller.cancel)
+        # bind the ESC key to quit the program
+        root_win.bind("<Escape>", lambda event: self.controller.cancel(event))
 
         # occupy the entire width
         # new buttons will be added to the right
         self.resetBtn = ttk.Button(self, text="Reset", command=self.reset_entries)
         self.separator = ttk.Separator(self, orient="horizontal")
         # Create Cancel and Submit buttons
-        self.cancelBtn = ttk.Button(self, text="Cancel", command=root_win.quit)
+        self.cancelBtn = ttk.Button(self, text="Cancel", command=self.controller.cancel)
         self.submitBtn = ttk.Button(self, text="Submit", command=self.controller.submit, cursor='hand2')
         # layout: keep the order
         self.separator.pack(fill="x")
@@ -380,6 +432,13 @@ class FormActionBar(ttk.Frame):
 
     def reset_entries(self, event=None):
         self.controller.reset()
+
+
+class OscillatorActionBar(FormActionBar):
+    def __init__(self, master, controller, *args, **kwargs):
+        super().__init__(master, controller, *args, **kwargs)
+        self.submitBtn.configure(text='Start')
+        self.cancelBtn.configure(text='Stop')
 
 
 class WaitBar(ttk.Frame):
@@ -480,19 +539,36 @@ class FloatEntry(Entry):
         self.data = self._init_data(tk.DoubleVar)
         # view
         self.spinbox = ttk.Spinbox(self.field, textvariable=self.data, from_=minmax[0], to=minmax[1], increment=step, format=f"%.{precision}f", validate='all', validatecommand=_Globals.validateFloatCmd)
-        self.slider = ttk.Scale(self.field, from_=0, to=1, orient="horizontal", variable=self.data, command=_update_float_var)
+        self.slider = ttk.Scale(self.field, from_=minmax[0], to=minmax[1], orient="horizontal", variable=self.data, command=_update_float_var)
         self.spinbox.grid(row=0, column=0, padx=(0, 5))
         self.slider.grid(row=0, column=1, sticky="ew")
 
 
 class OptionEntry(Entry):
+    """
+    - because most clients of optionEntry use its index instead of string value, e.g., csound oscillator waveform is defined by integer among a list of options
+    - we must bind to index instead of value for model-binding
+    """
     def __init__(self, master: Page, text, options, default, doc, **kwargs):
         super().__init__(master, text, ttk.Combobox, default, doc, values=options, **kwargs)
         # model-binding
-        self.options = []
-        self.data = self._init_data(tk.StringVar)
         self.field.configure(textvariable=self.data, state='readonly')
-        self.field.set(default)
+        self.data = self._init_data(tk.StringVar)
+        self.field.set(self.data.get())
+        self.index = tk.IntVar(name='index', value=self.get_selection_index())
+        self.field.bind("<<ComboboxSelected>>", self.on_combobox_selected)
+
+    def on_combobox_selected(self, event):
+        self.index.set(self.get_selection_index())
+
+    def get_options(self):
+        return self.field.cget('values')
+
+    def get_selection_index(self):
+        return self.get_options().index(self.data.get())
+
+    def set_tracer(self, handler):
+        self.index.trace_add('write', callback=lambda name, index, mode, var=self.index: handler(name, var, index, mode))
 
 
 class Checkbox(Entry):
@@ -587,50 +663,6 @@ def _test_form():
 
 
 def _test_rtctrl():
-    import pythonosc.udp_client as osc_client
-
-    class RtpcMan:
-        """
-        kk OSClisten gilisten, "/frequency", "f", gkfreq
-        kk OSClisten gilisten, "/gain", "f", gkgaindb
-        kk OSClisten gilisten, "/oscillator", "i", gkwavetype
-        kk OSClisten gilisten, "/duration", "f", gkdur
-        kk OSClisten gilisten, "/play", "i", gkplay
-        kk OSClisten gilisten, "/stop", "i", gkstop
-        kk OSClisten gilisten, "/quit", "i", gkquit
-        """
-        def __init__(self):
-            self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
-
-        def play(self):
-            self.sender.send_message('/play', 1)
-            _Globals.progressQueue.put(('/start', 0, 'Playing ...'))
-
-        def stop(self):
-            self.sender.send_message('/stop', 1)
-            _Globals.progressQueue.put(('/stop', 100, 'Stopped'))
-
-        def on_freq(self, cmd, arg, elem, mode):
-            self.on_osc_msg('/frequency', arg, elem, mode)
-
-        def on_gain(self, cmd, arg, elem, mode):
-            self.on_osc_msg('/gain', arg, elem, mode)
-
-        def on_oscillator(self, cmd, arg, elem, mode):
-            self.on_osc_msg('/oscillator', arg, elem, mode)
-
-        def on_osc_msg(self, cmd, arg, elem, mode):
-            """
-            - options:
-              - "Sine",
-              - "Triangular",
-              - "Square",
-              - "Sawtooth",
-              - "White Noise",
-              - "Pink Noise"
-            """
-            print(f'{cmd=}, arg={arg.get_data()}, {elem=}, {mode=}')
-            self.sender.send_message(f'/{cmd}', arg.get_data())
     _Globals.root = tk.Tk()
     _Globals.root.title("RTPC Example")
     screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
@@ -645,28 +677,24 @@ def _test_rtctrl():
     _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
     form = Form(_Globals.root)
     form.layout()
-    ctrlr = FormController(form)
+    ctrlr = OscillatorController(form)
     menu = FormMenu(_Globals.root, ctrlr)
     menu.init(_Globals.root)
     # Creating groups
     page = Page(form.entryPane, "General")
     page.layout()
 
-    rtpc_man = RtpcMan()
     # Adding widgets to groups
     scpt_entry = TextEntry(page, 'Csound Script', osp.join(osp.dirname(__file__), 'tonegen.csd'), 'Path to Csound script')
     oscillator_entry = OptionEntry(page, "Oscillator", ['Sine',
-                                                        'Triangular',
                                                         'Square',
-                                                        'Sawtooth',
-                                                        'White Noise',
-                                                        'Pink Noise'], 'Sine', 'Oscillator types of the output signal')
+                                                        'Sawtooth',], 'Sine', 'Oscillator waveform types')
     freq_entry = IntEntry(page, "Frequency (Hz)", 440, "Frequency of the output signal in Herz", (20, 20000))
-    gain_entry = FloatEntry(page, "Gain (dB)", -48.0, "Gain of the output signal in dB", (-96.0, 0), 1, 1.0)
-    oscillator_entry.set_tracer(rtpc_man.on_oscillator)
-    freq_entry.set_tracer(rtpc_man.on_freq)
-    gain_entry.set_tracer(rtpc_man.on_gain)
-    page.add([freq_entry, gain_entry])
+    gain_entry = FloatEntry(page, "Gain (dB)", -6.0, "Gain of the output signal in dB", (-48.0, 0.0), 2, 1.0)
+    oscillator_entry.set_tracer(ctrlr.on_oscillator)
+    freq_entry.set_tracer(ctrlr.on_freq)
+    gain_entry.set_tracer(ctrlr.on_gain)
+    page.add([scpt_entry, oscillator_entry, freq_entry, gain_entry])
     form.init([page])
     form.layout()
     action_bar = FormActionBar(_Globals.root, ctrlr)
@@ -678,4 +706,5 @@ def _test_rtctrl():
 
 
 if __name__ == "__main__":
-    _test_form()
+    # _test_form()
+    _test_rtctrl()
