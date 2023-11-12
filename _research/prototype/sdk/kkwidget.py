@@ -495,13 +495,40 @@ class TextEntry(Entry):
     def __init__(self, master: Page, text, default, doc, **kwargs):
         """there is no ttk.Text"""
 
-        def _update_text(*args):
-            self.data.set(self.field.get("1.0", "end-1c"))
-
         super().__init__(master, text, tk.Text, default, doc, height=4, **kwargs)
         self.data = self._init_data(tk.StringVar)
-        self.field.bind("<<Modified>>", _update_text)
+        # because the binding definition below will trigger callbacks
+        # we must avoid feedback loop by setting this flag right before binding
+        self._updatingModel = True
+        self.field.bind("<<Modified>>", self._on_text_changed)
+        self.data.trace_add("write", self._on_data_changed)
         self.field.insert("1.0", default)
+
+    def set_data(self, value):
+        super().set_data(value)
+        self._on_data_changed()
+
+    def _on_data_changed(self, *args):
+        """
+        - update view on model changes
+        """
+        self._updatingModel = True
+        seen = self.field.get("1.0", tk.END).strip()
+        to_see = self.data.get()
+        if seen != to_see:
+            self.field.delete("1.0", tk.END)
+            self.field.insert("1.0", to_see)
+        self._updatingModel = False
+
+    def _on_text_changed(self, event):
+        """
+        - update model on user editing
+        - must avoid feedback loop when text changes are caused by model changes
+        """
+        if self._updatingModel:
+            return
+        self.data.set(self.field.get("1.0", tk.END))
+        self.field.edit_modified(False)
 
 
 def _test():
