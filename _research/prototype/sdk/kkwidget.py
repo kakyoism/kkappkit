@@ -344,61 +344,6 @@ class FormController:
         self.form.master.quit()
 
 
-class OscillatorController(FormController):
-    """
-    kk OSClisten gilisten, "/frequency", "f", gkfreq
-    kk OSClisten gilisten, "/gain", "f", gkgaindb
-    kk OSClisten gilisten, "/oscillator", "i", gkwavetype
-    kk OSClisten gilisten, "/duration", "f", gkdur
-    kk OSClisten gilisten, "/play", "i", gkplay
-    kk OSClisten gilisten, "/stop", "i", gkstop
-    kk OSClisten gilisten, "/quit", "i", gkquit
-    """
-    def __init__(self, fm=None, model=None):
-        super().__init__(fm, model)
-        import pythonosc.udp_client as osc_client
-        self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
-        self.playing = False
-
-    def submit(self, event=None):
-        if self.playing:
-            return False
-        self.update()
-        cmd = ['csound', self.model['General']['Csound Script'], '-odac']
-        util.run_daemon(cmd)
-        # wait for csound to start
-        time.sleep(1)
-        options = ['Sine', 'Square', 'Sawtooth']
-        self.sender.send_message('/oscillator', options.index(self.model['General']['Oscillator']))
-        self.sender.send_message('/play', 1)
-        _Globals.progressQueue.put(('/start', 0, 'Playing ...'))
-        self.playing = True
-        return True
-
-    def cancel(self, event=None):
-        self.sender.send_message('/play', 0)
-        _Globals.progressQueue.put(('/stop', 100, 'Stopped'))
-        time.sleep(1)
-        util.kill_process_by_name('csound')
-        self.playing = False
-        super().cancel(event)
-
-    def on_freq(self, name, var, index, mode):
-        print(f'{name=}={var.get()}, {index=}, {mode=}')
-        self.sender.send_message('/frequency', var.get())
-
-    def on_gain(self, name, var, index, mode):
-        print(f'{name=}={var.get()}, {index=}, {mode=}')
-        self.sender.send_message('/gain', var.get())
-
-    def on_oscillator(self, name, var, index, mode):
-        print(f'{name=}={var.get()}, {index=}, {mode=}')
-        self.sender.send_message('/play', 0)
-        time.sleep(0.1)
-        self.sender.send_message('/oscillator', var.get())
-        self.sender.send_message('/play', 1)
-
-
 class FormActionBar(ttk.Frame):
     def __init__(self, master, controller, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
@@ -439,7 +384,7 @@ class FormActionBar(ttk.Frame):
         self.controller.reset()
 
 
-class OscillatorActionBar(FormActionBar):
+class OnOffActionBar(FormActionBar):
     def __init__(self, master, controller, *args, **kwargs):
         super().__init__(master, controller, *args, **kwargs)
         self.submitBtn.configure(text='Start')
@@ -565,7 +510,6 @@ class OptionEntry(Entry):
     def on_combobox_selected(self, event):
         new_index = self.get_selection_index()
         self.index.set(new_index)
-        print(f'{self.index.get()=}, on combo sel')
 
     def get_options(self):
         return self.field.cget('values')
@@ -677,6 +621,60 @@ def _test_form():
 
 
 def _test_rtctrl():
+    class OscillatorController(FormController):
+        """
+        kk OSClisten gilisten, "/frequency", "f", gkfreq
+        kk OSClisten gilisten, "/gain", "f", gkgaindb
+        kk OSClisten gilisten, "/oscillator", "i", gkwavetype
+        kk OSClisten gilisten, "/duration", "f", gkdur
+        kk OSClisten gilisten, "/play", "i", gkplay
+        kk OSClisten gilisten, "/stop", "i", gkstop
+        kk OSClisten gilisten, "/quit", "i", gkquit
+        """
+
+        def __init__(self, fm=None, model=None):
+            super().__init__(fm, model)
+            import pythonosc.udp_client as osc_client
+            self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
+            self.playing = False
+
+        def submit(self, event=None):
+            if self.playing:
+                return False
+            self.update()
+            cmd = ['csound', self.model['General']['Csound Script'], '-odac']
+            util.run_daemon(cmd)
+            # wait for csound to start
+            time.sleep(1)
+            options = ['Sine', 'Square', 'Sawtooth']
+            self.sender.send_message('/oscillator', options.index(self.model['General']['Oscillator']))
+            self.sender.send_message('/play', 1)
+            _Globals.progressQueue.put(('/start', 0, 'Playing ...'))
+            self.playing = True
+            return True
+
+        def cancel(self, event=None):
+            self.sender.send_message('/play', 0)
+            _Globals.progressQueue.put(('/stop', 100, 'Stopped'))
+            time.sleep(1)
+            util.kill_process_by_name('csound')
+            self.playing = False
+            super().cancel(event)
+
+        def on_freq(self, name, var, index, mode):
+            print(f'{name=}={var.get()}, {index=}, {mode=}')
+            self.sender.send_message('/frequency', var.get())
+
+        def on_gain(self, name, var, index, mode):
+            print(f'{name=}={var.get()}, {index=}, {mode=}')
+            self.sender.send_message('/gain', var.get())
+
+        def on_oscillator(self, name, var, index, mode):
+            print(f'{name=}={var.get()}, {index=}, {mode=}')
+            self.sender.send_message('/play', 0)
+            time.sleep(0.1)
+            self.sender.send_message('/oscillator', var.get())
+            self.sender.send_message('/play', 1)
     _Globals.root = tk.Tk()
     _Globals.root.title("RTPC Example")
     screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
@@ -711,7 +709,7 @@ def _test_rtctrl():
     page.add([scpt_entry, oscillator_entry, freq_entry, gain_entry])
     form.init([page])
     form.layout()
-    action_bar = OscillatorActionBar(_Globals.root, ctrlr)
+    action_bar = OnOffActionBar(_Globals.root, ctrlr)
     action_bar.layout()
     wait_bar = WaitBar(_Globals.root, _Globals.progressQueue)
     wait_bar.layout()
