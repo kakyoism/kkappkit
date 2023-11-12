@@ -208,9 +208,18 @@ class Entry(ttk.Frame):
         self.field = widget_constructor(self, **widget_kwargs)
         self.columnconfigure(0, weight=1)
         self.field.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+        # context menu
+        self.context_menu = tk.Menu(self, tearoff=0)
+        self.context_menu.add_command(label="Reset", command=self._reset)
+        # maximize context-menu hitbox
+        self.field.bind("<Button-2>", self.show_context_menu)
+        self.label.bind("<Button-2>", self.show_context_menu)
 
     def _init_data(self, var_cls):
         return var_cls(master=self, name=self.text, value=self.default)
+
+    def _reset(self):
+        self.set_data(self.default)
 
     def get_data(self):
         return self.data.get()
@@ -220,6 +229,12 @@ class Entry(ttk.Frame):
 
     def layout(self):
         self.pack(fill="both", expand=True, padx=5, pady=5, anchor="w")
+
+    def show_context_menu(self, event):
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
 
 
 class FormMenu(tk.Menu):
@@ -259,6 +274,7 @@ class FormController:
     """
     - observe all entries and update model
     """
+
     def __init__(self, fm=None, model=None):
         self.form = fm
         self.model = model
@@ -362,6 +378,7 @@ class WaitBar(ttk.Frame):
     - protocol: tuple(stage, progress, description), where stage is program instruction, description is for display
     - TODO: use IPC for cross-language open-source tasks
     """
+
     def __init__(self, master, progress_queue, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.queue = progress_queue
