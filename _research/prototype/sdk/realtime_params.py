@@ -53,32 +53,23 @@ class RtpcMan:
             'gain': {'OnChange': self.on_gain},
         }
 
-    def on_osc(self, var, varname, elemname, mode):
-        print('var: {}, elem: {}, mode: {}, value: {}'.format(varname,
-                                                              elemname,
-                                                              mode,
-                                                              var.get_data()))
+    def on_osc(self, var, name, elem, mode):
+        print(f'{name=}, {elem=}, {mode=}, value={var.get_data()}')
         # oscillators = ["Sine",
         #                "Triangular",
         #                "Square",
         #                "Sawtooth",
         #                "White Noise",
         #                "Pink Noise"]
-        self.sender.send_message('/{}'.format(varname), var.get_data())
+        self.sender.send_message(f'/{name}', var.get_data())
 
-    def on_freq(self, var, varname, elemname, mode):
-        print('var: {}, elem: {}, mode: {}, value: {}'.format(varname,
-                                                              elemname,
-                                                              mode,
-                                                              var.get_data()))
-        self.sender.send_message('/{}'.format(varname), var.get_data())
+    def on_freq(self, var, name, elem, mode):
+        print(f'{name=}, {elem=}, {mode=}, value={var.get_data()}')
+        self.sender.send_message(f'/{name}', var.get_data())
 
-    def on_gain(self, var, varname, elemname, mode):
-        print('var: {}, elem: {}, mode: {}, value: {}'.format(varname,
-                                                              elemname,
-                                                              mode,
-                                                              var.get_data()))
-        self.sender.send_message('/{}'.format(varname), var.get_data())
+    def on_gain(self, var, name, elem, mode):
+        print(f'{name=}, {elem=}, {mode=}, value={var.get_data()}')
+        self.sender.send_message(f'/{name}', var.get_data())
 
     def stop(self):
         """
