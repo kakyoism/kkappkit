@@ -39,6 +39,20 @@ def _validate_number(user_input, new_value, widget_name, data_type):
     return True
 
 
+def create_window(title, size=(800, 600)):
+    _Globals.root = tk.Tk()
+    _Globals.root.title(title)
+    screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
+    _Globals.root.geometry('{}x{}+{}+{}'.format(
+        size[0],
+        size[1],
+        int(screen_size[0] / 2 - size[0] / 2),
+        int(screen_size[1] / 2 - size[1] / 2))
+    )
+    _Globals.validateIntCmd = (_Globals.root.register(_validate_int), '%P', '%S', '%W')
+    _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
+
+
 class Prompt:
     """
     - must use within tkinter mainloop
@@ -577,18 +591,7 @@ class TextEntry(Entry):
 
 
 def _test_form():
-    _Globals.root = tk.Tk()
-    _Globals.root.title("Form Example")
-    screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
-    size = (800, 600)
-    _Globals.root.geometry('{}x{}+{}+{}'.format(
-        size[0],
-        size[1],
-        int(screen_size[0] / 2 - size[0] / 2),
-        int(screen_size[1] / 2 - size[1] / 2))
-    )
-    _Globals.validateIntCmd = (_Globals.root.register(_validate_int), '%P', '%S', '%W')
-    _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
+    create_window('Form Example', (800, 600))
     form = Form(_Globals.root)
     form.layout()
     ctrlr = FormController(form)
@@ -620,7 +623,7 @@ def _test_form():
     _Globals.root.mainloop()
 
 
-def _test_rtctrl():
+def _test_controller():
     class OscillatorController(FormController):
         """
         kk OSClisten gilisten, "/frequency", "f", gkfreq
@@ -675,18 +678,8 @@ def _test_rtctrl():
             time.sleep(0.1)
             self.sender.send_message('/oscillator', var.get())
             self.sender.send_message('/play', 1)
-    _Globals.root = tk.Tk()
-    _Globals.root.title("RTPC Example")
-    screen_size = (_Globals.root.winfo_screenwidth(), _Globals.root.winfo_screenheight())
-    size = (800, 600)
-    _Globals.root.geometry('{}x{}+{}+{}'.format(
-        size[0],
-        size[1],
-        int(screen_size[0] / 2 - size[0] / 2),
-        int(screen_size[1] / 2 - size[1] / 2))
-    )
-    _Globals.validateIntCmd = (_Globals.root.register(_validate_int), '%P', '%S', '%W')
-    _Globals.validateFloatCmd = (_Globals.root.register(_validate_float), '%P', '%S', '%W')
+
+    create_window('Controller Example', (800, 600))
     form = Form(_Globals.root)
     form.layout()
     ctrlr = OscillatorController(form)
@@ -698,9 +691,7 @@ def _test_rtctrl():
 
     # Adding widgets to groups
     scpt_entry = TextEntry(page, 'Csound Script', osp.join(osp.dirname(__file__), 'tonegen.csd'), 'Path to Csound script')
-    oscillator_entry = OptionEntry(page, "Oscillator", ['Sine',
-                                                        'Square',
-                                                        'Sawtooth',], 'Square', 'Oscillator waveform types')
+    oscillator_entry = OptionEntry(page, "Oscillator", ['Sine', 'Square', 'Sawtooth',], 'Square', 'Oscillator waveform types')
     freq_entry = IntEntry(page, "Frequency (Hz)", 440, "Frequency of the output signal in Herz", (20, 20000))
     gain_entry = FloatEntry(page, "Gain (dB)", -6.0, "Gain of the output signal in dB", (-48.0, 0.0), 2, 1.0)
     oscillator_entry.set_tracer(ctrlr.on_oscillator)
@@ -718,5 +709,5 @@ def _test_rtctrl():
 
 
 if __name__ == "__main__":
-    # _test_form()
-    _test_rtctrl()
+    _test_form()
+    # _test_controller()
