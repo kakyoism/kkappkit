@@ -711,7 +711,7 @@ def _test_rtctrl():
     page.add([scpt_entry, oscillator_entry, freq_entry, gain_entry])
     form.init([page])
     form.layout()
-    action_bar = FormActionBar(_Globals.root, ctrlr)
+    action_bar = OscillatorActionBar(_Globals.root, ctrlr)
     action_bar.layout()
     wait_bar = WaitBar(_Globals.root, _Globals.progressQueue)
     wait_bar.layout()
