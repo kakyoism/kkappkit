@@ -1,6 +1,7 @@
 import json
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk, filedialog
 from tkinter import messagebox as tkmsgbox
@@ -299,9 +300,21 @@ class FormController:
         """
         _Globals.progressQueue.put(('/start', 0, 'Processing ...'))
         self.update()
-        prompt = Prompt()
-        prompt.warning('You are calling base class', 'Subclass this!')
-        _Globals.progressQueue.put(('/stop', 100, 'SUCCESS!'))
+        # lambda wrapper ensures "self" is captured by threading as a context
+        # otherwise ui thread still blocks
+        threading.Thread(target=lambda: self.run_background(), daemon=True).start()
+        # prompt = Prompt()
+        # prompt.warning('You are calling base class', 'Subclass this!')
+
+    def run_background(self):
+        """
+        - run in background thread to avoid blocking UI
+        """
+        for p in range(101):
+            # Simulate a task
+            time.sleep(0.1)
+            _Globals.progressQueue.put(('/processing', p, f'Processing {p}%...'))
+        _Globals.progressQueue.put(('/stop', 100, 'Completed!'))
 
 
 class FormActionBar(ttk.Frame):
@@ -392,10 +405,15 @@ class ProgressBar(WaitBar):
         """
         while self.queue.qsize():
             try:
-                msg = self.queue.get(0)
-                self.progress.set(msg[1])
-                self.stage.set(msg[2])
-            except self.queue.Empty:
+                cmd, value, text = self.queue.get_nowait()
+                if cmd == '/start':
+                    self.bar.start()
+                elif cmd == '/stop':
+                    self.bar.stop()
+                elif cmd == '/processing':
+                    self.progress.set(value)
+                self.stage.set(text)  # Update the label text
+            except queue.Empty:
                 pass
         self.after(wait_ms, self.poll)
 
