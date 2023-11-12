@@ -368,13 +368,15 @@ class OscillatorController(FormController):
         util.run_daemon(cmd)
         # wait for csound to start
         time.sleep(1)
+        options = ['Sine', 'Square', 'Sawtooth']
+        self.sender.send_message('/oscillator', options.index(self.model['General']['Oscillator']))
         self.sender.send_message('/play', 1)
         _Globals.progressQueue.put(('/start', 0, 'Playing ...'))
         self.playing = True
         return True
 
     def cancel(self, event=None):
-        self.sender.send_message('/stop', 1)
+        self.sender.send_message('/play', 0)
         _Globals.progressQueue.put(('/stop', 100, 'Stopped'))
         time.sleep(1)
         util.kill_process_by_name('csound')
@@ -391,7 +393,10 @@ class OscillatorController(FormController):
 
     def on_oscillator(self, name, var, index, mode):
         print(f'{name=}={var.get()}, {index=}, {mode=}')
-        self.sender.send_message('/oscillator', 1)
+        self.sender.send_message('/play', 0)
+        time.sleep(0.1)
+        self.sender.send_message('/oscillator', var.get())
+        self.sender.send_message('/play', 1)
 
 
 class FormActionBar(ttk.Frame):
@@ -552,23 +557,32 @@ class OptionEntry(Entry):
     def __init__(self, master: Page, text, options, default, doc, **kwargs):
         super().__init__(master, text, ttk.Combobox, default, doc, values=options, **kwargs)
         # model-binding
-        self.field.configure(textvariable=self.data, state='readonly')
         self.data = self._init_data(tk.StringVar)
-        self.field.set(self.data.get())
+        self.field.configure(textvariable=self.data, state='readonly')
         self.index = tk.IntVar(name='index', value=self.get_selection_index())
         self.field.bind("<<ComboboxSelected>>", self.on_combobox_selected)
 
     def on_combobox_selected(self, event):
-        self.index.set(self.get_selection_index())
+        new_index = self.get_selection_index()
+        self.index.set(new_index)
+        print(f'{self.index.get()=}, on combo sel')
 
     def get_options(self):
         return self.field.cget('values')
 
     def get_selection_index(self):
-        return self.get_options().index(self.data.get())
+        # Get the current value from self.data
+        current_value = self.data.get()
+        try:
+            # Return the index of the current value in the options list
+            return self.get_options().index(current_value)
+        except ValueError:
+            # If current value is not in the options list, return -1 or handle appropriately
+            return -1
+        # return self.get_options().index(self.data.get())
 
     def set_tracer(self, handler):
-        self.index.trace_add('write', callback=lambda name, index, mode, var=self.index: handler(name, var, index, mode))
+        self.index.trace_add('write', callback=lambda name, idx, mode, var=self.index: handler(name, var, idx, mode))
 
 
 class Checkbox(Entry):
@@ -688,7 +702,7 @@ def _test_rtctrl():
     scpt_entry = TextEntry(page, 'Csound Script', osp.join(osp.dirname(__file__), 'tonegen.csd'), 'Path to Csound script')
     oscillator_entry = OptionEntry(page, "Oscillator", ['Sine',
                                                         'Square',
-                                                        'Sawtooth',], 'Sine', 'Oscillator waveform types')
+                                                        'Sawtooth',], 'Square', 'Oscillator waveform types')
     freq_entry = IntEntry(page, "Frequency (Hz)", 440, "Frequency of the output signal in Herz", (20, 20000))
     gain_entry = FloatEntry(page, "Gain (dB)", -6.0, "Gain of the output signal in dB", (-48.0, 0.0), 2, 1.0)
     oscillator_entry.set_tracer(ctrlr.on_oscillator)
