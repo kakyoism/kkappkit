@@ -26,7 +26,6 @@ GitPython = "*"
 
 [tool.poetry.dev-dependencies]
 jinja2 = "*"
-Pillow = "*"
 pytest = "*"
 python-osc = "*"
 

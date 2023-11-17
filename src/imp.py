@@ -132,12 +132,12 @@ class Core(base.Core):
         util.substitute_keywords_in_file(self.dstPaths.output, {'# {{assign}}': code}, useliteral=True)
 
     def _generate_gui(self):
-        # code_lines = []
-        # for name, arg in self.appConfig['input'].items():
-        #     codegen = self._create_gui_codegen(name, arg)
-        #     code_lines += codegen.generate()
-        # # substitute template
-        # code = '\n'.join(code_lines)
+        code_lines = []
+        for name, arg in self.appConfig['input'].items():
+            codegen = self._create_gui_codegen(name, arg)
+            code_lines += codegen.generate()
+        # substitute template
+        code = '\n'.join(code_lines)
         pass
 
     def _reset_interface(self):
