@@ -2,6 +2,7 @@
 # GENERATED: DO NOT EDIT
 #
 import argparse
+import os.path as osp
 # project
 import imp
 
@@ -12,6 +13,21 @@ def main():
     core = imp.Core(parser.parse_args())
     out = core.run()
     send(out)
+
+
+def file(path):
+    """
+    - empty string: valid path placeholder, implementation will fill it up
+    """
+    if path and not osp.isfile(path):
+        raise argparse.ArgumentTypeError(f"invalid file path argument: {path}; Does it exist?")
+    return path
+
+
+def folder(path):
+    if path and not osp.isdir(path):
+        raise argparse.ArgumentTypeError(f"invalid folder path argument: {path}; Does it exist?")
+    return path
 
 
 def create_parser():
