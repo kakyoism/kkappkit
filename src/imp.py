@@ -134,8 +134,10 @@ class Core(base.Core):
     def _generate_gui(self):
         code_lines = []
         for name, arg in self.appConfig['input'].items():
-            codegen = self._create_gui_codegen(name, arg)
+            codegen = EntryGen.create_codegen(name, arg)
             code_lines += codegen.generate()
+        # generate controller placeholder
+
         # substitute template
         code = '\n'.join(code_lines)
         pass
@@ -164,10 +166,10 @@ class ArgumentGen:
     @staticmethod
     def create_codegen(name, arg):
         if arg['type'] == 'bool':
-            return BoolGen(name, arg)
+            return BoolArgGen(name, arg)
         if 'choices' in arg:
-            return OptionGen(name, arg)
-        if arg['type'] in ('int', 'float', 'str', 'list'):
+            return OptionArgGen(name, arg)
+        if arg['type'] in ('int', 'float', 'str', 'list', 'file', 'folder'):
             return ArgumentGen(name, arg)
         util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in code-gen'])
 
@@ -213,7 +215,7 @@ parser.add_argument(
         return ''
 
 
-class BoolGen(ArgumentGen):
+class BoolArgGen(ArgumentGen):
     """
     parser.add_argument(
         '-e',
@@ -243,7 +245,7 @@ parser.add_argument(
 )""")
 
 
-class ListGen(ArgumentGen):
+class ListArgGen(ArgumentGen):
     """
     parser.add_argument(
         '-l',
@@ -284,7 +286,7 @@ parser.add_argument(
 )""")
 
 
-class OptionGen(ArgumentGen):
+class OptionArgGen(ArgumentGen):
     """
     parser.add_argument(
         '-s',
@@ -334,6 +336,14 @@ parser.add_argument(
 )""")
 
 
+class PathArgGen(ArgumentGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def main(self):
+        pass
+
+
 #
 # output
 #
@@ -349,7 +359,95 @@ class OutputGen:
 #
 # gui
 #
-class FormEntryGen:
+class EntryGen:
+    def __init__(self, name, arg):
+        self.name = name
+        self.arg = arg
+
+    @staticmethod
+    def create_codegen(name, arg):
+        if 'choices' in arg:
+            return OptionEntryGen(name, arg)
+        dtype_codegen_map = {
+            'bool': BoolEntryGen,
+            'int': IntEntryGen,
+            'float': FloatEntryGen,
+            'str': TextEntryGen,
+            'list': TextEntryGen,
+            'file': FileEntryGen,
+            'folder': FolderEntryGen,
+        }
+        return dtype_codegen_map[arg['type']](name, arg)
+
+    def generate(self):
+        return []
+
+
+class BoolEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class IntEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class FloatEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class TextEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class ListEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class FileEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class FolderEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class OptionEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return []
+
+
+class ControllerGen:
     def __init__(self, name, arg):
         self.name = name
         self.arg = arg
