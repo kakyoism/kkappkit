@@ -4,19 +4,20 @@
 import os.path as osp
 import sys
 import time
-
-# project
+# 3rd party
 import kkpyui as ui
+import kkpyutil as util
+# project
+import imp
 
 
-class MyController(ui.FormController):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def cacel(self, event=None):
-        super().cancel(event)
-
-    def submit(self, event=None):
-        super().submit(event)
+# {{controller}}
 
 
+def main():
+# {{view}}
+    pass
+
+
+if __name__ == "__main__":
+    main()
