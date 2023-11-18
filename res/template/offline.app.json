@@ -13,6 +13,7 @@
   ],
   "input": {
     "bio": {
+      "group": "general",
       "help": "text, with multiline support",
       "type": "str",
       "default": "",

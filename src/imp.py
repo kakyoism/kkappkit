@@ -142,9 +142,9 @@ class Core(base.Core):
         """
         view_lines = (self._create_root() +
                       self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() +
-                      self._create_runloop())
+                      self._create_mainloop())
         view_code = '\n'.join(view_lines)
-        ctrlr_lines = self._define_controller()
+        ctrlr_lines = ControllerGen(self.appConfig).generate()
         ctrlr_code = '\n'.join(ctrlr_lines)
         # substitute template
         util.substitute_keywords_in_file(self.dstPaths.gui, {
@@ -169,17 +169,20 @@ class Core(base.Core):
         - group is a gui-only tag
         - so we don't add group-layer to avoid confusing CLI roles
         - instead, use extra space for per-field group tag
+        - group title uses title case without underscores
         """
-        groups = {arg['group'] for name, arg in self.appConfig['input'].items()}
+        groups = {util.convert_compound_cases(arg['group'], style='title') for name, arg in self.appConfig['input'].items()}
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
 
-    def _create_controller(self):
+    @staticmethod
+    def _create_controller():
         return [
             'ctrlr = Controller(form)',
             'ui.Globals.root.bind_events(ctrlr)',
         ]
 
-    def _create_menu(self):
+    @staticmethod
+    def _create_menu():
         return ['menu = ui.FormMenu(ui.Globals.root, ctrlr)']
 
     def _create_entries(self):
@@ -214,11 +217,9 @@ class Core(base.Core):
             'progress_bar.poll()',
         ]
 
-    def _create_runloop(self):
+    @staticmethod
+    def _create_mainloop():
         return ['ui.Globals.root.mainloop()']
-
-    def _define_controller(self):
-        return []
 
 
 class ArgumentGen:
@@ -580,8 +581,10 @@ class ControllerGen:
         # add event handlers to traceable args
         traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
         code_lines += [line for name, arg in traceable_args.items() for line in self._create_event_handler(name, arg)]
+        return code_lines
 
-    def _create_event_handler(self, name, arg):
+    @staticmethod
+    def _create_event_handler(name, arg):
         return f"""\
     def on_{name.lower()}_changed(self, name, var, index, mode):
         # ADD YOUR OWN CODE HERE
