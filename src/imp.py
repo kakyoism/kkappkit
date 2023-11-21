@@ -48,8 +48,8 @@ class Core(base.Core):
 
     def _validate_args(self, args):
         _args = copy.deepcopy(args)
-        # because scripts is run by poetry, cwd is kkappkit root,
-        # so we must use absolute path for appRoot
+        # because scripts are run by poetry, cwd is kkappkit root,
+        # so we must use an absolute path for appRoot
         if not osp.isabs(_args.appRoot):
             util.throw(ValueError, f'Expected absolute path, received relative path: {_args.appRoot}', ['use absolute path for appRoot'])
         return _args
