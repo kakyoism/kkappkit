@@ -24,7 +24,7 @@ def _create_paths(root=None):
 
 
 _paths = _create_paths()
-# pytest will prepend first-encounter import path to sys.path, which will be res/skeleton/src
+# pytest will prepend first-encountered import paths to sys.path, which will be res/skeleton/src
 imp = util.safe_import_module('imp', _paths.srcDir, reload=True)
 
 # dst_root = ...

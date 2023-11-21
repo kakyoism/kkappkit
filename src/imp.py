@@ -67,7 +67,7 @@ class Core(base.Core):
         dst = osp.abspath(f'{self.dstPaths.srcDir}/app.json')
         util.copy_file(src, dst)
         # because pytest forbids name clashing b/w test modules
-        # skeleton test is named without test_ prefix to avoid name clashing with dst skeletion
+        # skeleton test is named without prefixing with test_ to avoid name clashing with dst skeleton
         # after copying, we must prepend test_ back for pytest to collect the test normally
         src = osp.abspath(f'{self.dstPaths.testDir}/default/_default.py')
         dst = osp.abspath(f'{self.dstPaths.testDir}/default/test_default.py')
@@ -98,7 +98,6 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         # TODO: replace with json schema
         if is_new_app := not self.appConfig['name']:
-            breakpoint()
             self.logger.warning('app.json is incomplete because its name is empty; complete app-config and rebuild the app')
             return
         # user has filled up app.json
@@ -140,9 +139,7 @@ class Core(base.Core):
         ui.Globals.root.bind_events(ctrlr)
         menu = ui.FormMenu(ui.Globals.root, ctrlr)
         """
-        view_lines = (self._create_root() +
-                      self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() +
-                      self._create_mainloop())
+        view_lines = self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() + self._create_mainloop()
         view_code = '\n'.join(view_lines)
         ctrlr_lines = ControllerGen(self.appConfig).generate()
         ctrlr_code = '\n'.join(ctrlr_lines)
@@ -169,7 +166,7 @@ class Core(base.Core):
         - group is a gui-only tag
         - so we don't add group-layer to avoid confusing CLI roles
         - instead, use extra space for per-field group tag
-        - group title uses title case without underscores
+        - group title uses title-casing without underscores
         """
         groups = {util.convert_compound_cases(arg['group'], style='title') for name, arg in self.appConfig['input'].items()}
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
@@ -501,6 +498,7 @@ class FileEntryGen(EntryGen):
       - $TEMP
       - $HOME
     """
+
     def __init__(self, name, arg):
         super().__init__(name, arg)
         buildvar_dir_map = {
@@ -537,7 +535,7 @@ class OptionEntryGen(EntryGen):
 
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
-        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self.title}, {repr(self.arg["choice"])}, {repr(self.arg["default"])}, {self.arg["help"]})']
+        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self.title}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self.arg["help"]})']
 
 
 class ControllerGen:
@@ -546,6 +544,7 @@ class ControllerGen:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
     """
+
     def __init__(self, appcfg):
         self.appConfig = appcfg
         template_cls_map = {
