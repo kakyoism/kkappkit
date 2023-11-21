@@ -271,3 +271,7 @@
 
 ## Do we need a .sh/.bat-.py delegation?
 - No, because this would introduce two layers of subprocesses, which would add to the complexity despite some maintenance benefit in making .sh/.bat shorter
+
+## Is *required* necessary for an argument spec?
+- No, because it's redundant with the default value
+- An argument is required when its default is None (null for JSON) 

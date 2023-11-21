@@ -20,14 +20,16 @@ def create_parser():
 # =============
 # EXAMPLES
 # =============
-# generate empty app project with default app-config under current working directory (cwd)
-kkgenapp -n my_app
+# generate empty app project with default app-config under specified root folder if it does not exists
+# regenerate its interface (cli, gui, etc.) if it exists 
+kkgenapp -p /path/to/my_app
 
 # same as above, but use a different app-config template, i.e., filename without extension
-kkgenapp -n my_app -t my_template
+kkgenapp -p my_app -t my_template
 
-# generate or update app (except app implementation) after editing app-config
-cd /path/to/my_app && kkgenapp
+# same as above, but force overwrite existing app folder with new one
+kkgenapp -p my_app -t my_template -f
+
 
 # =============
 # REMARKS
@@ -44,25 +46,34 @@ cd /path/to/my_app && kkgenapp
 
 def add_arguments(parser):
     parser.add_argument(
-        '-n',
-        '--app-name',
+        '-r',
+        '--app-root',
         action='store',
-        dest='appName',
+        dest='appRoot',
         type=str,
         default='',
-        required=False,
-        help='Name of the new app to create'
+        required=True,
+        help='Path to the root folder of the new app to create'
     )
     parser.add_argument(
         '-t',
         '--app-template',
         action='store',
-        choices=('offline', 'rt'),
+        choices=('form', 'controller'),
         dest='appTemplate',
-        default='offline',
+        default='form',
         type=str,
         required=False,
-        help='App-config template for creating the new app'
+        help='App-config template that the the new app is based upon; ignored if an app-config already exists'
+    )
+    parser.add_argument(
+        '-f',
+        '--force-overwrite',
+        action='store_true',
+        dest='forceOverwrite',
+        default=False,
+        required=False,
+        help='Force overwrite existing app folder with new one'
     )
 
 

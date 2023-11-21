@@ -18,7 +18,7 @@ class Core(base.Core):
         self.dstAppConfig = None
 
     def main(self):
-        if is_new_app := self.args.appName:
+        if is_new_app := not osp.isdir(self.args.appRoot):
             self._copy_skeleton()
         else:
             self._reset_interface()
@@ -32,18 +32,14 @@ class Core(base.Core):
         self.paths.skeletonDir = osp.join(self.paths.resDir, 'skeleton')
         self.paths.templateDir = osp.join(self.paths.resDir, 'template')
 
-        app_root = os.getcwd()
-        expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
-        if is_new_app := not osp.isfile(expected_app_cfg):
-            app_root = osp.join(os.getcwd(), self.args.appName)
-            expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
+        expected_app_cfg = osp.abspath(f'{self.args.appRoot}/src/app.json')
         self.dstPaths = types.SimpleNamespace(
-            root=app_root,
-            srcDir=osp.join(app_root, 'src'),
-            resDir=osp.join(app_root, 'res'),
-            testDir=osp.join(app_root, 'test'),
+            root=self.args.appRoot,
+            srcDir=osp.join(self.args.appRoot, 'src'),
+            resDir=osp.join(self.args.appRoot, 'res'),
+            testDir=osp.join(self.args.appRoot, 'test'),
             appCfg=expected_app_cfg,
-            depCfg=osp.join(app_root, 'pyproject.toml'),
+            depCfg=osp.join(self.args.appRoot, 'pyproject.toml'),
         )
         self.dstPaths.cli = osp.join(self.dstPaths.srcDir, 'cli.py')
         self.dstPaths.implementation = osp.join(self.dstPaths.srcDir, 'imp.py')
@@ -51,13 +47,12 @@ class Core(base.Core):
         self.dstPaths.gui = osp.join(self.dstPaths.srcDir, 'gui.py')
 
     def _validate_args(self, args):
-        self.args = copy.deepcopy(args)
-        app_root = os.getcwd()
-        expected_app_cfg = osp.abspath(f'{app_root}/src/app.json')
-        if gen_app_with_cfg := not self.args.appName:
-            if not osp.isfile(expected_app_cfg):
-                util.throw(FileNotFoundError, f'missing app-config under cwd: {expected_app_cfg}', 'retry creating new app with -n <app-name>')
-        return self.args
+        _args = copy.deepcopy(args)
+        # because scripts is run by poetry, cwd is kkappkit root,
+        # so we must use absolute path for appRoot
+        if not osp.isabs(_args.appRoot):
+            util.throw(ValueError, f'Expected absolute path, received relative path: {_args.appRoot}', ['use absolute path for appRoot'])
+        return _args
 
     def _copy_skeleton(self):
         src = osp.join(self.paths.resDir, 'skeleton')
@@ -75,13 +70,14 @@ class Core(base.Core):
 
     def _lazy_init_app_proj(self):
         """
-        - user gives app name only when creating new app
+        - user gives app name only when creating a new app
         """
-        if to_update_app := not self.args.appName:
+        if to_update_app := not self.args.forceOverwrite and osp.isfile(self.dstPaths.depCfg):
             # update toml
             return
+        util.safe_remove(self.dstPaths.depCfg)
         util.run_cmd(['poetry', 'init', '-n',
-                      '--name', self.args.appName,
+                      '--name', app_name := osp.basename(self.args.appRoot),
                       '--author', getpass.getuser(),
                       '--python', '^3.11',
                       '--dependency', 'kkpyutil',
@@ -90,7 +86,7 @@ class Core(base.Core):
                       ], cwd=self.dstPaths.root)
         # update app config
         self.appConfig = util.load_json(self.dstPaths.appCfg)
-        self.appConfig['name'] = self.args.appName
+        self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
         return True
 
@@ -220,7 +216,7 @@ class Core(base.Core):
 
 
 class ArgumentGen:
-    shortSwitches = set()
+    shortSwitches = set('-h')
 
     def __init__(self, name, arg):
         self.name = name
@@ -231,17 +227,38 @@ class ArgumentGen:
         self.dest = util.convert_compound_cases(self.name, style="camel", instyle="snake")
         # for platform dependent defaults
         default = self.arg['default'][util.PLATFORM] if isinstance(self.arg['default'], dict) else self.arg['default']
-        self.default = f"\'{default}\'" if self.arg['type'] == 'str' else default
+        self.default = f"\'{default}\'" if isinstance(default, str) else default
+        self.arg['required'] = self.arg['default'] is None
 
     @staticmethod
     def create_codegen(name, arg):
-        if arg['type'] == 'bool':
+        """
+        - order-sensitive code because some data types satisfy 2+ conditions
+        - we ensure key-differentiator is the 1st condition
+        - default is none/null for required args, must infer from default or obtain from type field
+        """
+        if isinstance(arg['default'], bool):
+            arg['type'] = 'bool'
             return BoolArgGen(name, arg)
-        if 'choices' in arg:
+        if arg.get('choices') is not None:
+            if not arg['choices'] and arg.get('type') is None:
+                util.throw(ValueError, f"Expected option argument to provide choices and type hint, got: choices={arg['choices']}, type={arg.get('type')}", ['provide type field for empty choices', 'provide concrete choices for empty type hint'])
+            if arg.get('type') is None:
+                arg['type'] = type(arg['choices'][0]).__name__
+                assert arg['type']
             return OptionArgGen(name, arg)
-        if arg['type'] in ('int', 'float', 'str', 'list', 'file', 'folder'):
+        if is_path := arg.get('type') in ('file', 'folder'):
             return ArgumentGen(name, arg)
-        util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['fix the type in app-config', 'support this type in code-gen'])
+        if is_float := arg.get('precision'):
+            arg['type'] = 'float'
+            return ArgumentGen(name, arg)
+        if not_required_arg := isinstance(arg['default'], (int, str, list)):
+            arg['type'] = type(arg['default']).__name__
+            return ArgumentGen(name, arg)
+        if is_required_arg := arg['default'] is None and isinstance(arg.get('type'), (int, str, list)):
+            return ArgumentGen(name, arg)
+        util.throw(ValueError, f'unknown argument type: {arg["type"]} for {name}', ['Option requires "choices" field', 'Float requires "precision" field', 'must provide type hint if default is None', 'fix the type in app-config',
+                                                                                    'support this type in code-gen'])
 
     def generate(self):
         """output code lines"""
@@ -253,7 +270,7 @@ parser.add_argument(
     dest='{self.dest}',
     type={self.arg['type']},
     default={self.default},
-    required={self.arg['required']},
+    required={self.arg['default'] is None},
     help='{self.arg['help']}'
 )""")
 
@@ -389,6 +406,8 @@ class OptionArgGen(ArgumentGen):
         self.nArgs = 1 if self.arg['range'][1] == 1 else f"\'+\'"
         assert not isinstance(self.arg['default'], dict), 'expected option args to be consistent across platforms, but got platform-dependent defaults'
         self.default = f"\'{self.arg['default']}\'" if isinstance(self.arg['default'], str) else self.arg['default']
+        # option is never required because it always has a default
+        self.arg['required'] = False
 
     def generate(self):
         return util.indent(f"""\

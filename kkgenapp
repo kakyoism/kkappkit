@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+pushd . &> /dev/null
+
+# Resolves the actual path even if the script is called through a symlink
+AppkitDir="$( cd "$( dirname "$(readlink -f "$0" || echo "$0")" )" && pwd )"
+cd "$AppkitDir"
+poetry run python src/cli.py "$@"
+
+popd &> /dev/null
