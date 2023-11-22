@@ -1,115 +1,116 @@
 {
-  "version": 1,
-  "name": "hello",
-  "description": "say hello",
-  "tutorial": [
-    "# example 1: do this",
-    "run -i input_file -o output_file"
-  ],
-  "remarks": [
-    "- prerequisites: do that before running this",
-    "- caution: do not do that"
-  ],
-  "input": {
-    "bio": {
-      "help": "text, with multiline support",
-      "type": "str",
-      "default": "",
-      "range": [
-        0,
-        null
-      ],
-      "required": false
+    "version": 1,
+    "name": "character",
+    "description": "form for filling character profile",
+    "template": "form",
+    "tutorial": [
+        "# example 1: do this",
+        "run -n your_name"
+    ],
+    "remarks": [
+        "- prerequisites: do that before running this",
+        "- caution: do not do that"
+    ],
+    "input": {
+        "name": {
+            "group": "profile",
+            "help": "Character name",
+            "default": "Robin Sena",
+            "range": [
+                0,
+                null
+            ]
+        },
+        "age": {
+            "group": "profile",
+            "help": "integer",
+            "default": 0,
+            "range": [
+                0,
+                null
+            ]
+        },
+        "height": {
+            "group": "profile",
+            "title": "Height (m)",
+            "help": "Character height in meters",
+            "default": 1.68,
+            "range": [
+                0.0,
+                2.0
+            ],
+            "step": 0.01,
+            "precision": 2
+        },
+        "weight": {
+            "group": "profile",
+            "title": "Weight (kg)",
+            "help": "Character weight in kilograms",
+            "default": 51,
+            "range": [
+                50.2,
+                70.3
+            ],
+            "step": 0.1,
+            "precision": 1
+        },
+        "gender": {
+            "group": "profile",
+            "help": "Character gender",
+            "choices": [
+                "Male",
+                "Female",
+                "*"
+            ],
+            "default": "*",
+            "range": [
+                1,
+                1
+            ]
+        },
+        "protagonist": {
+            "group": "profile",
+            "title": "Is Protagonist",
+            "help": "When set, this character is the protagonist",
+            "default": false
+        },
+        "bio": {
+            "group": "profile",
+            "help": "Character biography",
+            "default": "Robin Sena (瀬名 ロビン, Sena Robin) is a soft-spoken 15-year-old Hunter and craft-user with pyrokinetic abilities. She was raised in a convent in Italy-(where she was taught how to use and control her craft in hunting down Witches) before she was sent to the STN-J to gather information for the Solomon administration; even though she was born in Japan, she had moved to Tuscany when she was still very young. Her witch powers allow her to channel her energy into shields capable of blocking solid matter and crafts, magical powers. However, any use of her power temporarily weakens her eyesight, greatly reducing her accuracy and effectiveness. This problem is solved when she begins to wear glasses. Although she is good-natured, Robin employs her gift with lethal force when necessary to save a life or for the good of others. As the series progresses, her powers increase rapidly until she is labeled dangerous by Solomon and is ordered to be hunted as a witch. It is discovered that Robin is a \"Designer Witch\" and was created through \"Project Robin\", a genetic engineering project. Her mother, Maria, had agreed to genetic manipulation and called the unborn Robin \"Hope.\" Robin was designed to give birth to witch kind, what was once called \"divinities\" in ancient history. Robin was given thousands of years witch kind\\'s memories, the origin of \"craft\". This enables her to understand the sadness arising from the conflict between humans and witches, in turn allowing her to find a way for humans and witches to peacefully coexist. Amon volunteers to be a watchman who will terminate her if she becomes destructive. She accepts this. After the collapse of the Factory, her fate is unknown. The reactions of the other characters show that she is believed to be alive, but is said to be dead for her own safety. However, after the ending credits it shows that a new hunter arrived at the STN-J, which is actually not a new hunter but Robin herself. She is voiced by Akeno Watanabe in Japanese and Kari Wahlgren in English. -- Wikipedia",
+            "range": [
+                0,
+                null
+            ]
+        },
+        "occupation": {
+            "group": "plot",
+            "help": "Character occupation",
+            "choices": [
+                "Lead",
+                "Warrior",
+                "Wizard",
+                "Detective",
+                "Hacker",
+                "Clerk"
+            ],
+            "default": [
+                "Wizard",
+                "Detective"
+            ],
+            "range": [
+                1,
+                null
+            ]
+        }
     },
-    "age": {
-      "help": "an integer",
-      "type": "int",
-      "default": 0,
-      "range": [
-        0,
-        null
-      ],
-      "required": false
-    },
-    "height": {
-      "title": "Height (m):",
-      "help": "a float number",
-      "type": "float",
-      "default": 1.73,
-      "range": [
-        0.0,
-        3.0
-      ],
-      "required": false
-    },
-    "gender": {
-      "help": "single-selection with str as default, option-menu, no user option can be added when range.max==1",
-      "choices": [
-        "Male",
-        "Female",
-        "*"
-      ],
-      "type": "str",
-      "default": "*",
-      "range": [
-        1,
-        1
-      ],
-      "required": false
-    },
-    "language": {
-      "help": "multi-selection with list as default; allow user to add new option when range.max==null",
-      "choices": [
-        "English",
-        "French",
-        "Chinese"
-      ],
-      "type": "str",
-      "default": [
-        "English"
-      ],
-      "range": [
-        1,
-        null
-      ],
-      "validate": true,
-      "required": false
-    },
-    "show_hobbies": {
-      "help": "boolean, as master to a slave set",
-      "type": "bool",
-      "default": false,
-      "required": false,
-      "slaving": {
-        "enable": [
-          "music_collections",
-          "dreams"
-        ]
-      }
-    },
-    "dreams": {
-      "help": "list, ComboBox with CRUD",
-      "type": "list",
-      "default": [],
-      "range": [
-        0,
-        null
-      ],
-      "required": false
-    },
-    "auto_save_preset": {
-      "title": "Auto-save parameters as preset:",
-      "help": "boolean, global settings, always default to false in generated CLI even if it is true here; settings group is always persistent as <app_name>.settings.json, lazy-created on startup and saved on change; on change, always save a fixed file; on success, save to a time-stamped file to preset folder and also the session folder",
-      "type": "bool",
-      "default": false,
-      "required": false
+    "output": {},
+    "appearance": {
+        "title": "Characer Design",
+        "size": [
+            800,
+            600
+        ],
+        "progress": "finite"
     }
-  },
-  "output": {
-    "alive": {
-      "help": "is alive?",
-      "type": "bool",
-      "default": false
-    }
-  }
 }

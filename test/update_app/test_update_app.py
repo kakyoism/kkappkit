@@ -60,10 +60,9 @@ def test_update_app_generates_cli_out_gui():
     """
     sys.path.insert(0, _paths.srcDir)
     args = types.SimpleNamespace()
-    args.appName = ''
-    args.appTemplate = 'offline'
-    app_root = osp.join(_paths.caseWorkDir, _app_name)
-    os.chdir(app_root)
+    args.appRoot = osp.join(_paths.caseWorkDir, 'hello')
+    args.appTemplate = 'form'
+    args.forceOverwrite = False
     core = imp.Core(args)
     core.run()
     proj_cfg = osp.abspath(f'{_paths.caseWorkDir}/{_app_name}/pyproject.toml')

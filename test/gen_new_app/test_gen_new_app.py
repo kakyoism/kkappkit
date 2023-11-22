@@ -58,9 +58,9 @@ def test_new_app_generated_under_cwd():
     """
     sys.path.insert(0, _paths.srcDir)
     args = types.SimpleNamespace()
-    args.appName = 'hello'
-    args.appTemplate = 'offline'
-    os.chdir(_paths.caseWorkDir)
+    args.appRoot = osp.join(_paths.caseWorkDir, 'hello')
+    args.appTemplate = 'form'
+    args.forceOverwrite = False
     core = imp.Core(args)
     core.run()
     proj_cfg = osp.abspath(f'{_paths.caseWorkDir}/hello/pyproject.toml')
