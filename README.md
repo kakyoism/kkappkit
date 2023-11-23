@@ -21,8 +21,8 @@ Dev UX
 
 ## How to install kkappkit?
 - Clone this repo
-- POSIX: `sudo ln -s $(pwd)/kkappgen /usr/local/bin/`, ensure `/usr/local/bin` is under your system `$PATH`
-- Windows: `mklink a\folder\under\your\system\%PATH%\kkappgen.bat $(pwd)\kkappgen\kkappgen.bat`
+- POSIX: `cd kkappkit && sudo ln -s $(pwd)/kkappgen /usr/local/bin/`, ensure `/usr/local/bin` is under your system `$PATH`
+- Windows: `cd kkappkit && mklink a\folder\under\your\system\%PATH%\kkappgen.bat .\kkappgen\kkappgen.bat`
 
 ## How to work with kkappkit?
 - Initialize a new app project: `kkappgen -r /path/to/my_app_root -t <template_name>`
