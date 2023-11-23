@@ -135,15 +135,15 @@ class Core(base.Core):
         ui.Globals.root.bind_events(ctrlr)
         menu = ui.FormMenu(ui.Globals.root, ctrlr)
         """
-        view_lines = self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() + self._create_mainloop()
+        view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() + self._create_mainloop())
         view_code = '\n'.join(view_lines)
         ctrlr_lines = ControllerGen(self.appConfig).generate()
         ctrlr_code = '\n'.join(ctrlr_lines)
         # substitute template
         util.substitute_keywords_in_file(self.dstPaths.gui, {
-            '{{controller}}': ctrlr_code,
-            '{{view}}': view_code,
-        })
+            '# {{controller}}': ctrlr_code,
+            '# {{view}}': view_code,
+        }, useliteral=True)
 
     def _reset_interface(self):
         for fn in ('cli.py', 'gui.py', 'out.py'):
@@ -164,13 +164,18 @@ class Core(base.Core):
         - instead, use extra space for per-field group tag
         - group title uses title-casing without underscores
         """
-        groups = {util.convert_compound_cases(arg['group'], style='title') for name, arg in self.appConfig['input'].items()}
+        groups_with_dups = [util.convert_compound_cases(arg['group'], style='title') for name, arg in self.appConfig['input'].items()]
+        groups = util.remove_duplication(groups_with_dups)
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
 
-    @staticmethod
-    def _create_controller():
+    def _create_controller(self):
+        template_cls_map = {
+            'form': 'Controller',
+            'realtime': 'Controller',
+            'custom': 'ctrl.Controller',
+        }
         return [
-            'ctrlr = Controller(form)',
+            f'ctrlr = {template_cls_map[self.appConfig["template"]]}(form)',
             'ui.Globals.root.bind_events(ctrlr)',
         ]
 
@@ -193,17 +198,18 @@ class Core(base.Core):
     def _create_action(self):
         template_cls_map = {
             'form': 'FormActionBar',
-            'onoff': 'OnOffActionBar',
+            'realtime': 'OnOffActionBar',
+            'custom': 'ctrl.ActionBar',
         }
         return [f'action_bar = ui.{template_cls_map[self.appConfig["template"]]}(ui.Globals.root, ctrlr)']
 
     def _create_progress(self):
-        prog_type = self.appConfig['appearance']['progress']
+        prog_type = self.appConfig['template']
         if not prog_type:
             return []
         template_cls_map = {
-            'finite': 'ProgressBar',
-            'infinite': 'WaitBar',
+            'form': 'ProgressBar',
+            'realtime': 'WaitBar',
         }
         return [
             f'progress_bar = ui.{template_cls_map[prog_type]}(ui.Globals.root, ui.Globals.progressQueue)',
@@ -473,32 +479,45 @@ class EntryGen:
     def generate(self):
         raise NotImplementedError('subclass this!')
 
+    def _get_title_repr(self):
+        return repr(self.title)
+
+    def _get_help_repr(self):
+        return repr(self.arg['help'])
+
 
 class BoolEntryGen(EntryGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self.title}, {self.arg["default"]}, {self.arg["help"]})']
+        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
 
 
 class IntEntryGen(EntryGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
+        # must generate liberal code float('inf') when inf is involved
+        rg_min = "float('-inf')" if self.arg['range'][0] is None else int(self.arg['range'][0])
+        rg_max = "float('inf')" if self.arg['range'][1] is None else int(self.arg['range'][1])
+        self.range = f'[{rg_min}, {rg_max}]'
         self.step = self.arg.get('step') or 1
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self.title}, {self.arg['default']}, {self.arg['help']}, {self.arg['range']}, {self.step})"]
+        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
 
 
 class FloatEntryGen(EntryGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
+        rg_min = "float('-inf')" if self.arg['range'][0] is None else float(self.arg['range'][0])
+        rg_max = "float('inf')" if self.arg['range'][1] is None else float(self.arg['range'][1])
+        self.range = f'[{rg_min}, {rg_max}]'
         self.step = self.arg.get('step') or 0.1
-        self.precesion = self.arg.get('precesion') or 2
+        self.precision = self.arg.get('precision') or 2
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self.title}, {self.arg['default']}, {self.arg['help']}, {self.arg['range']}, {self.step}, {self.precesion})"]
+        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
 
 
 class TextEntryGen(EntryGen):
@@ -506,7 +525,7 @@ class TextEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self.title}, {self.arg["default"]}, {self.arg["help"]})']
+        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
 class FileEntryGen(EntryGen):
@@ -529,7 +548,7 @@ class FileEntryGen(EntryGen):
         self.startDir = util.substitute_keywords(self.arg['startDir'], buildvar_dir_map, useliteral=True) or '.'
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FileEntry({self.master}, {self.title}, {self.arg["default"]}, {self.arg["help"]}, {repr(self.arg["range"])})']
+        return [f'{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()}, {repr(self.arg["range"])})']
 
 
 class FolderEntryGen(EntryGen):
@@ -544,7 +563,7 @@ class FolderEntryGen(EntryGen):
         self.startDir = util.substitute_keywords(self.arg['startDir'], buildvar_dir_map, useliteral=True) or '.'
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self.title}, {self.arg["default"]}, {self.arg["help"]}, {repr(self.arg["range"])})']
+        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()}, {repr(self.arg["range"])})']
 
 
 class OptionEntryGen(EntryGen):
@@ -554,9 +573,12 @@ class OptionEntryGen(EntryGen):
 
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
-        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self.title}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self.arg["help"]})']
+        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
+#
+# controller
+#
 class ControllerGen:
     """
     class MyController(ui.FormController):
@@ -568,44 +590,73 @@ class ControllerGen:
         self.appConfig = appcfg
         template_cls_map = {
             'form': 'FormController',
-            'onoff': 'FormController',
+            'realtime': 'RealtimeController',
+            'custom': 'Controller',
         }
-        self.baseCls = template_cls_map[self.appConfig['template']]
+        self.baseClass = template_cls_map[self.appConfig['template']]
+
+    @staticmethod
+    def create_codegen(appcfg):
+        """
+        - both form and realtime apps share form controller where realtime app's app-config will set up tracers
+        """
+        template_cls_map = {
+            'form': 'FormController',
+            'realtime': 'FormController',
+            'custom': 'Controller',
+        }
+        return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg)
 
     def generate(self):
-        code_lines = f"""class Controller(ui.{self.baseCls}):',
+        return '# CUSTOM CONTROLLER: IMPLEMENT IT IN control.py'
+
+    @staticmethod
+    def _create_event_handler(name, arg):
+        """
+        - any callback registered on argument
+        """
+        return ''
+
+
+class FormControllerGen(ControllerGen):
+    def __init__(self, appcfg):
+        super().__init__(appcfg)
+
+    def generate(self):
+        """
+        - use the composite pattern for maximum flexibility
+        - generate controller interface in gui.py to make interface change always transparent
+        """
+        code_lines = f"""class Controller(ui.{self.baseClass}):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+        self.imp = ctrl.ControllerImp(self, *args, **kwargs)
+
     def submit(self, event=None):
-        # ADD YOUR OWN CODE HERE
-        pass
-    
+        self.imp.submit(event)
+
     def cancel(self, event=None):
-        # ADD YOUR OWN CODE HERE
-        pass
-    
+        self.imp.submit(event)
+
     def init(self, event=None):
-        super().init()
-        self.update()
-        # ADD YOUR OWN CODE HERE
-        pass
-    
+        self.imp.init(event)
+
     def term(self, event=None):
-        # ADD YOUR OWN CODE HERE
-        pass
-        
+        self.imp.term(event)
+
 """.splitlines()
-        # add event handlers to traceable args
+        # lazy-add event handlers to traceable args
         traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
         code_lines += [line for name, arg in traceable_args.items() for line in self._create_event_handler(name, arg)]
         return code_lines
 
     @staticmethod
     def _create_event_handler(name, arg):
+        """
+        - add value tracer to argument
+        """
         return f"""\
     def on_{name.lower()}_changed(self, name, var, index, mode):
-        # ADD YOUR OWN CODE HERE
-        pass
+        self.imp.on_{name.lower()}_changed(name, var, index, mode)
 
 """.splitlines()

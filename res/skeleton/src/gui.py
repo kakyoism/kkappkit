@@ -8,7 +8,7 @@ import time
 import kkpyui as ui
 import kkpyutil as util
 # project
-import imp
+import control as ctrl
 
 
 # {{controller}}

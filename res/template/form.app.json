@@ -106,11 +106,10 @@
     },
     "output": {},
     "appearance": {
-        "title": "Characer Design",
+        "title": "Character Design",
         "size": [
             800,
             600
-        ],
-        "progress": "finite"
+        ]
     }
 }
