@@ -59,7 +59,7 @@ def add_arguments(parser):
         '-t',
         '--app-template',
         action='store',
-        choices=('form', 'controller'),
+        choices=('form', 'realtime', 'custom'),
         dest='appTemplate',
         default='form',
         type=str,

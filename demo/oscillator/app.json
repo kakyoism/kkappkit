@@ -1,0 +1,73 @@
+{
+    "version": 1,
+    "name": "oscillator",
+    "description": "realtime controller of a simple oscillator",
+    "template": "realtime",
+    "tutorial": [
+        "# example 1: do this",
+        "run -p your_argument"
+    ],
+    "remarks": [
+        "- remarks will appear as the epilogue of the -h print-out of cli mode",
+        "- use remarks to further explain usage of the app, its preconditions, etc.",
+        "- controller app turns on the backend and changes its state by tweaking the form fields while the backend is running"
+    ],
+    "input": {
+        "csound_script": {
+            "group": "general",
+            "help": "Csound script that starts an oscillator and a Open-Sound-Control server",
+            "type": "file",
+            "default": null,
+            "range": [
+                1,
+                1
+            ],
+            "startDir": "$HOME$"
+        },
+        "oscillator": {
+            "group": "general",
+            "title": "Waveform",
+            "help": "Oscillator waveform types",
+            "choices": ["Sine", "Square", "Sawtooth"],
+            "default": "Square",
+            "range": [
+                1,
+                1
+            ],
+            "trace": true
+        },
+        "frequency": {
+            "group": "general",
+            "title": "Frequency (Hz)",
+            "help": "Frequency of the output signal in Hertz",
+            "default": 440,
+            "range": [
+                20,
+                20000
+            ],
+            "step": 1,
+            "trace": true
+        },
+        "gain": {
+            "group": "general",
+            "title": "Gain (dB)",
+            "help": "Gain of the output signal in dB",
+            "default": "-16.0",
+            "range": [
+                -48.0,
+                0.0
+            ],
+            "step": 1.0,
+            "precision": 1,
+            "trace": true
+        }
+    },
+    "output": {},
+    "appearance": {
+        "title": "Simple Oscillator",
+        "size": [
+            800,
+            600
+        ]
+    }
+}

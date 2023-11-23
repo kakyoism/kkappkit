@@ -4,8 +4,8 @@
     "description": "form for filling character profile",
     "template": "form",
     "tutorial": [
-        "# example 1: do this",
-        "run -n your_name"
+        "# generate default character profile",
+        "run"
     ],
     "remarks": [
         "- prerequisites: do that before running this",

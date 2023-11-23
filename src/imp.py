@@ -11,6 +11,14 @@ import kkpyutil as util
 # project
 import base
 
+_build_var_map = {
+    '$APPDATA$': 'util.get_platform_appdata_dir()',
+    '$HOME$': 'util.get_platform_home_dir()',
+    '$TEMP$': 'util.get_platform_tmp_dir()',
+    '$CWD$': 'os.getcwd()',
+    "$APP$": None
+}
+
 
 class Core(base.Core):
     def __init__(self, args, logger=None):
@@ -88,10 +96,12 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
+        _build_var_map['$APP$'] = app_name
         return True
 
     def _generate_code(self):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
+
         # TODO: replace with json schema
         if is_new_app := not self.appConfig['name']:
             self.logger.warning('app.json is incomplete because its name is empty; complete app-config and rebuild the app')
@@ -564,39 +574,25 @@ class TextEntryGen(EntryGen):
 class FileEntryGen(EntryGen):
     """
     - accept empty path for app-core to fill in
-    - accepted build variables
-      - $APPDATA
-      - $TEMP
-      - $HOME
     """
-
     def __init__(self, name, arg):
         super().__init__(name, arg)
-        buildvar_dir_map = {
-            '$APPDATA': 'util.get_platform_appdata_dir()',
-            '$TEMP': 'util.get_platform_tmp_dir()',
-            '$HOME': 'util.get_platform_home_dir()',
-        }
-        self.default = util.substitute_keywords(self.arg['default'], buildvar_dir_map, useliteral=True)
-        self.startDir = util.substitute_keywords(self.arg['startDir'], buildvar_dir_map, useliteral=True) or '.'
+        # if path is required, default will be null and we should keep it as is
+        self.default = util.substitute_keywords(self.arg['default'], _build_var_map, useliteral=True) if self.arg['default'] is not None else self.arg['default']
+        self.startDir = util.substitute_keywords(self.arg['startDir'], _build_var_map, useliteral=True) or _build_var_map['$HOME$']
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()}, {repr(self.arg["range"])})']
+        return [f'{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {self.startDir})']
 
 
 class FolderEntryGen(EntryGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
-        buildvar_dir_map = {
-            '$APPDATA': 'util.get_platform_appdata_dir()',
-            '$TEMP': 'util.get_platform_tmp_dir()',
-            '$HOME': 'util.get_platform_home_dir()',
-        }
-        self.default = util.substitute_keywords(self.arg['default'], buildvar_dir_map, useliteral=True)
-        self.startDir = util.substitute_keywords(self.arg['startDir'], buildvar_dir_map, useliteral=True) or '.'
+        self.default = util.substitute_keywords(self.arg['default'], _build_var_map, useliteral=True) if self.arg['default'] is not None else self.arg['default']
+        self.startDir = util.substitute_keywords(self.arg['startDir'], _build_var_map, useliteral=True) or _build_var_map['$HOME$']
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()}, {repr(self.arg["range"])})']
+        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {self.startDir})']
 
 
 class OptionEntryGen(EntryGen):
@@ -623,7 +619,7 @@ class ControllerGen:
         self.appConfig = appcfg
         template_cls_map = {
             'form': 'FormController',
-            'realtime': 'RealtimeController',
+            'realtime': 'FormController',
             'custom': 'Controller',
         }
         self.baseClass = template_cls_map[self.appConfig['template']]
