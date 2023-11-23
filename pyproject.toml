@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kkappkit"
-version = "0.6.5"
+version = "0.7.0"
 description = "Code-generator for building small desktop applications with Python and Tkinter"
 authors = ["Beinan Li <li.beinan@gmail.com>"]
 license = "MIT"
@@ -13,10 +13,15 @@ keywords = [
     "ui",
 ]
 packages = [
-    { include = "hello_world" },
-    { include = "test_offline_params" },
-    { include = "test_realtime_params" },
-    { include = "*.py" },
+    { include = "kkappkit", from = ".." },
+]
+exclude = [
+    ".idea",
+    ".vscode",
+    ".pytest_cache",
+    "_research",
+    "temp",
+    "pyproject.toml",
 ]
 
 [tool.poetry.dependencies]
