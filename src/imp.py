@@ -80,12 +80,14 @@ class Core(base.Core):
         """
         - user gives app name only when creating a new app
         """
+        app_name = osp.basename(self.args.appRoot)
+        _build_var_map['$APP$'] = app_name
         if to_update_app := not self.args.forceOverwrite and osp.isfile(self.dstPaths.depCfg):
             # update toml
             return
         util.safe_remove(self.dstPaths.depCfg)
         util.run_cmd(['poetry', 'init', '-n',
-                      '--name', app_name := osp.basename(self.args.appRoot),
+                      '--name', app_name,
                       '--author', getpass.getuser(),
                       '--python', '^3.11',
                       '--dependency', 'kkpyutil',
@@ -96,7 +98,6 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
-        _build_var_map['$APP$'] = app_name
         return True
 
     def _generate_code(self):
@@ -203,7 +204,9 @@ class Core(base.Core):
         pgvar_lines = list(pg_line_map.values())
         entry_lines = [line for name, arg in self.appConfig['input'].items()
                        for line in EntryGen.create_codegen(name, arg).generate()]
-        return pgvar_lines + entry_lines
+        traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
+        tracer_lines = [f'{name.lower()}.set_tracer(ctrlr.on_{name.lower()}_changed)' for name, arg in traceable_args.items()]
+        return pgvar_lines + entry_lines + tracer_lines
 
     def _create_action(self):
         template_cls_map = {
@@ -265,7 +268,7 @@ class ArgumentGen:
                 assert arg['type']
             return OptionArgGen(name, arg)
         if is_path := arg.get('type') in ('file', 'folder'):
-            return ArgumentGen(name, arg)
+            return PathArgGen(name, arg)
         if is_float := arg.get('precision'):
             arg['type'] = 'float'
             return FloatArgGen(name, arg)
@@ -475,11 +478,27 @@ parser.add_argument(
 
 
 class PathArgGen(ArgumentGen):
+    """
+    - cli default must ensure cross-platform,
+    - build variables $VAR$ are thus used and must not be expanded to their literal there
+    """
     def __init__(self, name, arg):
         super().__init__(name, arg)
+        self.default = self.arg['default'] if self.arg['default'] is not None else repr('')
 
-    def main(self):
-        pass
+    def generate(self):
+        """output code lines"""
+        return util.indent(f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    dest='{self.dest}',
+    type={self.arg['type']},
+    default={repr(self.default)},
+    required={self.arg['default'] is None},
+    help='{self.arg['help']}'
+)""")
 
 
 #
@@ -577,22 +596,56 @@ class FileEntryGen(EntryGen):
     """
     def __init__(self, name, arg):
         super().__init__(name, arg)
-        # if path is required, default will be null and we should keep it as is
-        self.default = util.substitute_keywords(self.arg['default'], _build_var_map, useliteral=True) if self.arg['default'] is not None else self.arg['default']
-        self.startDir = util.substitute_keywords(self.arg['startDir'], _build_var_map, useliteral=True) or _build_var_map['$HOME$']
+        # CAUTION
+        # - if path is required, default will be null,
+        # - but text widget will need it to be text, so we set it to empty string
+        # - e.g., $APPDATA$/$APP$ => osp.join(util.get_platform_appdata_dir(), self.appConfig['name'])
+        self.default = self._resolve_appconfig_path(self.arg['default'], repr(''))
+        self.startDir = self._resolve_appconfig_path(self.arg['startDir'],  _build_var_map['$HOME$'])
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {self.startDir})']
+        """
+        - default uses osp.join() and should be used as code literal
+        """
+        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
+
+    @staticmethod
+    def _resolve_appconfig_path(path, fallback):
+        """
+        - assume all app-config paths use forward-slashes / as path separator
+        """
+        if path is None:
+            return fallback
+        path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in path.split('/')]
+        for p, pc in enumerate(path_comps):
+            if not pc.startswith('util.'):
+                path_comps[p] = repr(pc)
+        path_arg_list = ', '.join(path_comps)
+        return f'osp.join({path_arg_list})'
 
 
 class FolderEntryGen(EntryGen):
     def __init__(self, name, arg):
         super().__init__(name, arg)
-        self.default = util.substitute_keywords(self.arg['default'], _build_var_map, useliteral=True) if self.arg['default'] is not None else self.arg['default']
-        self.startDir = util.substitute_keywords(self.arg['startDir'], _build_var_map, useliteral=True) or _build_var_map['$HOME$']
+        self.default = self._resolve_appconfig_path(self.arg['default'], repr(''))
+        self.startDir = self._resolve_appconfig_path(self.arg['startDir'],  _build_var_map['$HOME$'])
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {self.startDir})']
+        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
+
+    @staticmethod
+    def _resolve_appconfig_path(path, fallback):
+        """
+        - assume all app-config paths use forward-slashes / as path separator
+        """
+        if path is None:
+            return fallback
+        path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in path.split('/')]
+        for p, pc in enumerate(path_comps):
+            if not pc.startswith('util.'):
+                path_comps[p] = repr(pc)
+        path_arg_list = ', '.join(path_comps)
+        return f'osp.join({path_arg_list})'
 
 
 class OptionEntryGen(EntryGen):

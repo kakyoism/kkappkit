@@ -13,16 +13,15 @@
         "- controller app turns on the backend and changes its state by tweaking the form fields while the backend is running"
     ],
     "input": {
-        "csound_script": {
-            "group": "general",
-            "help": "Csound script that starts an oscillator and a Open-Sound-Control server",
-            "type": "file",
-            "default": "hello text",
+        "traceable": {
+            "group": "page1",
+            "help": "set trace to true to bind callback to field change for realtime control",
+            "default": 10,
             "range": [
                 0,
-                null
+                100
             ],
-            "startDir": "$HOME$",
+            "step": 1,
             "trace": true
         }
     },

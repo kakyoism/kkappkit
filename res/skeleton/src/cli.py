@@ -17,15 +17,17 @@ def main():
 
 def file(path):
     """
-    - empty string: valid path placeholder, implementation will fill it up
+    - must resolve path in implementation for following:
+      - empty string: valid path placeholder
+      - string containing $VAR$: cross-platform standard folders
     """
-    if path and not osp.isfile(path):
+    if path and '$' not in path and not osp.isfile(path):
         raise argparse.ArgumentTypeError(f"invalid file path argument: {path}; Does it exist?")
     return path
 
 
 def folder(path):
-    if path and not osp.isdir(path):
+    if path and '$' not in path and not osp.isdir(path):
         raise argparse.ArgumentTypeError(f"invalid folder path argument: {path}; Does it exist?")
     return path
 

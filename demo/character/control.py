@@ -31,12 +31,12 @@ class ControllerImp:
         - override this in app
         - run in background thread to avoid blocking UI
         """
-        ui.Globals.progressQueue.put(('/start', 0, 'Processing ...'))
+        self.controller.set_progress('/start', 0, 'Processing ...')
         for p in range(101):
             # Simulate a task
             time.sleep(0.01)
-            ui.Globals.progressQueue.put(('/processing', p, f'Processing {p}%...'))
-        ui.Globals.progressQueue.put(('/stop', 100, 'Completed!'))
+            self.controller.set_progress('/processing', p, f'Processing {p}%...')
+        self.controller.set_progress('/stop', 100, 'Completed!')
         prompt = ui.Prompt()
         prompt.info('Finished. Will open result in default browser', confirm=True)
         core = imp.Core(self.controller.pack())
