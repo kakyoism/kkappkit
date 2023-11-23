@@ -18,7 +18,7 @@ class Core(base.Core):
         self.dstAppConfig = None
 
     def main(self):
-        if is_new_app := not osp.isdir(self.args.appRoot):
+        if is_new_app := self.args.forceOverwrite or not osp.isdir(self.args.appRoot):
             self._copy_skeleton()
         else:
             self._reset_interface()
@@ -137,7 +137,7 @@ class Core(base.Core):
         """
         view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() + self._create_mainloop())
         view_code = '\n'.join(view_lines)
-        ctrlr_lines = ControllerGen(self.appConfig).generate()
+        ctrlr_lines = ControllerGen.create_codegen(self.appConfig).generate()
         ctrlr_code = '\n'.join(ctrlr_lines)
         # substitute template
         util.substitute_keywords_in_file(self.dstPaths.gui, {
@@ -204,13 +204,14 @@ class Core(base.Core):
         return [f'action_bar = ui.{template_cls_map[self.appConfig["template"]]}(ui.Globals.root, ctrlr)']
 
     def _create_progress(self):
-        prog_type = self.appConfig['template']
-        if not prog_type:
-            return []
         template_cls_map = {
             'form': 'ProgressBar',
             'realtime': 'WaitBar',
         }
+        # custom progressbar must be
+        prog_type = self.appConfig['template']
+        if not template_cls_map.get(prog_type):
+            return []
         return [
             f'progress_bar = ui.{template_cls_map[prog_type]}(ui.Globals.root, ui.Globals.progressQueue)',
             'progress_bar.poll()',
@@ -630,13 +631,13 @@ class FormControllerGen(ControllerGen):
         code_lines = f"""class Controller(ui.{self.baseClass}):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.imp = ctrl.ControllerImp(self, *args, **kwargs)
+        self.imp = ctrl.ControllerImp(self, **kwargs)
 
     def submit(self, event=None):
         self.imp.submit(event)
 
     def cancel(self, event=None):
-        self.imp.submit(event)
+        self.imp.cancel(event)
 
     def init(self, event=None):
         self.imp.init(event)
