@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.8.0
+## v0.7.0
 ### Changed
 - Redesign and reimplementation
 
@@ -12,7 +12,3 @@
 - auto-validate primitive parameters
 - auto-gen parameter help doc
 - saving/loading parameter presets
-
-## v0.7.0
-### Changed
-- [breaking change] Revamped architecture
