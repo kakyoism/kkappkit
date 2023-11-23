@@ -34,7 +34,7 @@
             "group": "profile",
             "title": "Height (m)",
             "help": "Character height in meters",
-            "default": 1.63,
+            "default": 1.64,
             "range": [
                 0.0,
                 2.0
