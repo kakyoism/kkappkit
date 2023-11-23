@@ -258,7 +258,10 @@ class ArgumentGen:
             return ArgumentGen(name, arg)
         if is_float := arg.get('precision'):
             arg['type'] = 'float'
-            return ArgumentGen(name, arg)
+            return FloatArgGen(name, arg)
+        if is_int := arg.get('step') and not arg.get('precision'):
+            arg['type'] = 'int'
+            return IntArgGen(name, arg)
         if not_required_arg := isinstance(arg['default'], (int, str, list)):
             arg['type'] = type(arg['default']).__name__
             return ArgumentGen(name, arg)
@@ -378,6 +381,35 @@ parser.add_argument(
     required={self.arg['required']},
     help='{self.arg['help']}'
 )""")
+
+
+class IntArgGen(ArgumentGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        rg_min = "float('-inf')" if self.arg['range'][0] is None else int(self.arg['range'][0])
+        rg_max = "float('inf')" if self.arg['range'][1] is None else int(self.arg['range'][1])
+        self.range = f'({rg_min}, {rg_max})'
+
+    def generate(self):
+        return util.indent(f"""\
+parser.add_argument(
+    {self.shortSwitch}
+    '{self.longSwitch}',
+    action='{self.action}',
+    dest='{self.dest}',
+    type=ranged_{self.arg['type']}{self.range},
+    default={self.arg['default']},
+    required={self.arg['required']},
+    help='{self.arg['help']}'
+)""")
+
+
+class FloatArgGen(IntArgGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        rg_min = "float('-inf')" if self.arg['range'][0] is None else float(self.arg['range'][0])
+        rg_max = "float('inf')" if self.arg['range'][1] is None else float(self.arg['range'][1])
+        self.range = f'({rg_min}, {rg_max})'
 
 
 class OptionArgGen(ArgumentGen):

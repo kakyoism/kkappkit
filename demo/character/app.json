@@ -28,7 +28,8 @@
             "range": [
                 0,
                 null
-            ]
+            ],
+            "step": 1
         },
         "height": {
             "group": "profile",

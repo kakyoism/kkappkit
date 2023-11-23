@@ -30,6 +30,40 @@ def folder(path):
     return path
 
 
+def ranged_float(min_val, max_val):
+    """ Factory function to generate range checking functions for argparse """
+
+    def check_range(value):
+        try:
+            val = float(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"Must be a floating point number, got '{value}'")
+
+        if val < min_val or val > max_val:
+            raise argparse.ArgumentTypeError(f"Must be in range [{min_val}, {max_val}], got '{val}'")
+
+        return val
+
+    return check_range
+
+
+def ranged_int(min_val, max_val):
+    """ Factory function to generate range checking functions for argparse """
+
+    def check_range(value):
+        try:
+            val = int(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"Must be an integer, got '{value}'")
+
+        if val < min_val or val > max_val:
+            raise argparse.ArgumentTypeError(f"Must be in range [{min_val}, {max_val}], got '{val}'")
+
+        return val
+
+    return check_range
+
+
 def create_parser():
     return argparse.ArgumentParser(
         prog='{{name}}',

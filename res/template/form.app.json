@@ -1,39 +1,40 @@
 {
     "version": 1,
-    "name": "character",
-    "description": "form for filling character profile",
+    "name": "my_form",
+    "description": "form-filler app",
     "template": "form",
     "tutorial": [
         "# example 1: do this",
         "run -n your_name"
     ],
     "remarks": [
-        "- prerequisites: do that before running this",
-        "- caution: do not do that"
+        "- remarks will appear as the epilogue of the -h print-out of cli mode",
+        "- use remarks to further explain usage of the app, its preconditions, etc."
     ],
     "input": {
-        "name": {
-            "group": "profile",
-            "help": "Character name",
-            "default": "Robin Sena",
+        "text": {
+            "group": "general",
+            "help": "text entry; assign group to make entry appear on that page; use range to specify length limits, with null meaning no limit; key is used as the variable name and also the ui title by default",
+            "default": "hello text",
             "range": [
                 0,
                 null
             ]
         },
-        "age": {
-            "group": "profile",
-            "help": "integer",
+        "integer": {
+            "group": "general",
+            "title": "custom entry title",
+            "help": "integer entry; use title to specify ui title; use range to specify value limits, with null meaning no limit; use step to specify increment/decrement steps size",
             "default": 0,
             "range": [
                 0,
                 null
-            ]
+            ],
+            "step": 1
         },
-        "height": {
-            "group": "profile",
-            "title": "Height (m)",
-            "help": "Character height in meters",
+        "float": {
+            "group": "general",
+            "help": "floating-point entry; use precision to specify number of decimal places to display under gui mode",
             "default": 1.63,
             "range": [
                 0.0,
@@ -42,21 +43,9 @@
             "step": 0.01,
             "precision": 2
         },
-        "weight": {
-            "group": "profile",
-            "title": "Weight (kg)",
-            "help": "Character weight in kilograms",
-            "default": 51,
-            "range": [
-                50.2,
-                70.3
-            ],
-            "step": 0.1,
-            "precision": 1
-        },
-        "gender": {
-            "group": "profile",
-            "help": "Character gender",
+        "options": {
+            "group": "general",
+            "help": "option entry; ",
             "choices": [
                 "Male",
                 "Female",

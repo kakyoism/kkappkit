@@ -38,9 +38,8 @@ class ControllerImp:
             ui.Globals.progressQueue.put(('/processing', p, f'Processing {p}%...'))
         ui.Globals.progressQueue.put(('/stop', 100, 'Completed!'))
         prompt = ui.Prompt()
-        prompt.info('Finished', 'Subclass this!')
-        args = types.SimpleNamespace()
-        core = self.core = imp.Core(self.controller.pack())
+        prompt.info('Finished. Will open result in default browser', confirm=True)
+        core = imp.Core(self.controller.pack())
         core.main()
 
     def init(self, event=None):
