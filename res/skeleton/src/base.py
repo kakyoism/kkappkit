@@ -16,7 +16,7 @@ class Core:
     - no need to consider caller session because caller must import pacakge instead of subprocess
     """
     def __init__(self, args, logger=None):
-        self.args = self._validate_args(args)
+        self.args = self.validate_args(args)
         self.out = out.Output()
         pkg_name = util.load_ini(osp.join(osp.dirname(__file__), 'pyproject.toml'))['tool.poetry']['name'] if self.is_dev_environment() else osp.basename(osp.dirname(__file__))
         tmp_dir = osp.join(util.get_platform_tmp_dir(), pkg_name)
@@ -44,10 +44,9 @@ class Core:
     def _create_paths(self):
         pass
 
-    def _validate_args(self, args):
+    def validate_args(self, args):
         """
         - reimplement in subclass
         """
         self.args = copy.deepcopy(args)
-        # IMPLEMENT VALIDATION HERE
         return self.args

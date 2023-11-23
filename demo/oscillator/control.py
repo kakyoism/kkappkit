@@ -1,5 +1,5 @@
+import os.path as osp
 import time
-
 # 3rd party
 import kkpyutil as util
 import pythonosc.udp_client as osc_client
@@ -26,7 +26,7 @@ class ControllerImp:
             return False
         self.controller.update()
         options = ['Sine', 'Square', 'Sawtooth']
-        self.sender.send_message('/oscillator', options.index(self.controller.model['General']['Oscillator']))
+        self.sender.send_message('/oscillator', options.index(self.controller.model['General']['Waveform']))
         self.sender.send_message('/frequency', self.controller.model['General']['Frequency (Hz)'])
         self.sender.send_message('/gain', self.controller.model['General']['Gain (dB)'])
         self.sender.send_message('/play', 1)
@@ -41,9 +41,14 @@ class ControllerImp:
         self.playing = False
 
     def init(self, event=None):
-        self.controller.init()
         self.controller.update()
-        cmd = ['csound', self.controller.model['General']['Csound Script'][0], '-odac']
+        scpt = self.controller.model['General']['Csound Script'][0]
+        if not osp.isfile(scpt):
+            prompt = ui.Prompt()
+            if not prompt.warning(FileNotFoundError, '\n'.join([f'Missing user Csound script: {scpt}', 'Copy your oscillator script over there and retry (if you answered No)', 'or use default (if you answered Yes)']), 'Proceed to use default script?', confirm=True):
+                return
+        scpt = osp.join(osp.dirname(__file__), 'tonegen.csd')
+        cmd = ['csound', scpt, '-odac']
         util.run_daemon(cmd)
         # time.sleep(0.8)
 
@@ -51,7 +56,7 @@ class ControllerImp:
         self.cancel()
         util.kill_process_by_name('csound')
 
-    def on_freq_changed(self, name, var, index, mode):
+    def on_frequency_changed(self, name, var, index, mode):
         print(f'{name=}={var.get()}, {index=}, {mode=}')
         self.sender.send_message('/frequency', var.get())
 
