@@ -608,7 +608,7 @@ class ControllerGen:
         return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg)
 
     def generate(self):
-        return '# CUSTOM CONTROLLER: IMPLEMENT IT IN control.py'
+        return ['# CUSTOM CONTROLLER: IMPLEMENT IT IN control.py']
 
     @staticmethod
     def _create_event_handler(name, arg):
