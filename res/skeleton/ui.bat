@@ -1,17 +1,15 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-pushd .
+pushd
 
 :: see posix version for details
 
-set myRoot=%~dp0..
-:build
-kkappgen -r %myRoot% %*
+cd /d %~dp0
+poetry run python src\gui.py %*
 set result=%errorlevel%
 if NOT %result% == 0 (
 	goto :failed
 )
-echo ** SUCCEEDED **
 goto :passed
 
 :failed

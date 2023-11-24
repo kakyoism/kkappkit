@@ -2,19 +2,20 @@
 setlocal EnableExtensions DisableDelayedExpansion
 pushd .
 
+:: see posix version for details
+
 set myRoot=%~dp0..
-cd /d %myProjRoot%
 :build
-kkgenapp %*
+kkappgen -r %myRoot% %*
 set result=%errorlevel%
 if NOT %result% == 0 (
-	goto :fail
+	goto :failed
 )
 echo ** SUCCEEDED **
+goto :passed
 
-goto :success
-:fail
+:failed
 echo ** FAILED **
-:success
+:passed
 popd
 exit /b %result%

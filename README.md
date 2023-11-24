@@ -17,6 +17,7 @@ Dev UX
 - Supports frontend-backend decoupling using Model-View-Controller architecture
 - Ready-to-use widgets for solving common UI patterns
 - JSON-based declarative configuration that drives code generation
+- CI/CD friendly: ready-to-use build scripts for testing, building, and packaging
 - Minimum dependencies: The generated app will only depend on Python 3 and Tkinter (wrapped into open-source packages written by this author)
 
 ## How to install kkappkit?

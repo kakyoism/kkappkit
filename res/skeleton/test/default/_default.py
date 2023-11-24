@@ -20,6 +20,13 @@ def _create_paths(root=None):
     return paths
 
 
+def _init_args(paths):
+    app_config = util.load_json(paths.appCfg)
+    app_input = app_config['input']
+    defaults = {name: arg['default'] for name, arg in app_input.items()}
+    return types.SimpleNamespace(**defaults)
+
+
 _paths = _create_paths()
 imp = util.safe_import_module('imp', _paths.srcDir)
 # dst_root = ...
@@ -48,6 +55,9 @@ def test_default():
     """
     - must update args in tests after changing CLI
     """
-    args = types.SimpleNamespace()
+    args = _init_args(_paths)
+    #
+    # CUSTOMIZE ARGS HERE
+    #
     imp.Core(args).run()
     assert True

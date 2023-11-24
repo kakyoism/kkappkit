@@ -1,15 +1,19 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-:: protect cwd
 pushd
+
+:: see posix version for details
 
 cd /d %~dp0
 poetry run python src\cli.py %*
-if NOT %errorlevel% == 0 (
-	goto :fail
+set result=%errorlevel%
+if NOT %result% == 0 (
+	goto :failed
 )
-popd
-goto :EOF
+goto :passed
 
-:fail
+:failed
+echo ** FAILED **
+:passed
 popd
+exit /b %result%
