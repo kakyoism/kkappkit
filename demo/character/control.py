@@ -14,7 +14,7 @@ class ControllerImp:
         super().__init__(*args, **kwargs)
         self.controller = ctrlr
 
-    def submit(self, event=None):
+    def on_submit(self, event=None):
         """
         - subclass this to implement custom logic
         """
@@ -23,8 +23,8 @@ class ControllerImp:
         # otherwise ui thread still blocks
         threading.Thread(target=lambda: self.run_background(), daemon=True).start()
 
-    def cancel(self, event=None):
-        self.controller.quit()
+    def on_cancel(self, event=None):
+        self.controller.on_quit()
 
     def run_background(self):
         """
@@ -42,8 +42,8 @@ class ControllerImp:
         core = imp.Core(self.controller.pack())
         core.main()
 
-    def init(self, event=None):
+    def on_activate(self, event=None):
         pass
 
-    def term(self, event=None):
+    def on_term(self, event=None):
         pass
