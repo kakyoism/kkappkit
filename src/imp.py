@@ -715,17 +715,17 @@ class FormControllerGen(ControllerGen):
         super().__init__(*args, **kwargs)
         self.imp = ctrl.ControllerImp(self, **kwargs)
 
-    def submit(self, event=None):
-        self.imp.submit(event)
+    def on_submit(self, event=None):
+        self.imp.on_submit(event)
 
-    def cancel(self, event=None):
-        self.imp.cancel(event)
+    def on_cancel(self, event=None):
+        self.imp.on_cancel(event)
 
-    def init(self, event=None):
-        self.imp.init(event)
+    def on_activate(self, event=None):
+        self.imp.on_activate(event)
 
-    def term(self, event=None):
-        self.imp.term(event)
+    def on_term(self, event=None):
+        self.imp.on_term(event)
 
 """.splitlines()
         # lazy-add event handlers to traceable args

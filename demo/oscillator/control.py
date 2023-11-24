@@ -19,7 +19,7 @@ class ControllerImp:
         self.playing = False
         self.initialized = False
 
-    def submit(self, event=None):
+    def on_submit(self, event=None):
         """
         - assume csound has started
         """
@@ -35,13 +35,13 @@ class ControllerImp:
         self.playing = True
         return True
 
-    def cancel(self, event=None):
+    def on_cancel(self, event=None):
         self.sender.send_message('/play', 0)
         self.controller.set_progress('/stop', 100, 'Stopped')
         time.sleep(0.1)
         self.playing = False
 
-    def init(self, event=None):
+    def on_activate(self, event=None):
         if self.initialized:
             return
         self.initialized = True
@@ -49,7 +49,7 @@ class ControllerImp:
         scpt = self.controller.model['General']['Csound Script'][0]
         if not osp.isfile(scpt):
             if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
-                self.term(None)
+                self.on_term(None)
                 return
             scpt = osp.join(osp.dirname(__file__), 'tonegen.csd')
             # refresh entry view
@@ -59,8 +59,8 @@ class ControllerImp:
         util.run_daemon(cmd)
         # time.sleep(0.8)
 
-    def term(self, event=None):
-        self.cancel()
+    def on_term(self, event=None):
+        self.on_cancel()
         util.kill_process_by_name('csound')
 
     def on_frequency_changed(self, name, var, index, mode):

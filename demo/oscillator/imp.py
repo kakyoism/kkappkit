@@ -21,7 +21,7 @@ class Core(base.Core):
     def __init__(self, args, logger=None):
         super().__init__(args, logger)
 
-    def _validate_args(self, args):
+    def validate_args(self, args):
         """
         - reimplement in subclass
         """
