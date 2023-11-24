@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kkappkit"
-version = "0.8.0"
+version = "0.9.0"
 description = "Code-generator for building small desktop applications with Python and Tkinter"
 authors = ["Beinan Li <li.beinan@gmail.com>"]
 license = "MIT"
