@@ -17,6 +17,7 @@ class ControllerImp:
         self.controller = ctrlr
         self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
         self.playing = False
+        self.initialized = False
 
     def submit(self, event=None):
         """
@@ -41,13 +42,19 @@ class ControllerImp:
         self.playing = False
 
     def init(self, event=None):
+        if self.initialized:
+            return
+        self.initialized = True
         self.controller.update()
         scpt = self.controller.model['General']['Csound Script'][0]
         if not osp.isfile(scpt):
-            prompt = ui.Prompt()
-            if not prompt.warning(FileNotFoundError, '\n'.join([f'Missing user Csound script: {scpt}', 'Copy your oscillator script over there and retry (if you answered No)', 'or use default (if you answered Yes)']), 'Proceed to use default script?', confirm=True):
+            if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
+                self.term(None)
                 return
-        scpt = osp.join(osp.dirname(__file__), 'tonegen.csd')
+            scpt = osp.join(osp.dirname(__file__), 'tonegen.csd')
+            # refresh entry view
+            self.controller.model['General']['Csound Script'][0] = scpt
+            self.controller.reflect()
         cmd = ['csound', scpt, '-odac']
         util.run_daemon(cmd)
         # time.sleep(0.8)

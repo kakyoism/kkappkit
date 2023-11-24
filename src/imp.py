@@ -93,6 +93,7 @@ class Core(base.Core):
                       '--dependency', 'kkpyutil',
                       '--dependency', 'kkpyui',
                       '--dev-dependency', 'pytest',
+                      '--dev-dependency', 'coverage',
                       ], cwd=self.dstPaths.root)
         # update app config
         self.appConfig = util.load_json(self.dstPaths.appCfg)
