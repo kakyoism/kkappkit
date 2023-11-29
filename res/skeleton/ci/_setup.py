@@ -19,11 +19,12 @@ def load_dependencies(src_root):
     - packages are defined as dependencies in pyproject.toml
     """
     dep_config = load_proj_config(src_root)['tool']['poetry']['dependencies']
-    return list(dep_config.keys())
+    pkgs = [pkg for pkg in dep_config.keys() if not pkg.startswith('python')]
+    return pkgs
 
 
 def load_dev_dependencies(src_root):
-    dep_config = load_proj_config(src_root)['tool']['poetry']['dev-dependencies']
+    dep_config = load_proj_config(src_root)['tool']['poetry']['group']['dev']['dependencies']
     return list(dep_config.keys())
 
 
@@ -60,15 +61,15 @@ def load_app_name(src_root):
     """
     - return None if it's a console app
     """
-    return load_proj_config(src_root)['name']
+    return load_proj_config(src_root)['tool']['poetry']['name']
 
 
 def load_app_version(src_root):
-    return load_proj_config(src_root)['version']
+    return load_proj_config(src_root)['tool']['poetry']['version']
 
 
 def load_app_description(src_root):
-    return load_proj_config(src_root)['description']
+    return load_proj_config(src_root)['tool']['poetry']['description']
 
 
 def get_build_options_exe(src_root):
