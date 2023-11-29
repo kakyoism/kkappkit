@@ -1,0 +1,14 @@
+#! /bin/sh
+
+# use -f to force overwrite existing app
+# use -t to specify template for new app
+
+set -e
+pushd . &> /dev/null
+
+scptdir="$( cd "$( dirname "$0" )" && pwd )"
+root="$( cd $scptdir/.. && pwd )"
+cd "$root"
+`which poetry` run python ci/_setup.py build_exe
+
+popd &> /dev/null

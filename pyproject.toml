@@ -28,10 +28,11 @@ exclude = [
 python = "^3.11"
 kkpyutil = "*"
 GitPython = "*"
+cx_freeze = "*"
 
 [tool.poetry.dev-dependencies]
-jinja2 = "*"
 pytest = "*"
+coverage = "*"
 python-osc = "*"
 
 [build-system]
