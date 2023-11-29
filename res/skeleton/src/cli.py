@@ -4,13 +4,13 @@
 import argparse
 import os.path as osp
 # project
-import imp
+import impl
 
 
 def main():
     parser = create_parser()
     add_arguments(parser)
-    core = imp.Core(parser.parse_args())
+    core = impl.Core(parser.parse_args())
     out = core.run()
     send(out)
 

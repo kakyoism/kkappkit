@@ -29,7 +29,7 @@ class Core(base.Core):
         self.args.csoundScript = util.substitute_keywords(self.args.csoundScript, _build_var_map, useliteral=True)
         if not os.path.isfile(self.args.csoundScript):
             self.logger.warning(f'Missing user Csound script: {self.args.csoundScript}; will use default script')
-            self.args.csoundScript = os.path.join(os.path.dirname(__file__), 'tonegen.csd')
+            self.args.csoundScript = os.path.join(os.path.dirname(__file__), '../res/tonegen.csd')
         return self.args
 
     def main(self):

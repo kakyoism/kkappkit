@@ -1,9 +1,8 @@
 import threading
 import time
-import types
 # project
 import kkpyui as ui
-import imp
+import impl
 
 
 class ControllerImp:
@@ -39,7 +38,7 @@ class ControllerImp:
         self.controller.set_progress('/stop', 100, 'Completed!')
         prompt = ui.Prompt()
         prompt.info('Finished. Will open result in default browser', confirm=True)
-        core = imp.Core(self.controller.pack())
+        core = impl.Core(self.controller.pack())
         core.main()
 
     def on_activate(self, event=None):
