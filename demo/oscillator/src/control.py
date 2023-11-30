@@ -55,7 +55,12 @@ class ControllerImp:
             # refresh entry view
             self.controller.model['General']['Csound Script'][0] = scpt
             self.controller.reflect()
-        cmd = ['csound', scpt, '-odac']
+        # CAUTION
+        # - because sandboxed app cannot access system PATH, must use absolute path to executable
+        # - assume csound is installed by chocolatey and homebrew
+        # - use their default installation paths
+        exe = osp.normpath('c:/program files/csound/bin/csound.exe') if util.PLATFORM == 'Windows' else '/usr/local/bin/csound'
+        cmd = [exe, scpt, '-odac']
         util.run_daemon(cmd)
         # time.sleep(0.8)
 
