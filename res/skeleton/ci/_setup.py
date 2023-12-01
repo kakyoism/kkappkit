@@ -1,10 +1,11 @@
 import glob
 import os.path as osp
+import platform
 import sys
 import tomllib
 # 3rd-party
 from cx_Freeze import setup, Executable
-import kkpyutil as util
+import kkbuild as butil
 
 
 def load_proj_config(src_root):
@@ -57,6 +58,15 @@ def get_gui_entry(src_root):
     return osp.join(src_root, 'src', 'gui.py')
 
 
+def get_gui_base():
+    return 'Win32GUI' if sys.platform == 'win32' else None
+
+
+def create_icon(src_root):
+    master = osp.abspath(f'{src_root}/res/icon.png')
+    return butil.create_apple_icon(master) if platform.system() == 'Darwin' else butil.create_microsoft_icon(master)
+
+
 def load_app_name(src_root):
     """
     - return None if it's a console app
@@ -96,7 +106,7 @@ _dev_src_dir = osp.join(_dev_root, 'src')
 _dst_datadir = 'lib'
 
 executables = [
-    Executable(get_gui_entry(_dev_root), base='Win32GUI' if sys.platform == 'win32' else None, target_name=load_app_name(_dev_root)),
+    Executable(get_gui_entry(_dev_root), base=get_gui_base(), icon=create_icon(_dev_root), target_name=load_app_name(_dev_root)),
     Executable(get_cli_entry(_dev_root), base=None, target_name=f'{load_app_name(_dev_root)}_cli'),
 ]
 
