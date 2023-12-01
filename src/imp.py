@@ -95,6 +95,7 @@ class Core(base.Core):
                       '--dev-dependency', 'pytest',
                       '--dev-dependency', 'coverage',
                       '--dev-dependency', 'cx_freeze',
+                      '--dev-dependency', 'kkbuild',
                       ], cwd=self.dstPaths.root)
         # update app config
         self.appConfig = util.load_json(self.dstPaths.appCfg)

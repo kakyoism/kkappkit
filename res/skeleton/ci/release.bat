@@ -7,7 +7,7 @@ pushd .
 set myRoot=%~dp0..
 :build
 cd /d %myRoot%
-`which poetry` run python ci\_setup.py bdist_msi
+poetry run python ci\_setup.py bdist_msi
 set result=%errorlevel%
 if NOT %result% == 0 (
 	goto :failed
