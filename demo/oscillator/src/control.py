@@ -51,7 +51,7 @@ class ControllerImp:
             if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
                 self.on_term(None)
                 return
-            scpt = osp.join(osp.dirname(__file__), '../res/tonegen.csd')
+            scpt = osp.abspath(f'{osp.dirname(__file__)}/../res/tonegen.csd')
             # refresh entry view
             self.controller.model['General']['Csound Script'][0] = scpt
             self.controller.reflect()
