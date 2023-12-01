@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "oscillator"
+version = "0.1.0"
+description = ""
+authors = ["bin.luo"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+kkbuild = "*"
+kkpyui = "^0.13.0"
+kkpyutil = "^1.18.0"
+python-osc = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+coverage = "*"
+cx_freeze = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
