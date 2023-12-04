@@ -34,10 +34,14 @@ class Core(base.Core):
         self._lazy_init_manifests()
         self._generate_interface()
         if self.args.impRoot:
-            srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
-            dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
-            for src, dst in zip(srcs, dsts):
-                util.copy_file(src, dst)
+            self._update_implementation()
+
+    def _update_implementation(self):
+        srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
+        dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
+        for src, dst in zip(srcs, dsts):
+            util.copy_file(src, dst)
+        util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
 
     def _create_paths(self):
         self.paths = types.SimpleNamespace()
@@ -111,6 +115,8 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
+        # initalize venv and install dependency
+        util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
         return True
 
     def _generate_interface(self):
