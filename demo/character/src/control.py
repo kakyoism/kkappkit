@@ -12,6 +12,10 @@ class ControllerImp:
     def __init__(self, ctrlr, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.controller = ctrlr
+        self.core = impl.Core(self.controller.pack())
+
+    def on_open_log(self):
+        self.core.open_log()
 
     def on_submit(self, event=None):
         """
@@ -38,10 +42,11 @@ class ControllerImp:
         self.controller.set_progress('/stop', 100, 'Completed!')
         prompt = ui.Prompt()
         prompt.info('Finished. Will open result in default browser', confirm=True)
-        core = impl.Core(self.controller.pack())
-        core.main()
+        self.core.args = self.controller.pack()
+        self.core.main()
 
     def on_activate(self, event=None):
+        pass
         pass
 
     def on_term(self, event=None):

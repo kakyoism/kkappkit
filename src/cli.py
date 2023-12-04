@@ -1,12 +1,12 @@
 import argparse
 # project
-import imp as imp
+import impl
 
 
 def main():
     parser = create_parser()
     add_arguments(parser)
-    core = imp.Core(parser.parse_args())
+    core = impl.Core(parser.parse_args())
     out = core.run()
     send(out)
 
@@ -30,6 +30,9 @@ kkgenapp -p my_app -t my_template
 # same as above, but force overwrite existing app folder with new one
 kkgenapp -p my_app -t my_template -f
 
+
+# same as above, but update the implementation using a custom root folder, whose content will overwrite the mirrored folder under the app project folder
+kkgenapp -p my_app -t my_template -f -i /path/to/my_app_impl
 
 # =============
 # REMARKS
@@ -65,6 +68,16 @@ def add_arguments(parser):
         type=str,
         required=False,
         help='App-config template that the the new app is based upon; ignored if an app-config already exists'
+    )
+    parser.add_argument(
+        '-i',
+        '--implementation-root',
+        action='store',
+        dest='impRoot',
+        type=str,
+        default='',
+        required=True,
+        help='Path to the root folder of the implementation, mirroring the app project folder structure'
     )
     parser.add_argument(
         '-f',

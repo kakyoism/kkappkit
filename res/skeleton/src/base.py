@@ -50,3 +50,9 @@ class Core:
         """
         self.args = copy.deepcopy(args)
         return self.args
+
+    def open_log(self):
+        log = util.find_log_path(self.logger)
+        if not log:
+            return
+        util.open_in_browser(log)

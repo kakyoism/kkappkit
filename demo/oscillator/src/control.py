@@ -19,6 +19,12 @@ class ControllerImp:
         self.playing = False
         self.initialized = False
 
+    def open_log(self):
+        """
+        - for performance reasons, no logging is needed for a realtime controller
+        """
+        return
+
     def on_submit(self, event=None):
         """
         - assume csound has started

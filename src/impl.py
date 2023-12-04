@@ -1,5 +1,6 @@
 import copy
 import getpass
+import glob
 import os
 import os.path as osp
 import shutil
@@ -30,8 +31,13 @@ class Core(base.Core):
             self._copy_skeleton()
         else:
             self._reset_interface()
-        self._lazy_init_app_proj()
-        self._generate_code()
+        self._lazy_init_manifests()
+        self._generate_interface()
+        if self.args.impRoot:
+            srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
+            dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
+            for src, dst in zip(srcs, dsts):
+                util.copy_file(src, dst)
 
     def _create_paths(self):
         self.paths = types.SimpleNamespace()
@@ -59,7 +65,11 @@ class Core(base.Core):
         # because scripts are run by poetry, cwd is kkappkit root,
         # so we must use an absolute path for appRoot
         if not osp.isabs(_args.appRoot):
-            util.throw(ValueError, f'Expected absolute path, received relative path: {_args.appRoot}', ['use absolute path for appRoot'])
+            util.throw(ValueError, f'Expected absolute path, received relative path: {_args.appRoot}', ['use absolute path for app root'])
+        if _args.impRoot and not osp.isabs(_args.impRoot):
+            util.throw(ValueError, f'Expected absolute path, received relative path: {_args.impRoot}', ['use absolute path for implementation root'])
+        if _args.impRoot and not osp.isdir(_args.impRoot):
+            util.throw(FileNotFoundError, f'Missing implementation root folder: {_args.impRoot}', ['Ensure path exists and spelling is correct'])
         return _args
 
     def _copy_skeleton(self):
@@ -76,7 +86,7 @@ class Core(base.Core):
         dst = osp.abspath(f'{self.dstPaths.testDir}/default/test_default.py')
         os.rename(src, dst)
 
-    def _lazy_init_app_proj(self):
+    def _lazy_init_manifests(self):
         """
         - user gives app name only when creating a new app
         """
@@ -103,7 +113,7 @@ class Core(base.Core):
         util.save_json(self.dstPaths.appCfg, self.appConfig)
         return True
 
-    def _generate_code(self):
+    def _generate_interface(self):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
 
         # TODO: replace with json schema
@@ -143,13 +153,10 @@ class Core(base.Core):
 
     def _generate_gui(self):
         """
-         ui.Globals.root = ui.Root('Form Demo: Character Design', (800, 600))
-        form = ui.Form(ui.Globals.root, ['Profile', 'Plot'])
-        ctrlr = MyController(form)
-        ui.Globals.root.bind_events(ctrlr)
-        menu = ui.FormMenu(ui.Globals.root, ctrlr)
+        - due to tkinter threading issue, progressbar and actionbar would be reversed against packing order,
+        - to give user a consistent control, we pre-swap them to allow progressbar to update in the background and keep the action bar at the bottom
         """
-        view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_progress() + self._create_action() + self._create_mainloop())
+        view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_action() + self._create_progress() + self._create_mainloop())
         view_code = '\n'.join(view_lines)
         ctrlr_lines = ControllerGen.create_codegen(self.appConfig).generate()
         ctrlr_code = '\n'.join(ctrlr_lines)
@@ -715,19 +722,22 @@ class FormControllerGen(ControllerGen):
         code_lines = f"""class Controller(ui.{self.baseClass}):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.imp = ctrl.ControllerImp(self, **kwargs)
+        self.ctrlrImp = ctrl.ControllerImp(self, **kwargs)
+    
+    def on_open_log(self):
+        self.ctrlrImp.on_open_log()
 
     def on_submit(self, event=None):
-        self.imp.on_submit(event)
+        self.ctrlrImp.on_submit(event)
 
     def on_cancel(self, event=None):
-        self.imp.on_cancel(event)
+        self.ctrlrImp.on_cancel(event)
 
     def on_activate(self, event=None):
-        self.imp.on_activate(event)
+        self.ctrlrImp.on_activate(event)
 
     def on_term(self, event=None):
-        self.imp.on_term(event)
+        self.ctrlrImp.on_term(event)
 
 """.splitlines()
         # lazy-add event handlers to traceable args
@@ -742,6 +752,6 @@ class FormControllerGen(ControllerGen):
         """
         return f"""\
     def on_{name.lower()}_changed(self, name, var, index, mode):
-        self.imp.on_{name.lower()}_changed(name, var, index, mode)
+        self.ctrlrImp.on_{name.lower()}_changed(name, var, index, mode)
 
 """.splitlines()
