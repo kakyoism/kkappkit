@@ -115,7 +115,7 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
-        # initalize venv and install dependency
+        # initialize venv and install dependency
         util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
         return True
 
@@ -198,7 +198,7 @@ class Core(base.Core):
     def _create_controller(self):
         template_cls_map = {
             'form': 'Controller',
-            'realtime': 'Controller',
+            'onoff': 'Controller',
             'custom': 'ctrl.Controller',
         }
         return [
@@ -227,7 +227,7 @@ class Core(base.Core):
     def _create_action(self):
         template_cls_map = {
             'form': 'FormActionBar',
-            'realtime': 'OnOffActionBar',
+            'onoff': 'OnOffActionBar',
             'custom': 'ctrl.ActionBar',
         }
         return [f'action_bar = ui.{template_cls_map[self.appConfig["template"]]}(ui.Globals.root, ctrlr)']
@@ -235,7 +235,7 @@ class Core(base.Core):
     def _create_progress(self):
         template_cls_map = {
             'form': 'ProgressBar',
-            'realtime': 'WaitBar',
+            'onoff': 'WaitBar',
         }
         # custom progressbar must be
         prog_type = self.appConfig['template']
@@ -533,6 +533,9 @@ class OutputGen:
 # gui
 #
 class EntryGen:
+    """
+    - assume app.json uses snake_case for input/output field keys
+    """
     def __init__(self, name, arg):
         self.name = name
         self.arg = arg
@@ -569,7 +572,7 @@ class BoolEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
 
 
 class IntEntryGen(EntryGen):
@@ -582,7 +585,7 @@ class IntEntryGen(EntryGen):
         self.step = self.arg.get('step') or 1
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
+        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
 
 
 class FloatEntryGen(EntryGen):
@@ -595,7 +598,7 @@ class FloatEntryGen(EntryGen):
         self.precision = self.arg.get('precision') or 2
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
+        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
 
 
 class TextEntryGen(EntryGen):
@@ -603,7 +606,7 @@ class TextEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
 class FileEntryGen(EntryGen):
@@ -623,7 +626,7 @@ class FileEntryGen(EntryGen):
         """
         - default uses osp.join() and should be used as code literal
         """
-        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
+        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -647,7 +650,7 @@ class FolderEntryGen(EntryGen):
         self.startDir = self._resolve_appconfig_path(self.arg['startDir'],  _build_var_map['$HOME$'])
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
+        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -671,7 +674,7 @@ class OptionEntryGen(EntryGen):
 
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
-        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
 #
@@ -688,7 +691,7 @@ class ControllerGen:
         self.appConfig = appcfg
         template_cls_map = {
             'form': 'FormController',
-            'realtime': 'FormController',
+            'onoff': 'FormController',
             'custom': 'Controller',
         }
         self.baseClass = template_cls_map[self.appConfig['template']]
@@ -700,7 +703,7 @@ class ControllerGen:
         """
         template_cls_map = {
             'form': 'FormController',
-            'realtime': 'FormController',
+            'onoff': 'FormController',
             'custom': 'Controller',
         }
         return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg)
@@ -729,9 +732,15 @@ class FormControllerGen(ControllerGen):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ctrlrImp = ctrl.ControllerImp(self, **kwargs)
-    
+
+    def on_open_help(self):
+        self.ctrlrImp.on_open_help()
+
     def on_open_log(self):
         self.ctrlrImp.on_open_log()
+
+    def on_report_issue(self):
+        self.ctrlrImp.on_report_issue()
 
     def on_submit(self, event=None):
         self.ctrlrImp.on_submit(event)

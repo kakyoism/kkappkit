@@ -1,11 +1,11 @@
 {
     "version": 1,
     "name": "controller",
-    "description": "form-filler app",
-    "template": "realtime",
+    "description": "on-off controller",
+    "template": "onoff",
     "tutorial": [
-        "# example 1: do this",
-        "run -p your_argument"
+        "# example 1: launch controller",
+        "run"
     ],
     "remarks": [
         "- remarks will appear as the epilogue of the -h print-out of cli mode",
@@ -27,7 +27,7 @@
     },
     "output": {},
     "appearance": {
-        "title": "Oscillator",
+        "title": "controller",
         "size": [
             800,
             600
