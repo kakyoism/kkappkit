@@ -18,7 +18,6 @@ class ControllerImp:
         """
         pass
 
-
     def on_open_log(self):
         """
         - implement this to open log file in default browser
