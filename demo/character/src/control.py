@@ -47,7 +47,6 @@ class ControllerImp:
 
     def on_activate(self, event=None):
         pass
-        pass
 
     def on_term(self, event=None):
         pass
