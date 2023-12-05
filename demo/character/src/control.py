@@ -2,6 +2,7 @@ import threading
 import time
 # project
 import kkpyui as ui
+import kkpyutil as util
 import impl
 
 
@@ -14,8 +15,14 @@ class ControllerImp:
         self.controller = ctrlr
         self.core = impl.Core(self.controller.pack())
 
+    def on_open_help(self):
+        util.alert('Dev: Just use it! Trust yourself and the log!')
+
     def on_open_log(self):
         self.core.open_log()
+
+    def on_report_issue(self):
+        util.alert('Dev: It\'s not a bug, it\'s a feature!')
 
     def on_submit(self, event=None):
         """
