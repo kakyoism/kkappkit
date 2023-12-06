@@ -63,6 +63,7 @@ class Core(base.Core):
         self.dstPaths.implementation = osp.join(self.dstPaths.srcDir, 'imp.py')
         self.dstPaths.output = osp.join(self.dstPaths.srcDir, 'out.py')
         self.dstPaths.gui = osp.join(self.dstPaths.srcDir, 'gui.py')
+        self.dstPaths.icon = osp.join(self.dstPaths.resDir, 'icon.png')
 
     def _validate_args(self, args):
         _args = copy.deepcopy(args)
@@ -182,7 +183,9 @@ class Core(base.Core):
         title = self.appConfig['appearance']['title']
         width = self.appConfig['appearance']['size'][0]
         height = self.appConfig['appearance']['size'][1]
-        return [f"ui.Globals.root = ui.Root('{title}', ({width}, {height}))"]
+        icon_file = self.dstPaths.icon
+        icon = f'osp.abspath(f"{{osp.dirname(__file__)}}/../res/icon.png")' if osp.isfile(icon_file) else ''
+        return [f"ui.Globals.root = ui.Root('{title}', ({width}, {height}), {icon})"]
 
     def _create_form(self):
         """
