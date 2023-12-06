@@ -2,7 +2,7 @@
     "version": 1,
     "name": "oscillator",
     "description": "realtime controller of a simple oscillator",
-    "template": "realtime",
+    "template": "onoff",
     "tutorial": [
         "# example 1: do this",
         "run -p your_argument"

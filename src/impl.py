@@ -153,7 +153,7 @@ class Core(base.Core):
         - must add import by hand for custom types
         """
         indent = ' ' * 4
-        prop_assignment_lines = [f'{indent}{util.convert_compound_cases(name, style="camel", instyle="snake")}: {arg["type"]} = {repr(arg["default"])}' for name, arg in self.appConfig['output'].items()]
+        prop_assignment_lines = [f'{indent}{util.convert_compound_cases(name, style="camel")}: {arg["type"]} = {repr(arg["default"])}' for name, arg in self.appConfig['output'].items()]
         code = '\n'.join(prop_assignment_lines)
         util.substitute_keywords_in_file(self.dstPaths.output, {'# {{assign}}': code}, useliteral=True)
 
@@ -258,9 +258,9 @@ class ArgumentGen:
         self.name = name
         self.arg = arg
         self.shortSwitch = self._extract_short_switch()
-        self.longSwitch = f'--{util.convert_compound_cases(self.name, style="kebab", instyle="snake")}'
+        self.longSwitch = f'--{util.convert_compound_cases(self.name, style="kebab")}'
         self.action = 'store'
-        self.dest = util.convert_compound_cases(self.name, style="camel", instyle="snake")
+        self.dest = util.convert_compound_cases(self.name, style="camel")
         # for platform dependent defaults
         default = self.arg['default'][util.PLATFORM] if isinstance(self.arg['default'], dict) else self.arg['default']
         self.default = f"\'{default}\'" if isinstance(default, str) else default
@@ -534,13 +534,14 @@ class OutputGen:
 #
 class EntryGen:
     """
-    - assume app.json uses snake_case for input/output field keys
+    - app.json input/output keys (names) can use snake_case, cameCase, PascalCase, or title/phrase case
+    - code-gen will output standard casing instead: camelCase for args, title-case for entry captions
     """
     def __init__(self, name, arg):
         self.name = name
         self.arg = arg
         self.master = f'pg_{arg["group"].lower()}'
-        self.title = self.arg.get('title') or util.convert_compound_cases(self.name, style='title', instyle='snake')
+        self.title = self.arg.get('title') or util.convert_compound_cases(self.name, style='title')
 
     @staticmethod
     def create_codegen(name, arg):
@@ -560,6 +561,9 @@ class EntryGen:
     def generate(self):
         raise NotImplementedError('subclass this!')
 
+    def _get_name_repr(self):
+        return repr(self.name)
+
     def _get_title_repr(self):
         return repr(self.title)
 
@@ -572,7 +576,7 @@ class BoolEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
 
 
 class IntEntryGen(EntryGen):
@@ -585,7 +589,7 @@ class IntEntryGen(EntryGen):
         self.step = self.arg.get('step') or 1
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
+        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
 
 
 class FloatEntryGen(EntryGen):
@@ -598,7 +602,7 @@ class FloatEntryGen(EntryGen):
         self.precision = self.arg.get('precision') or 2
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
+        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
 
 
 class TextEntryGen(EntryGen):
@@ -606,7 +610,7 @@ class TextEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
 class FileEntryGen(EntryGen):
@@ -626,7 +630,7 @@ class FileEntryGen(EntryGen):
         """
         - default uses osp.join() and should be used as code literal
         """
-        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self.name}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
+        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -650,7 +654,7 @@ class FolderEntryGen(EntryGen):
         self.startDir = self._resolve_appconfig_path(self.arg['startDir'],  _build_var_map['$HOME$'])
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
+        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -674,7 +678,7 @@ class OptionEntryGen(EntryGen):
 
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
-        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self.name}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
 
 
 #

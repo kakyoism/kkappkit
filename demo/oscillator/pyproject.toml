@@ -8,8 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 kkbuild = "*"
-kkpyui = "^0.13.0"
-kkpyutil = "^1.18.0"
+kkpyui = "*"
+kkpyutil = "*"
 python-osc = "*"
 
 [tool.poetry.group.dev.dependencies]

@@ -62,7 +62,7 @@ def add_arguments(parser):
         '-t',
         '--app-template',
         action='store',
-        choices=('form', 'realtime', 'custom'),
+        choices=('form', 'onoff', 'custom'),
         dest='appTemplate',
         default='form',
         type=str,
@@ -76,7 +76,7 @@ def add_arguments(parser):
         dest='impRoot',
         type=str,
         default='',
-        required=True,
+        required=False,
         help='Path to the root folder of the implementation, mirroring the app project folder structure'
     )
     parser.add_argument(
