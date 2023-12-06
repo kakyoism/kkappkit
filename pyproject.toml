@@ -28,9 +28,9 @@ exclude = [
 python = "^3.11"
 GitPython = "*"
 cx_freeze = "*"
-kkbuild = "^0.3.1"
-kkpyui = "^0.16.0"
-kkpyutil = "^1.21.1"
+kkbuild = "*"
+kkpyui = "*"
+kkpyutil = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
