@@ -33,9 +33,9 @@ class ControllerImp:
             return False
         self.controller.update()
         options = ['Sine', 'Square', 'Sawtooth']
-        self.sender.send_message('/oscillator', options.index(self.controller.model['General']['Waveform']))
-        self.sender.send_message('/frequency', self.controller.model['General']['Frequency (Hz)'])
-        self.sender.send_message('/gain', self.controller.model['General']['Gain (dB)'])
+        self.sender.send_message('/oscillator', options.index(self.controller.model['oscillator']))
+        self.sender.send_message('/frequency', self.controller.model['frequency'])
+        self.sender.send_message('/gain', self.controller.model['gain'])
         self.sender.send_message('/play', 1)
         self.controller.set_progress('/start', 0, 'Playing ...')
         self.playing = True
@@ -52,14 +52,14 @@ class ControllerImp:
             return
         self.initialized = True
         self.controller.update()
-        scpt = self.controller.model['General']['Csound Script'][0]
+        scpt = self.controller.model['engine'][0]
         if not osp.isfile(scpt):
             if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
                 self.on_term(None)
                 return
             scpt = osp.abspath(f'{osp.dirname(__file__)}/../res/tonegen.csd')
             # refresh entry view
-            self.controller.model['General']['Csound Script'][0] = scpt
+            self.controller.model['engine'][0] = scpt
             self.controller.reflect()
         # CAUTION
         # - because sandboxed app cannot access system PATH, must use absolute path to executable

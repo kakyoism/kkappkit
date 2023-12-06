@@ -13,7 +13,7 @@
         "- controller app turns on the backend and changes its state by tweaking the form fields while the backend is running"
     ],
     "input": {
-        "csound_script": {
+        "engine": {
             "group": "general",
             "help": "Csound script that starts an oscillator and a Open-Sound-Control server",
             "type": "file",
