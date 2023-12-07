@@ -206,7 +206,8 @@ class Core(base.Core):
         }
         return [
             f'ctrlr = {template_cls_map[self.appConfig["template"]]}(form)',
-            'ui.Globals.root.bind_events(ctrlr)',
+            'ui.Globals.root.set_controller(ctrlr)',
+            'ui.Globals.root.bind_events()',
         ]
 
     @staticmethod

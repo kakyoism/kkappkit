@@ -71,7 +71,7 @@ cd /path/to/character
 # edit pyproject.toml to add dependencies
 # 
 # then install dependencies
-rm poetry.lock $> /dev/null
+rm poetry.lock &> /dev/null
 poetry install
 
 # edit the configuration file (src/app.json) to fill in app metadata and input/output

@@ -17,7 +17,6 @@ class ControllerImp:
         self.controller = ctrlr
         self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
         self.playing = False
-        self.initialized = False
 
     def open_log(self):
         """
@@ -25,7 +24,7 @@ class ControllerImp:
         """
         return
 
-    def on_submit(self, event=None):
+    def run_task(self):
         """
         - assume csound has started
         """
@@ -37,20 +36,17 @@ class ControllerImp:
         self.sender.send_message('/frequency', self.controller.model['frequency'])
         self.sender.send_message('/gain', self.controller.model['gain'])
         self.sender.send_message('/play', 1)
-        self.controller.set_progress('/start', 0, 'Playing ...')
+        self.controller.start_progress()
         self.playing = True
         return True
 
     def on_cancel(self, event=None):
         self.sender.send_message('/play', 0)
-        self.controller.set_progress('/stop', 100, 'Stopped')
+        self.controller.stop_progress()
         time.sleep(0.1)
         self.playing = False
 
-    def on_activate(self, event=None):
-        if self.initialized:
-            return
-        self.initialized = True
+    def on_startup(self, event=None):
         self.controller.update()
         scpt = self.controller.model['engine'][0]
         if not osp.isfile(scpt):
@@ -70,9 +66,12 @@ class ControllerImp:
         util.run_daemon(cmd)
         # time.sleep(0.8)
 
-    def on_term(self, event=None):
+    def on_shutdown(self, event=None) -> bool:
+        if not super().on_shutdown():
+            return False
         self.on_cancel()
         util.kill_process_by_name('csound')
+        return True
 
     def on_frequency_changed(self, name, var, index, mode):
         print(f'{name=}={var.get()}, {index=}, {mode=}')

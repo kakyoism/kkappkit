@@ -13,7 +13,7 @@ class ControllerImp:
     def __init__(self, ctrlr, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.controller = ctrlr
-        self.core = impl.Core(self.controller.pack())
+        self.core = impl.Core(self.controller.get_latest_model())
 
     def on_open_help(self):
         util.alert('Dev: Just use it! Trust yourself and the log!')
@@ -24,36 +24,21 @@ class ControllerImp:
     def on_report_issue(self):
         util.alert('Dev: It\'s not a bug, it\'s a feature!')
 
-    def on_submit(self, event=None):
-        """
-        - subclass this to implement custom logic
-        """
-        self.controller.update()
-        # lambda wrapper ensures "self" is captured by threading as a context
-        # otherwise ui thread still blocks
-        threading.Thread(target=lambda: self.run_background(), daemon=True).start()
-
-    def on_cancel(self, event=None):
-        self.controller.on_quit()
-
-    def run_background(self):
+    def run_task(self):
         """
         - override this in app
         - run in background thread to avoid blocking UI
         """
-        self.controller.set_progress('/start', 0, 'Processing ...')
+        self.controller.start_progress()
         for p in range(101):
             # Simulate a task
             time.sleep(0.01)
             self.controller.set_progress('/processing', p, f'Processing {p}%...')
-        self.controller.set_progress('/stop', 100, 'Completed!')
+            if self.controller.scheduled_to_stop():
+                self.controller.stop_progress()
+                return
+        self.controller.stop_progress()
         prompt = ui.Prompt()
         prompt.info('Finished. Will open result in default browser', confirm=True)
-        self.core.args = self.controller.pack()
+        self.core.args = self.controller.get_latest_model()
         self.core.main()
-
-    def on_activate(self, event=None):
-        pass
-
-    def on_term(self, event=None):
-        pass
