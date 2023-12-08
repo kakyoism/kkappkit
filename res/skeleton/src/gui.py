@@ -12,8 +12,6 @@ import kkpyutil as util
 import control as ctrl
 
 
-# {{controller}}
-
 def main():
 # {{view}}
     pass

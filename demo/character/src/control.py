@@ -6,14 +6,13 @@ import kkpyutil as util
 import impl
 
 
-class ControllerImp:
+class Controller(ui.FormController):
     """
-    - implement all gui event-handlers
     """
-    def __init__(self, ctrlr, *args, **kwargs):
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.controller = ctrlr
-        self.core = impl.Core(self.controller.get_latest_model())
+        self.core = impl.Core(args=None)
 
     def on_open_help(self):
         util.alert('Dev: Just use it! Trust yourself and the log!')
@@ -24,21 +23,45 @@ class ControllerImp:
     def on_report_issue(self):
         util.alert('Dev: It\'s not a bug, it\'s a feature!')
 
+    def on_startup(self):
+        """
+        - called just before showing root window, after all fields are initialized
+        - so that fields can be used here for the first time
+        """
+        print('Welcome!')
+
+    def on_shutdown(self, event=None) -> bool:
+        """
+        - called just before quitting
+        - base-class safe-schedules shutdown with prompt and early-outs if user cancels
+        - impelement post-user-confirm logic here, or override completely
+        """
+        if not super().on_shutdown():
+            return False
+        print('bye!')
+        return True
+
     def run_task(self):
-        """
-        - override this in app
-        - run in background thread to avoid blocking UI
-        """
-        self.controller.start_progress()
+        self.start_progress()
+
         for p in range(101):
             # Simulate a task
             time.sleep(0.01)
-            self.controller.set_progress('/processing', p, f'Processing {p}%...')
-            if self.controller.scheduled_to_stop():
-                self.controller.stop_progress()
+            self.set_progress('/processing', p, f'Processing {p}%...')
+            if self.is_scheduled_to_stop():
+                self.stop_progress()
                 return
-        self.controller.stop_progress()
+        self.stop_progress()
         prompt = ui.Prompt()
         prompt.info('Finished. Will open result in default browser', confirm=True)
-        self.core.args = self.controller.get_latest_model()
+        self.core.args = self.get_latest_model()
         self.core.main()
+
+    def on_cancel(self, event=None):
+        """
+        - if task-thread is alive, base-controller schedules stop-event and waits for task to finish
+        - implement pre-cancel and post-cancel logic here, or override completely
+        """
+        # IMPLEMENT PRE-CANCELLING LOGIC HERE, E.G., DATA PROTECTION
+        super().on_cancel(event)
+        # IMPLEMENT POST-CANCELLING LOGIC HERE, E.G., CLEANUP

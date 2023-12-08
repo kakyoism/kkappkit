@@ -62,9 +62,6 @@ Next, we'll introduce each demo.
 cd /path/to/kkappkit
 kkappgen -r /path/to/character -t template
 
-# overwrite the default assets with demo assets
-cp -r demo/character/* /path/to/character
-
 # navigate to the generated app  
 cd /path/to/character
 #
@@ -74,9 +71,10 @@ cd /path/to/character
 rm poetry.lock &> /dev/null
 poetry install
 
-# edit the configuration file (src/app.json) to fill in app metadata and input/output
+# manually edit the configuration file (src/app.json) to fill in app metadata and input/output
 # and generate the interface code
-kkappgen -r `pwd`
+# overwrite the default assets with demo implementation
+kkappgen -r `pwd` -i demo/character
 
 # run the app and play around with it
 ./ui

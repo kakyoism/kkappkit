@@ -275,3 +275,11 @@
 ## Is *required* necessary for an argument spec?
 - No, because it's redundant with the default value
 - An argument is required when its default is None (null for JSON) 
+
+## Is the bridge pattern necessary for structuring generated main app entry point versus custom implementation?
+- In V1, we aim to expose the full interface of controller in gui.py so that dev can implement the controller in control.py accordingly
+- Because gui.py is fully generated main entry, we don't want dev to mess with it; so we need a way to separate the generated code from the custom code
+- We chose the bridge pattern, which is a simple way for the separation
+- However, we soon dicovered that the implementation still needs to be aware of the generated code, e.g., before submitting, we need to update the view and retrieve all fields, which is implemented in the base controller
+- Therefore, we had to expose the base controller to the implementation, leading to a tight coupling between the interface and the interface; we essentially just extended the interface
+- so inheritance would be a better fit here, because the implementation can open-close the base controller as needed

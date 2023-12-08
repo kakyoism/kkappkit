@@ -32,11 +32,25 @@ class Core(base.Core):
         else:
             self._reset_interface()
         self._lazy_init_manifests()
+        if self.args.impRoot:
+            # app-config is part of the implementation
+            # so it must be copied over before generating the interface
+            self._update_app_config()
         self._generate_interface()
         if self.args.impRoot:
+            # app-config is part of the implementation
+            # so it must be copied over before generating the interface
             self._update_implementation()
 
+    def _update_app_config(self):
+        appcfg_imp = osp.abspath(f'{self.args.impRoot}/src/app.json')
+        util.copy_file(appcfg_imp, self.dstPaths.appCfg)
+
     def _update_implementation(self):
+        """
+        - if user provides implementation root, it's recommended to always edit the source code there
+        - and let the codegen to directly overwrite the dst implementation
+        """
         srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
         dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
         for src, dst in zip(srcs, dsts):
@@ -60,9 +74,10 @@ class Core(base.Core):
             depCfg=osp.join(self.args.appRoot, 'pyproject.toml'),
         )
         self.dstPaths.cli = osp.join(self.dstPaths.srcDir, 'cli.py')
-        self.dstPaths.implementation = osp.join(self.dstPaths.srcDir, 'imp.py')
+        self.dstPaths.imp = osp.join(self.dstPaths.srcDir, 'impl.py')
         self.dstPaths.output = osp.join(self.dstPaths.srcDir, 'out.py')
         self.dstPaths.gui = osp.join(self.dstPaths.srcDir, 'gui.py')
+        self.dstPaths.ctrl = osp.join(self.dstPaths.srcDir, 'control.py')
         self.dstPaths.icon = osp.join(self.dstPaths.resDir, 'icon.png')
 
     def _validate_args(self, args):
@@ -75,9 +90,13 @@ class Core(base.Core):
             util.throw(ValueError, f'Expected absolute path, received relative path: {_args.impRoot}', ['use absolute path for implementation root'])
         if _args.impRoot and not osp.isdir(_args.impRoot):
             util.throw(FileNotFoundError, f'Missing implementation root folder: {_args.impRoot}', ['Ensure path exists and spelling is correct'])
+        if osp.isdir(_args.impRoot) and not osp.isfile(app_cfg := osp.abspath(f'{_args.impRoot}/src/app.json')):
+            util.throw(FileNotFoundError, f'Missing app.json implementation: {app_cfg}, and so cannot generate interface', ['Ensure path exists and spelling is correct'])
         return _args
 
     def _copy_skeleton(self):
+        util.backup_file(self.dstPaths.ctrl, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
+        util.backup_file(self.dstPaths.imp, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
         src = osp.join(self.paths.resDir, 'skeleton')
         dst = self.dstPaths.root
         shutil.copytree(src, dst, dirs_exist_ok=True)
@@ -117,6 +136,7 @@ class Core(base.Core):
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
         # initialize venv and install dependency
+        util.safe_remove(osp.join(self.dstPaths.root, 'poetry.lock'))
         util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
         return True
 
@@ -163,15 +183,18 @@ class Core(base.Core):
         - due to tkinter threading issue, progressbar and actionbar would be reversed against packing order,
         - to give user a consistent control, we pre-swap them to allow progressbar to update in the background and keep the action bar at the bottom
         """
+        # main
         view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_action() + self._create_progress() + self._create_mainloop())
         view_code = '\n'.join(view_lines)
-        ctrlr_lines = ControllerGen.create_codegen(self.appConfig).generate()
-        ctrlr_code = '\n'.join(ctrlr_lines)
-        # substitute template
         util.substitute_keywords_in_file(self.dstPaths.gui, {
-            '# {{controller}}': ctrlr_code,
             '# {{view}}': view_code,
         }, useliteral=True)
+        # controller
+        if ctrlr_api_changed := self.args.forceOverwrite:
+            util.copy_file(osp.abspath(f'{self.paths.skeletonDir}/src/control.py'), self.dstPaths.ctrl)
+        ctrlr_lines = ControllerGen.create_codegen(self.appConfig, self.dstPaths.ctrl).generate()
+        util.save_lines(self.dstPaths.ctrl, ctrlr_lines)
+
 
     def _reset_interface(self):
         for fn in ('cli.py', 'gui.py', 'out.py'):
@@ -205,7 +228,7 @@ class Core(base.Core):
             'custom': 'ctrl.Controller',
         }
         return [
-            f'ctrlr = {template_cls_map[self.appConfig["template"]]}(form)',
+            'ctrlr = ctrl.Controller(form)',
             'ui.Globals.root.set_controller(ctrlr)',
             'ui.Globals.root.bind_events()',
         ]
@@ -231,7 +254,7 @@ class Core(base.Core):
     def _create_action(self):
         template_cls_map = {
             'form': 'FormActionBar',
-            'onoff': 'OnOffActionBar',
+            'onoff': 'FormActionBar',
             'custom': 'ctrl.ActionBar',
         }
         return [f'action_bar = ui.{template_cls_map[self.appConfig["template"]]}(ui.Globals.root, ctrlr)']
@@ -690,22 +713,27 @@ class OptionEntryGen(EntryGen):
 #
 class ControllerGen:
     """
-    class MyController(ui.FormController):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+    - generate and update controller code
+    - protect custom code on updates
+    - user must select only the applicable code and merge by hand
+    - a diff-tool is recommended
+    - TODO: auto-merge
     """
 
-    def __init__(self, appcfg):
+    def __init__(self, appcfg, srcfile):
         self.appConfig = appcfg
-        template_cls_map = {
-            'form': 'FormController',
-            'onoff': 'FormController',
-            'custom': 'Controller',
+        self.srcFile = srcfile
+        template_basecls_map = {
+            'form': 'ui.FormController',
+            'onoff': 'ui.FormController',
+            # more factory controllers to come ...
+            # custom controller is recommended to derive from FormController
+            'custom': 'CustomController',
         }
-        self.baseClass = template_cls_map[self.appConfig['template']]
+        self.baseClass = template_basecls_map[self.appConfig['template']]
 
     @staticmethod
-    def create_codegen(appcfg):
+    def create_codegen(appcfg, srcfile):
         """
         - both form and realtime apps share form controller where realtime app's app-config will set up tracers
         """
@@ -714,7 +742,7 @@ class ControllerGen:
             'onoff': 'FormController',
             'custom': 'Controller',
         }
-        return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg)
+        return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg, srcfile)
 
     def generate(self):
         return ['# CUSTOM CONTROLLER: IMPLEMENT IT IN control.py']
@@ -728,41 +756,19 @@ class ControllerGen:
 
 
 class FormControllerGen(ControllerGen):
-    def __init__(self, appcfg):
-        super().__init__(appcfg)
+    def __init__(self, appcfg, srcfile):
+        super().__init__(appcfg, srcfile)
 
     def generate(self):
         """
         - use the composite pattern for maximum flexibility
         - generate controller interface in gui.py to make interface change always transparent
         """
-        code_lines = f"""class Controller(ui.{self.baseClass}):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ctrlrImp = ctrl.ControllerImp(self, **kwargs)
-
-    def on_open_help(self):
-        self.ctrlrImp.on_open_help()
-
-    def on_open_log(self):
-        self.ctrlrImp.on_open_log()
-
-    def on_report_issue(self):
-        self.ctrlrImp.on_report_issue()
-
-    def on_submit(self, event=None):
-        self.ctrlrImp.on_submit(event)
-
-    def on_cancel(self, event=None):
-        self.ctrlrImp.on_cancel(event)
-
-    def on_activate(self, event=None):
-        self.ctrlrImp.on_activate(event)
-
-    def on_term(self, event=None):
-        self.ctrlrImp.on_term(event)
-
-""".splitlines()
+        util.substitute_keywords_in_file(self.srcFile, {
+            '{{BASE_CONTROLLER}}': self.baseClass,
+        }, useliteral=True)
+        # load skeleton
+        code_lines = util.load_lines(self.srcFile)
         # lazy-add event handlers to traceable args
         traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
         code_lines += [line for name, arg in traceable_args.items() for line in self._create_event_handler(name, arg)]
@@ -775,6 +781,6 @@ class FormControllerGen(ControllerGen):
         """
         return f"""\
     def on_{name.lower()}_changed(self, name, var, index, mode):
-        self.ctrlrImp.on_{name.lower()}_changed(name, var, index, mode)
+        pass
 
 """.splitlines()

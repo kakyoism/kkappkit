@@ -23,7 +23,7 @@
         },
         "age": {
             "group": "profile",
-            "help": "integer",
+            "help": "Character age",
             "default": 15,
             "range": [
                 0,
