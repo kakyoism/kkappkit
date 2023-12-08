@@ -193,7 +193,7 @@ class Core(base.Core):
         if ctrlr_api_changed := self.args.forceOverwrite:
             util.copy_file(osp.abspath(f'{self.paths.skeletonDir}/src/control.py'), self.dstPaths.ctrl)
         ctrlr_lines = ControllerGen.create_codegen(self.appConfig, self.dstPaths.ctrl).generate()
-        util.save_lines(self.dstPaths.ctrl, ctrlr_lines)
+        util.save_lines(self.dstPaths.ctrl, ctrlr_lines, addlineend=True)
 
 
     def _reset_interface(self):
@@ -768,7 +768,7 @@ class FormControllerGen(ControllerGen):
             '{{BASE_CONTROLLER}}': self.baseClass,
         }, useliteral=True)
         # load skeleton
-        code_lines = util.load_lines(self.srcFile)
+        code_lines = util.load_lines(self.srcFile, rmlineend=True)
         # lazy-add event handlers to traceable args
         traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
         code_lines += [line for name, arg in traceable_args.items() for line in self._create_event_handler(name, arg)]

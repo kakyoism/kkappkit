@@ -8,55 +8,42 @@ import kkpyui as ui
 import impl
 
 
-class ControllerImp:
+class Controller(ui.FormController):
     """
-    - implement all gui event-handlers
     """
-    def __init__(self, ctrlr, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.controller = ctrlr
         self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
         self.playing = False
 
-    def open_log(self):
+    def on_open_help(self):
         """
-        - for performance reasons, no logging is needed for a realtime controller
+        - implement this to open help URL/file in default browser
         """
-        return
+        pass
 
-    def run_task(self):
+    def on_open_log(self):
         """
-        - assume csound has started
+        - implement this to open log file in default browser
         """
-        if self.playing:
-            return False
-        self.controller.update()
-        options = ['Sine', 'Square', 'Sawtooth']
-        self.sender.send_message('/oscillator', options.index(self.controller.model['oscillator']))
-        self.sender.send_message('/frequency', self.controller.model['frequency'])
-        self.sender.send_message('/gain', self.controller.model['gain'])
-        self.sender.send_message('/play', 1)
-        self.controller.start_progress()
-        self.playing = True
-        return True
+        pass
 
-    def on_cancel(self, event=None):
-        self.sender.send_message('/play', 0)
-        self.controller.stop_progress()
-        time.sleep(0.1)
-        self.playing = False
+    def on_report_issue(self):
+        """
+        - implement this to receive user feedback
+        """
+        pass
 
-    def on_startup(self, event=None):
-        self.controller.update()
-        scpt = self.controller.model['engine'][0]
+    def on_startup(self):
+        scpt = self.model['engine'][0]
         if not osp.isfile(scpt):
             if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
-                self.on_term(None)
+                self.on_quit(None)
                 return
             scpt = osp.abspath(f'{osp.dirname(__file__)}/../res/tonegen.csd')
             # refresh entry view
-            self.controller.model['engine'][0] = scpt
-            self.controller.reflect()
+            self.model['engine'][0] = scpt
+            self.update_view()
         # CAUTION
         # - because sandboxed app cannot access system PATH, must use absolute path to executable
         # - assume csound is installed by chocolatey and homebrew
@@ -72,6 +59,26 @@ class ControllerImp:
         self.on_cancel()
         util.kill_process_by_name('csound')
         return True
+
+    def run_task(self):
+        if self.playing:
+            return False
+        self.update_model()
+        options = ['Sine', 'Square', 'Sawtooth']
+        self.sender.send_message('/oscillator', options.index(self.model['oscillator']))
+        self.sender.send_message('/frequency', self.model['frequency'])
+        self.sender.send_message('/gain', self.model['gain'])
+        self.sender.send_message('/play', 1)
+        self.set_progress('/start', 0, 'Playing ...')
+        self.playing = True
+        return True
+
+    def on_cancel(self, event=None):
+        self.sender.send_message('/play', 0)
+        self.set_progress('/stop', 100, 'Stopped')
+        time.sleep(0.1)
+        self.playing = False
+        super().on_cancel(event)
 
     def on_frequency_changed(self, name, var, index, mode):
         print(f'{name=}={var.get()}, {index=}, {mode=}')
