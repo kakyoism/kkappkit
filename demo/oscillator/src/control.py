@@ -15,6 +15,7 @@ class Controller(ui.FormController):
         super().__init__(*args, **kwargs)
         self.sender = osc_client.SimpleUDPClient('127.0.0.1', 10000)
         self.playing = False
+        self.curEngine = None
 
     def on_open_help(self):
         """
@@ -51,6 +52,7 @@ class Controller(ui.FormController):
         exe = osp.normpath('c:/program files/csound/bin/csound.exe') if util.PLATFORM == 'Windows' else '/usr/local/bin/csound'
         cmd = [exe, scpt, '-odac']
         util.run_daemon(cmd)
+        self.curEngine = self.model['engine'][0]
         # time.sleep(0.8)
 
     def on_shutdown(self, event=None) -> bool:
@@ -64,6 +66,9 @@ class Controller(ui.FormController):
         if self.playing:
             return False
         self.update_model()
+        if self.curEngine != self.model['engine'][0]:
+            self.on_shutdown()
+            self.on_startup()
         options = ['Sine', 'Square', 'Sawtooth']
         self.sender.send_message('/oscillator', options.index(self.model['oscillator']))
         self.sender.send_message('/frequency', self.model['frequency'])

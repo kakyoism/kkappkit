@@ -42,21 +42,6 @@ class Core(base.Core):
             # so it must be copied over before generating the interface
             self._update_implementation()
 
-    def _update_app_config(self):
-        appcfg_imp = osp.abspath(f'{self.args.impRoot}/src/app.json')
-        util.copy_file(appcfg_imp, self.dstPaths.appCfg)
-
-    def _update_implementation(self):
-        """
-        - if user provides implementation root, it's recommended to always edit the source code there
-        - and let the codegen to directly overwrite the dst implementation
-        """
-        srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
-        dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
-        for src, dst in zip(srcs, dsts):
-            util.copy_file(src, dst)
-        util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
-
     def _create_paths(self):
         self.paths = types.SimpleNamespace()
         self.paths.root = osp.abspath(f'{osp.dirname(__file__)}/../')
@@ -152,6 +137,21 @@ class Core(base.Core):
         self._generate_out()
         self._generate_gui()
 
+    def _update_app_config(self):
+        appcfg_imp = osp.abspath(f'{self.args.impRoot}/src/app.json')
+        util.copy_file(appcfg_imp, self.dstPaths.appCfg)
+
+    def _update_implementation(self):
+        """
+        - if user provides implementation root, it's recommended to always edit the source code there
+        - and let the codegen to directly overwrite the dst implementation
+        """
+        srcs = [file for file in util.collect_file_tree(self.args.impRoot) if osp.isfile(file)]
+        dsts = [osp.join(self.dstPaths.root, osp.relpath(src, self.args.impRoot)) for src in srcs]
+        for src, dst in zip(srcs, dsts):
+            util.copy_file(src, dst)
+        util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
+
     def _generate_cli(self):
         code_lines = []
         for name, arg in self.appConfig['input'].items():
@@ -222,11 +222,6 @@ class Core(base.Core):
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
 
     def _create_controller(self):
-        template_cls_map = {
-            'form': 'Controller',
-            'onoff': 'Controller',
-            'custom': 'ctrl.Controller',
-        }
         return [
             'ctrlr = ctrl.Controller(form)',
             'ui.Globals.root.set_controller(ctrlr)',
@@ -738,11 +733,11 @@ class ControllerGen:
         - both form and realtime apps share form controller where realtime app's app-config will set up tracers
         """
         template_cls_map = {
-            'form': 'FormController',
-            'onoff': 'FormController',
-            'custom': 'Controller',
+            'form': 'FormControllerGen',
+            'onoff': 'FormControllerGen',
+            'custom': 'ControllerGen',
         }
-        return globals()[f'{template_cls_map[appcfg["template"]]}Gen'](appcfg, srcfile)
+        return globals()[f'{template_cls_map[appcfg["template"]]}'](appcfg, srcfile)
 
     def generate(self):
         return ['# CUSTOM CONTROLLER: IMPLEMENT IT IN control.py']
@@ -760,10 +755,6 @@ class FormControllerGen(ControllerGen):
         super().__init__(appcfg, srcfile)
 
     def generate(self):
-        """
-        - use the composite pattern for maximum flexibility
-        - generate controller interface in gui.py to make interface change always transparent
-        """
         util.substitute_keywords_in_file(self.srcFile, {
             '{{BASE_CONTROLLER}}': self.baseClass,
         }, useliteral=True)
