@@ -17,6 +17,7 @@
             "group": "page1",
             "help": "text entry; use snake_case for keys; assign group to make entry appear on that page; use range to specify length limits, with null meaning no limit; key is used as the variable name and also the ui title by default",
             "default": "hello text",
+            "presetable": true,
             "range": [
                 0,
                 null
@@ -27,6 +28,7 @@
             "title": "custom entry title",
             "help": "integer entry; use title to specify ui title; use range to specify value limits, with null meaning no limit; use step to specify increment/decrement steps size",
             "default": 0,
+            "presetable": true,
             "range": [
                 0,
                 null
@@ -37,6 +39,7 @@
             "group": "page1",
             "help": "floating-point entry; use precision to specify number of decimal places to display under gui mode",
             "default": 1.63,
+            "presetable": true,
             "range": [
                 0.0,
                 2.0
@@ -53,6 +56,7 @@
                 "option3"
             ],
             "default": "option3",
+            "presetable": true,
             "range": [
                 1,
                 1
@@ -67,6 +71,7 @@
                 "option3"
             ],
             "default": ["option1", "option3"],
+            "presetable": true,
             "range": [
                 1,
                 null
@@ -75,12 +80,14 @@
         "bool": {
             "group": "page1",
             "help": "boolean entry",
-            "default": false
+            "default": false,
+            "presetable": true
         },
         "list": {
             "group": "profile",
             "help": "list entry; essentially a text entry that recognizes multiples lines as list items under gui mode",
             "default": ["item1", "item2"],
+            "presetable": true,
             "range": [
                 0,
                 null
@@ -91,6 +98,7 @@
             "help": "file-path entry; set type to file; use build variables to specify paths; use range to specify file-type patterns; available ones: $HOME$, $APPDATA$, $TEMP$, $CWD$, $APP$; on macOS, an extra file-pattern is added by code-gen to avoid crashes",
             "type": "file",
             "default": "$APPDATA$/$APP$/hello.txt",
+            "presetable": true,
             "range": [
                 ["My Files", "*.ext"]
             ],
@@ -101,6 +109,7 @@
             "help": "folder-path entry; set type to folder; use build variables to specify paths",
             "type": "folder",
             "default": "$HOME$/Desktop",
+            "presetable": true,
             "range": [
                 1,
                 null

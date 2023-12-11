@@ -17,6 +17,7 @@
             "group": "page1",
             "help": "set trace to true to bind callback to field change for realtime control",
             "default": 10,
+            "presetable": true,
             "range": [
                 0,
                 100

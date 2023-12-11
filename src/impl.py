@@ -598,7 +598,7 @@ class BoolEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.BoolEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg["default"]}, {self._get_help_repr()})']
+        return [f"{self.name.lower()} = ui.BoolEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.arg['presetable']})"]
 
 
 class IntEntryGen(EntryGen):
@@ -611,7 +611,7 @@ class IntEntryGen(EntryGen):
         self.step = self.arg.get('step') or 1
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step})"]
+        return [f"{self.name.lower()} = ui.IntEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.arg['presetable']}, {self.range}, {self.step})"]
 
 
 class FloatEntryGen(EntryGen):
@@ -624,7 +624,7 @@ class FloatEntryGen(EntryGen):
         self.precision = self.arg.get('precision') or 2
 
     def generate(self):
-        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.range}, {self.step}, {self.precision})"]
+        return [f"{self.name.lower()} = ui.FloatEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.arg['default']}, {self._get_help_repr()}, {self.arg['presetable']}, {self.range}, {self.step}, {self.precision})"]
 
 
 class TextEntryGen(EntryGen):
@@ -632,7 +632,7 @@ class TextEntryGen(EntryGen):
         super().__init__(name, arg)
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.TextEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f"{self.name.lower()} = ui.TextEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['default'])}, {self._get_help_repr()}, {self.arg['presetable']}, )"]
 
 
 class FileEntryGen(EntryGen):
@@ -652,7 +652,7 @@ class FileEntryGen(EntryGen):
         """
         - default uses osp.join() and should be used as code literal
         """
-        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {repr(self.arg['range'])}, {self.startDir})"]
+        return [f"{self.name.lower()} = ui.FileEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {self.default}, {self._get_help_repr()}, {self.arg['presetable']}, {repr(self.arg['range'])}, {self.startDir})"]
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -676,7 +676,7 @@ class FolderEntryGen(EntryGen):
         self.startDir = self._resolve_appconfig_path(self.arg['startDir'],  _build_var_map['$HOME$'])
 
     def generate(self):
-        return [f'{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {repr(self.startDir)})']
+        return [f"{self.name.lower()} = ui.FolderEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.default)}, {self._get_help_repr()}, {self.arg['presetable']}, {repr(self.startDir)})"]
 
     @staticmethod
     def _resolve_appconfig_path(path, fallback):
@@ -700,7 +700,7 @@ class OptionEntryGen(EntryGen):
 
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
-        return [f'{self.name.lower()} = ui.{cls}({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg["choices"])}, {repr(self.arg["default"])}, {self._get_help_repr()})']
+        return [f"{self.name.lower()} = ui.{cls}({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['choices'])}, {repr(self.arg['default'])}, {self._get_help_repr()}, {self.arg['presetable']})"]
 
 
 #
