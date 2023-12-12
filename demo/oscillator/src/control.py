@@ -36,14 +36,14 @@ class Controller(ui.FormController):
         pass
 
     def on_startup(self):
-        scpt = self.model['engine'][0]
+        scpt = self.model['engine']
         if not osp.isfile(scpt):
             if not util.confirm(f'Missing user Csound script: {scpt}', 'Proceed to use default script? Otherwise switch to a different script and restart app', title='Warning'):
                 self.on_quit(None)
                 return
             scpt = osp.abspath(f'{osp.dirname(__file__)}/../res/tonegen.csd')
             # refresh entry view
-            self.model['engine'][0] = scpt
+            self.model['engine'] = scpt
             self.update_view()
         # CAUTION
         # - because sandboxed app cannot access system PATH, must use absolute path to executable
@@ -52,7 +52,7 @@ class Controller(ui.FormController):
         exe = osp.normpath('c:/program files/csound/bin/csound.exe') if util.PLATFORM == 'Windows' else '/usr/local/bin/csound'
         cmd = [exe, scpt, '-odac']
         util.run_daemon(cmd)
-        self.curEngine = self.model['engine'][0]
+        self.curEngine = self.model['engine']
         # time.sleep(0.8)
 
     def on_shutdown(self, event=None) -> bool:
@@ -66,7 +66,8 @@ class Controller(ui.FormController):
         if self.playing:
             return False
         self.update_model()
-        if self.curEngine != self.model['engine'][0]:
+        print(f'{self.curEngine=}; {self.model["engine"]=}')
+        if self.curEngine != self.model['engine']:
             self.on_shutdown()
             self.on_startup()
         options = ['Sine', 'Square', 'Sawtooth']

@@ -56,7 +56,7 @@ class Controller(ui.FormController):
         self.core.args = self.get_latest_model()
         self.core.main()
         # reflect output
-        self.model['export'] = [self.core.out.export]
+        self.model['export'] = self.core.out.export
         self.update_view()
 
     def on_cancel(self, event=None):
