@@ -51,7 +51,7 @@ class Core:
         self.args = copy.deepcopy(args)
         return self.args
 
-    def open_log(self):
+    def on_open_diagnostics(self):
         log = util.find_log_path(self.logger)
         if not log:
             return

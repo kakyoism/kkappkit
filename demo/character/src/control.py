@@ -17,8 +17,8 @@ class Controller(ui.FormController):
     def on_open_help(self):
         util.alert('Dev: Just use it! Trust yourself and the log!')
 
-    def on_open_log(self):
-        self.core.open_log()
+    def on_open_diagnostics(self):
+        self.core.on_open_diagnostics()
 
     def on_report_issue(self):
         util.alert('Dev: It\'s not a bug, it\'s a feature!')
