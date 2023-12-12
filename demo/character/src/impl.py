@@ -23,3 +23,4 @@ class Core(base.Core):
         export = osp.join(self.paths.sessionDir, 'out.json')
         util.save_json(export, vars(self.args))
         util.open_in_browser(export)
+        self.out.export = export

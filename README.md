@@ -74,7 +74,7 @@ poetry install
 # manually edit the configuration file (src/app.json) to fill in app metadata and input/output
 # and generate the interface code
 # overwrite the default assets with demo implementation
-kkappgen -r `pwd` -i demo/character
+kkappgen -r `pwd` -i /path/to/kkappkit/demo/character
 
 # run the app and play around with it
 ./ui

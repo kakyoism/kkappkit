@@ -174,7 +174,12 @@ class Core(base.Core):
         - must add import by hand for custom types
         """
         indent = ' ' * 4
-        prop_assignment_lines = [f'{indent}{util.convert_compound_cases(name, style="camel")}: {arg["type"]} = {repr(arg["default"])}' for name, arg in self.appConfig['output'].items()]
+        raw_py_map = {
+            'file': 'str',
+            'folder': 'str',
+            'path': 'str',
+        }
+        prop_assignment_lines = [f"{indent}{util.convert_compound_cases(name, style='camel')}: {raw_py_map.get(arg['type'], arg['type'])} = {repr(arg['default'])}" for name, arg in self.appConfig['output'].items()]
         code = '\n'.join(prop_assignment_lines)
         util.substitute_keywords_in_file(self.dstPaths.output, {'# {{assign}}': code}, useliteral=True)
 
@@ -219,6 +224,7 @@ class Core(base.Core):
         """
         groups_with_dups = [util.convert_compound_cases(arg['group'], style='title') for name, arg in self.appConfig['input'].items()]
         groups = util.remove_duplication(groups_with_dups)
+        groups.append('output')
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
 
     def _create_controller(self):
@@ -237,14 +243,16 @@ class Core(base.Core):
         - in app-config, entries are defined in layout order
         - their groups are also sorted by layout order
         """
-        groups = {arg['group'] for name, arg in self.appConfig['input'].items()}
+        groups = {arg['group'] for name, arg in self.appConfig['input'].items()}.union({'output'})
         pg_line_map = {grp: f"pg_{grp} = form.pages['{grp}']" for grp in groups}
         pgvar_lines = list(pg_line_map.values())
         entry_lines = [line for name, arg in self.appConfig['input'].items()
                        for line in EntryGen.create_codegen(name, arg).generate()]
         traceable_args = {name: arg for name, arg in self.appConfig['input'].items() if arg.get('trace')}
         tracer_lines = [f'{name.lower()}.set_tracer(ctrlr.on_{name.lower()}_changed)' for name, arg in traceable_args.items()]
-        return pgvar_lines + entry_lines + tracer_lines
+        output_lines = [line for name, arg in self.appConfig['output'].items()
+                       for line in OutputEntryGen.create_codegen(name, arg).generate()]
+        return pgvar_lines + entry_lines + tracer_lines + output_lines
 
     def _create_action(self):
         template_cls_map = {
@@ -540,18 +548,6 @@ parser.add_argument(
 
 
 #
-# output
-#
-class OutputGen:
-    def __init__(self, name, arg):
-        self.name = name
-        self.arg = arg
-
-    def generate(self):
-        return []
-
-
-#
 # gui
 #
 class EntryGen:
@@ -701,6 +697,41 @@ class OptionEntryGen(EntryGen):
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
         return [f"{self.name.lower()} = ui.{cls}({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['choices'])}, {repr(self.arg['default'])}, {self._get_help_repr()}, {self.arg['presetable']})"]
+
+
+#
+# output
+#
+class OutputEntryGen(EntryGen):
+    """
+    - TODO: support read-only list
+    """
+    def __init__(self, name, arg):
+        arg['group'] = 'output'
+        super().__init__(name, arg)
+
+    @staticmethod
+    def create_codegen(name, arg):
+        dtype_codegen_map = {
+            'bool': OutputEntryGen,
+            'int': OutputEntryGen,
+            'float': OutputEntryGen,
+            'str': OutputEntryGen,
+            'file': OutputPathEntryGen,
+            'folder': OutputPathEntryGen,
+        }
+        return dtype_codegen_map[arg['type']](name, arg)
+
+    def generate(self):
+        return [f"out_{self.name.lower()} = ui.ReadOnlyEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['default'])}, {self._get_help_repr()})"]
+
+
+class OutputPathEntryGen(OutputEntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+
+    def generate(self):
+        return [f"out_{self.name.lower()} = ui.ReadOnlyPathEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['default'])}, {self._get_help_repr()})"]
 
 
 #

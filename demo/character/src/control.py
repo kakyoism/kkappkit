@@ -43,7 +43,6 @@ class Controller(ui.FormController):
 
     def run_task(self):
         self.start_progress()
-
         for p in range(101):
             # Simulate a task
             time.sleep(0.01)
@@ -56,6 +55,9 @@ class Controller(ui.FormController):
         prompt.info('Finished. Will open result in default browser', confirm=True)
         self.core.args = self.get_latest_model()
         self.core.main()
+        # reflect output
+        self.model['export'] = [self.core.out.export]
+        self.update_view()
 
     def on_cancel(self, event=None):
         """
