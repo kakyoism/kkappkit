@@ -784,10 +784,14 @@ class ControllerGen:
 class FormControllerGen(ControllerGen):
     def __init__(self, appcfg, srcfile):
         super().__init__(appcfg, srcfile)
+        self.reflectOutCodeLines = [f'self.model[{repr(out_argname)}] = out.{out_argname}' for out_argname in self.appConfig['output'].keys()]
+        if self.reflectOutCodeLines:
+            self.reflectOutCodeLines += ['self.update_view()']
 
     def generate(self):
         util.substitute_keywords_in_file(self.srcFile, {
             '{{BASE_CONTROLLER}}': self.baseClass,
+            '{{REFLECT_OUTPUT}}': self.reflectOutCodeLines, 
         }, useliteral=True)
         # load skeleton
         code_lines = util.load_lines(self.srcFile, rmlineend=True)

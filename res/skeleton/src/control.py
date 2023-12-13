@@ -52,6 +52,7 @@ class Controller({{BASE_CONTROLLER}}):
         - runs in a background thread out of the box to unblock UI
         - implement this to execute the main task in the background
         """
+        {{REFLECT_OUTPUT}}
         pass
 
     def on_cancel(self, event=None):
