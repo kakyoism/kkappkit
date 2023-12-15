@@ -4,7 +4,7 @@ import time
 import kkpyutil as util
 import pythonosc.udp_client as osc_client
 # project
-import kkpyui as ui
+from kkpyui import kkpyui as ui
 import impl
 
 

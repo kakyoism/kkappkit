@@ -1,7 +1,7 @@
 """
 - implement callbacks on_*() defined in gui-controller prototype
 """
-import kkpyui as ui
+from kkpyui import kkpyui as ui
 import impl
 
 

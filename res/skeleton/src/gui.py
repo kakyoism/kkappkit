@@ -6,7 +6,7 @@ import os.path as osp
 import sys
 import time
 # 3rd party
-import kkpyui as ui
+from kkpyui import kkpyui as ui
 import kkpyutil as util
 # project
 import control as ctrl

@@ -1,7 +1,7 @@
 import threading
 import time
 # project
-import kkpyui as ui
+from kkpyui import kkpyui as ui
 import kkpyutil as util
 import impl
 
