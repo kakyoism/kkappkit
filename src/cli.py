@@ -21,11 +21,13 @@ def create_parser():
 # EXAMPLES
 # =============
 # generate empty app project with default app-config under specified root folder if it does not exists
-# regenerate its interface (cli, gui, etc.) if it exists 
+# regenerate its interface (cli, gui, etc.) if it exists
+# app allows single instance only
 kkgenapp -p /path/to/my_app
 
 # same as above, but use a different app-config template, i.e., filename without extension
-kkgenapp -p my_app -t my_template
+# app allows 2 simultaneous instances
+kkgenapp -p my_app -t my_template -I 2
 
 # same as above, but force overwrite existing app folder with new one
 kkgenapp -p my_app -t my_template -f
@@ -87,6 +89,16 @@ def add_arguments(parser):
         default=False,
         required=False,
         help='Force overwrite existing app folder with new one'
+    )
+    parser.add_argument(
+        '-I',
+        '--max-instances',
+        action='store',
+        dest='nMaxInsts',
+        type=int,
+        default=1,
+        required=False,
+        help='Number of simultaneous instances allowed'
     )
 
 

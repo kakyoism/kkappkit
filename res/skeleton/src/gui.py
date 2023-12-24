@@ -12,6 +12,7 @@ import kkpyutil as util
 import control as ctrl
 
 
+# {{lock}}
 def main():
 # {{view}}
     pass

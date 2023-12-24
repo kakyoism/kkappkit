@@ -188,6 +188,11 @@ class Core(base.Core):
         - due to tkinter threading issue, progressbar and actionbar would be reversed against packing order,
         - to give user a consistent control, we pre-swap them to allow progressbar to update in the background and keep the action bar at the bottom
         """
+        # lock
+        lock_code = f"@util.rerun_lock(name=__file__, folder=osp.abspath(f'{{util.get_platform_tmp_dir()}}/{self.appConfig['name']}'), max_instances={self.args.nMaxInsts})"
+        util.substitute_keywords_in_file(self.dstPaths.gui, {
+            '# {{lock}}': lock_code,
+        }, useliteral=True)
         # main
         view_lines = util.indent(self._create_root() + self._create_form() + self._create_controller() + self._create_menu() + self._create_entries() + self._create_action() + self._create_progress() + self._create_mainloop())
         view_code = '\n'.join(view_lines)
@@ -199,7 +204,6 @@ class Core(base.Core):
             util.copy_file(osp.abspath(f'{self.paths.skeletonDir}/src/control.py'), self.dstPaths.ctrl)
         ctrlr_lines = ControllerGen.create_codegen(self.appConfig, self.dstPaths.ctrl).generate()
         util.save_lines(self.dstPaths.ctrl, ctrlr_lines, addlineend=True)
-
 
     def _reset_interface(self):
         for fn in ('cli.py', 'gui.py', 'out.py'):
@@ -227,7 +231,8 @@ class Core(base.Core):
         groups.append('output')
         return [f'form = ui.Form(ui.Globals.root, page_titles={repr(groups)})']
 
-    def _create_controller(self):
+    @staticmethod
+    def _create_controller():
         return [
             'ctrlr = ctrl.Controller(form)',
             'ui.Globals.root.set_controller(ctrlr)',
