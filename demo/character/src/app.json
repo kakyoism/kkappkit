@@ -1,134 +1,174 @@
 {
-    "version": 1,
-    "name": "character",
-    "description": "form for filling character profile",
-    "template": "form",
-    "tutorial": [
-        "# generate default character profile",
-        "run"
-    ],
-    "remarks": [
-        "- prerequisites: do that before running this",
-        "- caution: do not do that"
-    ],
-    "input": {
-        "name": {
-            "group": "profile",
-            "help": "Character name",
-            "default": "Robin Sena",
-            "presetable": true,
-            "range": [
-                0,
-                null
-            ]
-        },
-        "age": {
-            "group": "profile",
-            "help": "Character age",
-            "default": 15,
-            "presetable": true,
-            "range": [
-                0,
-                null
-            ],
-            "step": 1
-        },
-        "height": {
-            "group": "profile",
-            "title": "Height (m)",
-            "help": "Character height in meters",
-            "default": 1.64,
-            "presetable": true,
-            "range": [
-                0.0,
-                2.0
-            ],
-            "step": 0.01,
-            "precision": 2
-        },
-        "weight": {
-            "group": "profile",
-            "title": "Weight (kg)",
-            "help": "Character weight in kilograms",
-            "default": 51,
-            "presetable": true,
-            "range": [
-                50.2,
-                70.3
-            ],
-            "step": 0.1,
-            "precision": 1
-        },
-        "gender": {
-            "group": "profile",
-            "help": "Character gender",
-            "choices": [
-                "Male",
-                "Female",
-                "*"
-            ],
-            "default": "*",
-            "presetable": true,
-            "range": [
-                1,
-                1
-            ]
-        },
-        "protagonist": {
-            "group": "profile",
-            "title": "Is Protagonist",
-            "help": "When set, this character is the protagonist",
-            "default": false,
-            "presetable": true
-        },
-        "bio": {
-            "group": "profile",
-            "help": "Character biography",
-            "default": "Robin Sena (瀬名 ロビン, Sena Robin) is a soft-spoken 15-year-old Hunter and craft-user with pyrokinetic abilities. She was raised in a convent in Italy-(where she was taught how to use and control her craft in hunting down Witches) before she was sent to the STN-J to gather information for the Solomon administration; even though she was born in Japan, she had moved to Tuscany when she was still very young. Her witch powers allow her to channel her energy into shields capable of blocking solid matter and crafts, magical powers. -- Wikipedia",
-            "presetable": true,
-            "range": [
-                0,
-                null
-            ]
-        },
-        "occupation": {
-            "group": "plot",
-            "help": "Character occupation",
-            "choices": [
-                "Lead",
-                "Warrior",
-                "Wizard",
-                "Detective",
-                "Hacker",
-                "Clerk"
-            ],
-            "default": [
-                "Wizard",
-                "Detective"
-            ],
-            "presetable": true,
-            "range": [
-                1,
-                null
-            ]
-        }
+  "version": 1,
+  "name": "character",
+  "description": "form for filling character profile",
+  "template": "form",
+  "tutorial": [
+    "# generate default character profile",
+    "run"
+  ],
+  "remarks": [
+    "- prerequisites: do that before running this",
+    "- caution: do not do that"
+  ],
+  "input": {
+    "name": {
+      "group": "profile",
+      "help": "Character name",
+      "default": "Robin Sena",
+      "presetable": true,
+      "range": [
+        0,
+        null
+      ]
     },
-    "output": {
-        "export": {
-            "title": "Export to File",
-            "help": "Path to output file of the complete design",
-            "type": "file",
-            "default": "",
-            "range": [
-                ["Output", "*.out.json"]
-            ]
-        }
+    "age": {
+      "group": "profile",
+      "help": "Character age",
+      "default": 15,
+      "presetable": true,
+      "range": [
+        0,
+        null
+      ],
+      "step": 1
     },
-    "appearance": {
-        "title": "Character Design",
-        "size": [
-            800,
-            600
-        ]
+    "height": {
+      "group": "profile",
+      "title": "Height (m)",
+      "help": "Character height in meters",
+      "default": 1.64,
+      "presetable": true,
+      "range": [
+        0.0,
+        2.0
+      ],
+      "step": 0.01,
+      "precision": 2
+    },
+    "weight": {
+      "group": "profile",
+      "title": "Weight (kg)",
+      "help": "Character weight in kilograms",
+      "default": 51,
+      "presetable": true,
+      "range": [
+        50.2,
+        70.3
+      ],
+      "step": 0.1,
+      "precision": 1
+    },
+    "gender": {
+      "group": "profile",
+      "help": "Character gender",
+      "choices": [
+        "Male",
+        "Female",
+        "*"
+      ],
+      "default": "*",
+      "presetable": true,
+      "range": [
+        1,
+        1
+      ]
+    },
+    "protagonist": {
+      "group": "profile",
+      "title": "Is Protagonist",
+      "help": "When set, this character is the protagonist",
+      "default": false,
+      "presetable": true
+    },
+    "bio": {
+      "group": "profile",
+      "help": "Character biography",
+      "default": "Robin Sena (瀬名 ロビン, Sena Robin) is a soft-spoken 15-year-old Hunter and craft-user with pyrokinetic abilities. She was raised in a convent in Italy-(where she was taught how to use and control her craft in hunting down Witches) before she was sent to the STN-J to gather information for the Solomon administration; even though she was born in Japan, she had moved to Tuscany when she was still very young. Her witch powers allow her to channel her energy into shields capable of blocking solid matter and crafts, magical powers. -- Wikipedia",
+      "presetable": true,
+      "range": [
+        0,
+        null
+      ]
+    },
+    "occupation": {
+      "group": "plot",
+      "help": "Character occupation",
+      "choices": [
+        "Lead",
+        "Warrior",
+        "Wizard",
+        "Detective",
+        "Hacker",
+        "Clerk"
+      ],
+      "default": [
+        "Wizard",
+        "Detective"
+      ],
+      "presetable": true,
+      "range": [
+        1,
+        null
+      ]
+    },
+    "episodes": {
+      "group": "plot",
+      "title": "Appeared in Episodes",
+      "help": "List of episodes in which this character appears",
+      "default": [
+        "ep01",
+        "ep02",
+        "ep03",
+        "ep04",
+        "ep05",
+        "ep06",
+        "ep07",
+        "ep08",
+        "ep09",
+        "ep10",
+        "ep11",
+        "ep12",
+        "ep13",
+        "ep14",
+        "ep15",
+        "ep16",
+        "ep17",
+        "ep18",
+        "ep19",
+        "ep20",
+        "ep21",
+        "ep22",
+        "ep23",
+        "ep24",
+        "ep25",
+        "ep26"
+      ],
+      "range": [
+        0,
+        26
+      ]
     }
+  },
+  "output": {
+    "export": {
+      "title": "Export to File",
+      "help": "Path to output file of the complete design",
+      "type": "file",
+      "default": "",
+      "range": [
+        [
+          "Output",
+          "*.out.json"
+        ]
+      ]
+    }
+  },
+  "appearance": {
+    "title": "Character Design",
+    "size": [
+      800,
+      600
+    ]
+  }
 }
