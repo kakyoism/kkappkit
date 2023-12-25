@@ -12,6 +12,7 @@
         "- use remarks to further explain usage of the app, its preconditions, etc.",
         "- controller app turns on the backend and changes its state by tweaking the form fields while the backend is running"
     ],
+    "instances": 1,
     "input": {
         "traceable": {
             "group": "page1",

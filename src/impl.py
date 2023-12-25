@@ -191,7 +191,7 @@ class Core(base.Core):
         - to give user a consistent control, we pre-swap them to allow progressbar to update in the background and keep the action bar at the bottom
         """
         # lock
-        lock_code = f"@util.rerun_lock(name=__file__, folder=osp.abspath(f'{{util.get_platform_tmp_dir()}}/{self.appConfig['name']}'), max_instances={self.args.nMaxInsts})"
+        lock_code = f"@util.rerun_lock(name=__file__, folder=osp.abspath(f'{{util.get_platform_tmp_dir()}}/{self.appConfig['name']}'), max_instances={self.appConfig['instances']})" if self.appConfig.get('instances') is not None else ''
         util.substitute_keywords_in_file(self.dstPaths.gui, {
             '# {{lock}}': lock_code,
         }, useliteral=True)

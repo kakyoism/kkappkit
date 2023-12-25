@@ -11,6 +11,7 @@
     "- prerequisites: do that before running this",
     "- caution: do not do that"
   ],
+  "instances": 1,
   "input": {
     "name": {
       "group": "profile",

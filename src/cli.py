@@ -26,8 +26,7 @@ def create_parser():
 kkgenapp -p /path/to/my_app
 
 # same as above, but use a different app-config template, i.e., filename without extension
-# app allows 2 simultaneous instances
-kkgenapp -p my_app -t my_template -I 2
+kkgenapp -p my_app -t my_template
 
 # same as above, but force overwrite existing app folder with new one
 kkgenapp -p my_app -t my_template -f
@@ -89,16 +88,6 @@ def add_arguments(parser):
         default=False,
         required=False,
         help='Force overwrite existing app folder with new one'
-    )
-    parser.add_argument(
-        '-I',
-        '--max-instances',
-        action='store',
-        dest='nMaxInsts',
-        type=int,
-        default=1,
-        required=False,
-        help='Number of simultaneous instances allowed'
     )
 
 

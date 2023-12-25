@@ -12,6 +12,7 @@
         "- use remarks to further explain usage of the app, its preconditions, etc.",
         "- form app launches backend and feed the field values to it as arguments and waits for it to finish"
     ],
+    "instances": 1,
     "input": {
         "text": {
             "group": "page1",
