@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "character"
+version = "0.1.0"
+description = ""
+authors = ["kakyo"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+kkpyutil = "*"
+kkpyui = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+coverage = "^7.3.4"
+cx-freeze = "^6.15.12"
+kkbuild = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -58,7 +58,7 @@ Next, we'll introduce each demo.
 
 ### Charater
 ```sh
-# create a new skeleton
+# create a new skeleton, use -f to force-overwrite existing files 
 cd /path/to/kkappkit
 kkappgen -r /path/to/character -t template
 

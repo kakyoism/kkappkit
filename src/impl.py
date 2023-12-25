@@ -80,8 +80,10 @@ class Core(base.Core):
         return _args
 
     def _copy_skeleton(self):
-        util.backup_file(self.dstPaths.ctrl, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
-        util.backup_file(self.dstPaths.imp, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
+        if osp.isfile(self.dstPaths.ctrl):
+            util.backup_file(self.dstPaths.ctrl, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
+        if osp.isfile(self.dstPaths.imp):
+            util.backup_file(self.dstPaths.imp, dstdir=osp.join(self.dstPaths.srcDir, 'backup'))
         src = osp.join(self.paths.resDir, 'skeleton')
         dst = self.dstPaths.root
         shutil.copytree(src, dst, dirs_exist_ok=True)
@@ -102,7 +104,6 @@ class Core(base.Core):
         app_name = osp.basename(self.args.appRoot)
         _build_var_map['$APP$'] = app_name
         if to_update_app := not self.args.forceOverwrite and osp.isfile(self.dstPaths.depCfg):
-            # update toml
             return
         util.safe_remove(self.dstPaths.depCfg)
         util.run_cmd(['poetry', 'init', '-n',
@@ -120,9 +121,10 @@ class Core(base.Core):
         self.appConfig = util.load_json(self.dstPaths.appCfg)
         self.appConfig['name'] = app_name
         util.save_json(self.dstPaths.appCfg, self.appConfig)
-        # initialize venv and install dependency
-        util.safe_remove(osp.join(self.dstPaths.root, 'poetry.lock'))
-        util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
+        # initialize venv and install dependency, new app will fail due to empty tomo
+        if toml_edited := not self.args.forceOverwrite:
+            util.safe_remove(osp.join(self.dstPaths.root, 'poetry.lock'))
+            util.run_cmd(['poetry', 'install'], cwd=self.dstPaths.root)
         return True
 
     def _generate_interface(self):
@@ -575,11 +577,12 @@ class EntryGen:
             'int': IntEntryGen,
             'float': FloatEntryGen,
             'str': TextEntryGen,
-            'list': TextEntryGen,
+            'list': ListEntryGen,
             'file': FileEntryGen,
             'folder': FolderEntryGen,
         }
-        return dtype_codegen_map[arg['type']](name, arg)
+        arg_type = arg.get('type') or type(arg['default']).__name__
+        return dtype_codegen_map[arg_type](name, arg)
 
     def generate(self):
         raise NotImplementedError('subclass this!')
@@ -702,6 +705,21 @@ class OptionEntryGen(EntryGen):
     def generate(self):
         cls = 'MultiOptionEntry' if self.isMultiOpts else 'SingleOptionEntry'
         return [f"{self.name.lower()} = ui.{cls}({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['choices'])}, {repr(self.arg['default'])}, {self._get_help_repr()}, {self.arg['presetable']})"]
+
+
+class ListEntryGen(EntryGen):
+    def __init__(self, name, arg):
+        super().__init__(name, arg)
+        self.arg['range'] = [
+            self.arg['range'][0] if self.arg['range'][0] is not None else 0,
+            self.arg['range'][1] if self.arg['range'][1] is not None else float('inf'),
+        ]
+
+    def generate(self):
+        lst_size = len(self.arg['default'])
+        if not self.arg['range'][0] <= lst_size <= self.arg['range'][1]:
+            raise ValueError(f'invalid default list length, expected range: {self.arg["range"]}, got: {lst_size}')
+        return [f"{self.name.lower()} = ui.ListEntry({self.master}, {self._get_name_repr()}, {self._get_title_repr()}, {repr(self.arg['default'])}, {self._get_help_repr()}, {self.arg['presetable']})"]
 
 
 #

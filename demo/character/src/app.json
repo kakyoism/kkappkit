@@ -115,7 +115,7 @@
     "episodes": {
       "group": "plot",
       "title": "Appeared in Episodes",
-      "help": "List of episodes in which this character appears",
+      "help": "List of episodes that this character appears in",
       "default": [
         "ep01",
         "ep02",
@@ -147,7 +147,8 @@
       "range": [
         0,
         26
-      ]
+      ],
+      "presetable": true
     }
   },
   "output": {
