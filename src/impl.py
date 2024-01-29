@@ -664,12 +664,13 @@ class FileEntryGen(EntryGen):
         """
         if not path:
             return fallback
+        path = util.normalize_path(path, mode='posix')
         path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in path.split('/')]
         for p, pc in enumerate(path_comps):
             if not pc.startswith('util.'):
                 path_comps[p] = repr(pc)
         path_arg_list = ', '.join(path_comps)
-        return f'osp.join({path_arg_list})'
+        return f'osp.join({path_arg_list})' if len(path_comps) > 1 else path_arg_list
 
 
 class FolderEntryGen(EntryGen):
