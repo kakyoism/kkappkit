@@ -17,7 +17,6 @@ _build_var_map = {
     '$HOME$': 'util.get_platform_home_dir()',
     '$TEMP$': 'util.get_platform_tmp_dir()',
     '$CWD$': 'os.getcwd()',
-    "$APP$": None
 }
 
 
@@ -663,7 +662,7 @@ class FileEntryGen(EntryGen):
         """
         - assume all app-config paths use forward-slashes / as path separator
         """
-        if path is None:
+        if not path:
             return fallback
         path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in path.split('/')]
         for p, pc in enumerate(path_comps):
