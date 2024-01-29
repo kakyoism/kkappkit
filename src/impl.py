@@ -664,8 +664,7 @@ class FileEntryGen(EntryGen):
         """
         if not path:
             return fallback
-        path = util.normalize_path(path, mode='posix')
-        path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in path.split('/')]
+        path_comps = [osp.normpath(util.substitute_keywords(comp, _build_var_map, useliteral=True)) for comp in util.normalize_path(path, mode='posix').split('/')]
         for p, pc in enumerate(path_comps):
             if not pc.startswith('util.'):
                 path_comps[p] = repr(pc)
