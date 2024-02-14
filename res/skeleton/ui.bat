@@ -5,7 +5,7 @@ pushd
 :: see posix version for details
 
 cd /d %~dp0
-poetry run python src\gui.py %*
+cscript //nologo "ci\_ui.vbs" "ci\_ui.bat" %*
 set result=%errorlevel%
 if NOT %result% == 0 (
 	goto :failed
